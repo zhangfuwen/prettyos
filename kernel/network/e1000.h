@@ -89,7 +89,7 @@ enum {
     TCTL_ENABLE     = (1 <<  1),
     TCTL_PADDING    = (1 <<  2),
     TCTL_COLL_TSH   = (0x0f <<  4), /* CT - Collision Threshold */
-    TCTL_COLL_DIST  = (0x40 << 12), /* COLD - Collision Distance */    
+    TCTL_COLL_DIST  = (0x40 << 12), /* COLD - Collision Distance */
 };
 
 enum {
@@ -181,6 +181,5 @@ void e1000_remove_device(struct cdi_device* device);
 void e1000_send_packet
     (struct cdi_net_device* device, void* data, size_t size);
 
-int e1000_driver_init(); // TEST
 
 #endif

@@ -121,8 +121,7 @@ bool elf_header(file_t* file)
     elf_header_t header;
     fread(&header, sizeof(elf_header_t), 1, file);
 
-    bool valid = true;
-    valid =          header.ident[EI_MAG0]    == 0x7F;
+    bool valid =     header.ident[EI_MAG0]    == 0x7F;
     valid = valid && header.ident[EI_MAG1]    == 'E';
     valid = valid && header.ident[EI_MAG2]    == 'L';
     valid = valid && header.ident[EI_MAG3]    == 'F';

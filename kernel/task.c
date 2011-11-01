@@ -100,7 +100,7 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
 
     if (newTask->privilege == 3 && newTask->type != VM86)
     {
-        newTask->heap_top = USER_heapStart;
+        newTask->heap_top = USER_HEAP_START;
         paging_alloc(newTask->pageDirectory, (void*)(USER_STACK - 10*PAGESIZE), 10*PAGESIZE, MEM_USER|MEM_WRITE); // Stack starts at USER_STACK-StackSize*PAGESIZE
     }
 
@@ -401,7 +401,7 @@ void* task_grow_userheap(uint32_t increase)
     uint8_t* old_heap_top = currentTask->heap_top;
     increase = alignUp(increase, PAGESIZE);
 
-    if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_heapEnd) ||
+    if (((uintptr_t)old_heap_top + increase > (uintptr_t)USER_HEAP_END) ||
         !paging_alloc(currentTask->pageDirectory, old_heap_top, increase, MEM_USER | MEM_WRITE))
     {
         return (0);

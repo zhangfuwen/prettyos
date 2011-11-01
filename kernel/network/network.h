@@ -83,7 +83,9 @@ typedef struct
 extern network_driver_t network_drivers[ND_COUNT];
 
 
+network_adapter_t* network_createDevice(pciDev_t* device);
 bool network_installDevice(pciDev_t* device);
+void network_installCDIDevice(network_adapter_t* adapter);
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length);
 void network_receivedPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length); // Called by driver
 void network_displayArpTables();

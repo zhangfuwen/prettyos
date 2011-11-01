@@ -31,7 +31,10 @@ void* cdi_list_pop(cdi_list_t list)
     return (retVal);
 }
 
-size_t cdi_list_empty(cdi_list_t list);
+size_t cdi_list_empty(cdi_list_t list)
+{
+    return(list_isEmpty(list));
+}
 
 void* cdi_list_get(cdi_list_t list, size_t index)
 {
@@ -43,7 +46,11 @@ void* cdi_list_get(cdi_list_t list, size_t index)
     return (temp->data);
 }
 
-cdi_list_t cdi_list_insert(cdi_list_t list, size_t index, void* value);
+cdi_list_t cdi_list_insert(cdi_list_t list, size_t index, void* value)
+{
+    list_insert(list, list_getElement(list, index), value);
+    return(list);
+}
 
 void* cdi_list_remove(cdi_list_t list, size_t index)
 {
@@ -53,7 +60,13 @@ void* cdi_list_remove(cdi_list_t list, size_t index)
     return (retVal);
 }
 
-size_t cdi_list_size(cdi_list_t list);
+size_t cdi_list_size(cdi_list_t list)
+{
+    size_t counter = 0;
+    for(dlelement_t* elem = list->head; elem; elem = elem->next)
+        counter++;
+    return(counter);
+}
 
 /*
 * Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.

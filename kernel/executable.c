@@ -105,7 +105,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
             }
 
             // Copy nArgv to user PD
-            paging_alloc(pd, (void*)USER_DATA_BUFFER, (uintptr_t)USER_heapStart - (uintptr_t)USER_DATA_BUFFER, MEM_USER | MEM_WRITE); // Allocate space in user PD (Pages between heap and dataBuffer)
+            paging_alloc(pd, (void*)USER_DATA_BUFFER, (uintptr_t)USER_HEAP_START - (uintptr_t)USER_DATA_BUFFER, MEM_USER | MEM_WRITE); // Allocate space in user PD (Pages between heap and dataBuffer)
             cli();
             paging_switch (pd); // Switch to user PD
             char** nnArgv = (void*)USER_DATA_BUFFER; // argv buffer

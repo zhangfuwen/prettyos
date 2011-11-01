@@ -5,12 +5,12 @@
 
 
 // Additional features (Should be enabled per default)
-/// #define _BOOTSCREEN_           // Enables the bootscreen displayed at startup
-#define _PCI_VEND_PROD_LIST_   // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
-#define _SERIAL_LOG_           // Enables log information over the COM-Ports
-#define _EHCI_ENABLE_          // EHCI driver will be installed and used on the disadvantage of UHCI/OHCI if supported by the attached device
-#define _OHCI_ENABLE_          // OHCI driver will be installed
-#define _UHCI_ENABLE_          // UHCI driver will be installed
+#define _BOOTSCREEN_         // Enables the bootscreen displayed at startup
+#define _PCI_VEND_PROD_LIST_ // http://www.pcidatabase.com/pci_c_header.php - Increases the size of the kernel significantly
+#define _SERIAL_LOG_         // Enables log information over the COM-Ports
+#define _EHCI_ENABLE_        // EHCI driver will be installed and used on the disadvantage of UHCI/OHCI if supported by the attached device
+#define _OHCI_ENABLE_        // OHCI driver will be installed
+#define _UHCI_ENABLE_        // UHCI driver will be installed
 
 // Additional debug output (Should be disabled per default)
 /// #define _DIAGNOSIS_            // General diagnosis output - activates prints to the screen about some details and memory use
@@ -28,7 +28,7 @@
 /// #define _UHCI_DIAGNOSIS_       // Debug UHCI
 /// #define _EHCI_DIAGNOSIS_       // Debug EHCI
 /// #define _USB_DIAGNOSIS_        // Debug USB transfers
-#define _USB_TRANSFER_DIAGNOSIS_ // Debug USB transfers and transactions
+/// #define _USB_TRANSFER_DIAGNOSIS_ // Debug USB transfers and transactions
 /// #define _FLOPPY_DIAGNOSIS_     // Information about the floppy(-motor)
 /// #define _RAMDISK_DIAGNOSIS_    // Information about the ramdisk
 /// #define _FAT_DIAGNOSIS_        // Only as transition state during implementation of FAT 12/16/32

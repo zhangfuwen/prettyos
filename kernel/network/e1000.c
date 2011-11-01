@@ -301,7 +301,7 @@ static void reset_nic(struct e1000_device* netcard)
         ((mac >> 32) & 0xFFFF) | RAH_VALID);
 
     netcard->net.mac = mac;
-    printf("e1000: MAC-Adresse: %012llx\n", (uint64_t) netcard->net.mac);
+    //printf("e1000: MAC-Adresse: %012llx\n", (uint64_t) netcard->net.mac);
 
     // Rx-Deskriptoren aufsetzen
     for (i = 0; i < RX_BUFFER_NUM; i++) {
@@ -312,7 +312,7 @@ static void reset_nic(struct e1000_device* netcard)
 #ifdef DEBUG
         printf("e1000: [%d] Rx: Buffer @ phys %08x, Desc @ phys %08x\n",
             i,
-            netcard->rx_desc[i].buffer, 
+            netcard->rx_desc[i].buffer,
             PHYS(netcard, rx_desc[i]));
 #endif
     }
@@ -395,10 +395,10 @@ found:
     }
 
     // Karte initialisieren
-    printf("e1000: IRQ %d, MMIO an %p  Revision:%d\n",
-        pci->irq, netcard->mem_base, netcard->revision);
+    //printf("e1000: IRQ %d, MMIO an %p  Revision:%d\n",
+    //    pci->irq, netcard->mem_base, netcard->revision);
 
-    printf("e1000: Fuehre Reset der Karte durch\n");
+    //printf("e1000: Fuehre Reset der Karte durch\n");
     reset_nic(netcard);
 
     cdi_net_device_init(&netcard->net);

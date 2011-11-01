@@ -16,7 +16,7 @@
 const int dns_port = 53;
 
 static void dns_copyInverse(void* dst, const void* src, size_t size)
-{ 
+{
     // same as htons() + memcpy()
     for (size_t i = 0; size--; i++)
     {

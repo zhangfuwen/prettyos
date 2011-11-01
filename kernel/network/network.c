@@ -4,6 +4,8 @@
 */
 
 #include "network.h"
+#include "cdi/net.h"
+#include "cdi/pci.h"
 #include "util.h"
 #include "list.h"
 #include "todo_list.h"
@@ -59,15 +61,43 @@ bool network_installDevice(pciDev_t* device)
     textColor(TEXT);
 
     // PrettyOS has a driver for this adapter. Install it.
-    network_adapter_t* adapter = malloc(sizeof(network_adapter_t), 0, "network apdapter");
+    network_adapter_t* adapter = network_createDevice(device);
     adapter->driver = driver;
-    adapter->PCIdev = device;
     device->data = adapter;
-
-    arp_initTable(&adapter->arpTable);
 
     // Set IRQ handler
     irq_installPCIHandler(device->irq, driver->interruptHandler, device);
+
+    adapter->driver->install(adapter);
+
+    if (adapters == 0)
+        adapters = list_create();
+    list_append(adapters, adapter);
+
+    // Try to get an IP by DHCP
+    DHCP_Discover(adapter);
+
+    textColor(TEXT);
+    printf("\nMAC: ");
+    textColor(IMPORTANT);
+    printf("%M", adapter->MAC);
+    textColor(TEXT);
+    printf("\tIP: ");
+    textColor(IMPORTANT);
+    printf("%I", adapter->IP);
+    textColor(TEXT);
+
+    return (true);
+}
+
+network_adapter_t* network_createDevice(pciDev_t* device)
+{
+    network_adapter_t* adapter = malloc(sizeof(network_adapter_t), 0, "network apdapter");
+    adapter->driver = 0;
+    adapter->PCIdev = device;
+    adapter->DHCP_State = START;
+
+    arp_initTable(&adapter->arpTable);
 
     // nic
     adapter->IP.IP[0]           =  IP_1;
@@ -87,32 +117,34 @@ bool network_installDevice(pciDev_t* device)
     adapter->dnsServer_IP.IP[2] = DNS_IP_3;
     adapter->dnsServer_IP.IP[3] = DNS_IP_4;
 
-    adapter->driver->install(adapter);
+    return(adapter);
+}
 
+void network_installCDIDevice(network_adapter_t* adapter)
+{
     if (adapters == 0)
         adapters = list_create();
     list_append(adapters, adapter);
 
-    // Try to get an IP by DHCP
     adapter->DHCP_State  = START;
     DHCP_Discover(adapter);
-
-    textColor(TEXT);
-    printf("\nMAC: ");
-    textColor(IMPORTANT);
-    printf("%M", adapter->MAC);
-    textColor(TEXT);
-    printf("\tIP: ");
-    textColor(IMPORTANT);
-    printf("%I", adapter->IP);
-    textColor(TEXT);
-
-    return (true);
 }
 
 bool network_sendPacket(network_adapter_t* adapter, uint8_t* buffer, size_t length)
 {
-    return (adapter->driver->sendPacket != 0 && adapter->driver->sendPacket(adapter, buffer, length));
+    if(adapter && adapter->driver)
+        return (adapter->driver->sendPacket != 0 && adapter->driver->sendPacket(adapter, buffer, length));
+    else if(adapter && adapter->PCIdev->data)
+    {
+        struct cdi_pci_device* cdiPciDev = adapter->PCIdev->data;
+        struct cdi_net_driver* cdiDriver = (struct cdi_net_driver*)cdiPciDev->meta.cdiDev->driver;
+        if(cdiDriver->send_packet)
+        {
+            cdiDriver->send_packet((struct cdi_net_device*)cdiPciDev->meta.cdiDev, buffer, length);
+            return true;
+        }
+    }
+    return false;
 }
 
 static void network_handleReceivedBuffer(void* data, size_t length)

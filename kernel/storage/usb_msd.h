@@ -26,24 +26,24 @@ void          usb_bulkReset(usb_device_t* device, uint8_t numInterface);
 uint8_t       usb_getMaxLUN(usb_device_t* device, uint8_t numInterface);
 void          usb_resetRecoveryMSD(usb_device_t* device, uint32_t Interface);
 
-void          usb_sendSCSICommand    (usb_device_t* device, 
-                                      uint32_t      interface, 
-                                      uint32_t      endpointOut, 
-                                      uint32_t      endpointIn, 
-                                      uint8_t       SCSIcommand, 
-                                      uint32_t      LBA, 
-                                      uint16_t      TransferLength, 
-                                      void*         dataBuffer, 
+void          usb_sendSCSICommand    (usb_device_t* device,
+                                      uint32_t      interface,
+                                      uint32_t      endpointOut,
+                                      uint32_t      endpointIn,
+                                      uint8_t       SCSIcommand,
+                                      uint32_t      LBA,
+                                      uint16_t      TransferLength,
+                                      void*         dataBuffer,
                                       void*         statusBuffer);
 
-void          usb_sendSCSICommand_out(usb_device_t* device, 
-                                      uint32_t      interface, 
-                                      uint32_t      endpointOut, 
-                                      uint32_t      endpointIn, 
-                                      uint8_t       SCSIcommand, 
-                                      uint32_t      LBA, 
-                                      uint16_t      TransferLength, 
-                                      void*         dataBuffer, 
+void          usb_sendSCSICommand_out(usb_device_t* device,
+                                      uint32_t      interface,
+                                      uint32_t      endpointOut,
+                                      uint32_t      endpointIn,
+                                      uint8_t       SCSIcommand,
+                                      uint32_t      LBA,
+                                      uint16_t      TransferLength,
+                                      void*         dataBuffer,
                                       void*         statusBuffer);
 
 FS_ERROR      usb_read (uint32_t sector, void* buffer, void* device);

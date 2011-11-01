@@ -2,6 +2,7 @@
 #define PCI_H
 
 #include "os.h"
+#include "list.h"
 
 
 #define PCI_CONFIGURATION_ADDRESS 0x0CF8   // Address I/O Port
@@ -61,6 +62,9 @@ typedef struct
    pciBar_t  bar[6];
    void*     data; // Pointer to internal data of associated driver.
 } pciDev_t;
+
+
+extern list_t* pci_devices;
 
 
 void     pci_scan();

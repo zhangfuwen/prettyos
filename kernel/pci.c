@@ -5,7 +5,6 @@
 
 #include "pci.h"
 #include "util.h"
-#include "list.h"
 #include "storage/usb_hc.h"
 #include "network/network.h"
 #include "video/console.h"
@@ -18,7 +17,7 @@
 #endif
 
 
-static list_t* devices = 0;
+list_t* pci_devices = 0;
 
 void pci_analyzeHostSystemError(pciDev_t* pciDev)
 {
@@ -119,7 +118,7 @@ bool pci_deviceSentInterrupt(pciDev_t* dev)
 
 void pci_scan()
 {
-    devices = list_create();
+    pci_devices = list_create();
 
     textColor(LIGHT_GRAY);
     printf("   => PCI devices:");
@@ -145,7 +144,7 @@ void pci_scan()
                 if (vendorID && vendorID != 0xFFFF)
                 {
                     pciDev_t* PCIdev = malloc(sizeof(pciDev_t), 0, "pciDev_t");
-                    list_append(devices, PCIdev);
+                    list_append(pci_devices, PCIdev);
 
                     PCIdev->data        = 0;
                     PCIdev->vendorID    = vendorID;
@@ -258,17 +257,10 @@ void pci_scan()
                         {
                             usb_hc_install(PCIdev);
                         }
-                        else if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00 && 
-                                 PCIdev->deviceID == 0x100E && PCIdev->vendorID == 0x8086) // Intel Gigabit Ethernet Controller // CDI-Interface
-                        {
-                            // driver = &network_drivers[...]; // CDI 
-                            printf("\nIntel Gigabit Ethernet Controller");
-                            e1000_driver_init(); // CDI
-                        }
                         else if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00) // network adapters
                         {
                             network_installDevice(PCIdev);
-                        }                        
+                        }
 
                         putch('\n');
 

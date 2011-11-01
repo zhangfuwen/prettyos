@@ -23,8 +23,8 @@ Start address | End address | Contains    | Annotations
               |             |             |
 0x1410000     | 0xBF000000  | User        | User PD. Visible during syscalls
               |             |             |
-0xC0000000    | 0xE0000000  | Kernel Data | Where the kernel's private data is stored
-0xE0000000    | 0x100000000 | PCI         | Memory for MMIO of Devices
+0xC0000000    | 0xE0000000  | PCI         | Memory for MMIO of Devices
+0xE0000000    | 0xFFFFFFFF  | Kernel Data | Where the kernel's private data is stored
 
 =========================================================================================================
 

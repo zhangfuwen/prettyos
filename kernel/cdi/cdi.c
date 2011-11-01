@@ -16,26 +16,25 @@ extern struct cdi_driver* _cdi_start; // Declared in kernel.ld
 extern struct cdi_driver* _cdi_end;   // Declared in kernel.ld
 
 // Initialisiert alle PCI-Geraete
-static void cdi_tyndur_init_pci_devices(void)
+static void init_pci_devices(void)
 {
-    struct cdi_driver* driver;
-    struct cdi_device* device;
-    struct cdi_pci_device* pci;
-    int i, j;
-
     // Liste der PCI-Geraete holen
-    cdi_list_t pci_devices = cdi_list_create();
-    cdi_pci_get_all_devices(pci_devices);
+    cdi_list_t pciDevices = cdi_list_create();
+    cdi_pci_get_all_devices(pciDevices);
 
+    struct cdi_pci_device* pci;
     // Fuer jedes Geraet einen Treiber suchen
-    for (i = 0; (pci = cdi_list_get(pci_devices, i)); i++) {
-
-        device = 0;
-        for (j = 0; (driver = cdi_list_get(drivers, j)); j++)
+    for (int i = 0; (pci = cdi_list_get(pciDevices, i)); i++)
+    {
+        struct cdi_device* device = 0;
+        struct cdi_driver* driver;
+        for (int j = 0; (driver = cdi_list_get(drivers, j)); j++)
         {
             if (driver->bus == CDI_PCI && driver->init_device)
             {
+                pci->meta.driver = driver;
                 device = driver->init_device(&pci->bus_data);
+                pci->meta.cdiDev = device;
                 break;
             }
         }
@@ -43,8 +42,6 @@ static void cdi_tyndur_init_pci_devices(void)
         if (device != 0)
         {
             cdi_list_push(driver->devices, device);
-            printf("cdi: %x.%x.%x: Benutze Treiber %s\n",
-                pci->bus, pci->dev, pci->function, driver->name);
         }
         else
         {
@@ -52,7 +49,7 @@ static void cdi_tyndur_init_pci_devices(void)
         }
     }
 
-    cdi_list_destroy(pci_devices);
+    cdi_list_destroy(pciDevices);
 }
 
 /* Diese Funktion wird von Treibern aufgerufen, nachdem ein neuer Treiber
@@ -64,10 +61,10 @@ static void cdi_tyndur_init_pci_devices(void)
    Nach dem Aufruf dieser Funktion duerfen vom Treiber keine weiteren Befehle
    ausgefuehrt werden, da nicht definiert ist, ob und wann die Funktion
    zurueckkehrt. */
-static void cdi_tyndur_run_drivers()
+static void run_drivers()
 {
     // PCI-Geraete suchen
-    cdi_tyndur_init_pci_devices();
+    init_pci_devices();
 
     // Geraete initialisieren
     struct cdi_driver* driver;
@@ -79,18 +76,7 @@ static void cdi_tyndur_run_drivers()
         {
             device->driver = driver;
         }
-
-        if (driver->type != CDI_NETWORK)
-        {
-            ///init_service_register((char*) driver->name);
-        }
     }
-
-    // Warten auf Ereignisse
-    ///while (1)
-    ///{
-    ///    wait_for_rpc();
-    ///}
 }
 
 void cdi_init()
@@ -100,11 +86,6 @@ void cdi_init()
 
     // Interne Strukturen initialisieren
     drivers = cdi_list_create();
-    ///atexit(cdi_destroy);
-
-    ///lostio_init();
-    ///lostio_type_directory_use();
-    ///timer_sync_caches();
 
     // Alle in dieser Binary verfuegbaren Treiber aufsammeln
     pdrv = &_cdi_start;
@@ -113,22 +94,14 @@ void cdi_init()
         drv = *pdrv;
         if (drv->init != 0)
         {
-            // FIXME Der Service muss registriert sein, wenn die Karte bei
-            // tcpip registriert wird (fuer den Namen) und das passiert im
-            // Moment in drv->init()
-            if (drv->type == CDI_NETWORK)
-            {
-                ///init_service_register((char*) drv->name);
-            }
-
             drv->init();
-            ///cdi_driver_register(drv);
+            cdi_driver_register(drv);
         }
         pdrv++;
     }
 
     // Treiber starten
-    cdi_tyndur_run_drivers();
+    run_drivers();
 }
 
 void cdi_driver_init(struct cdi_driver* driver)

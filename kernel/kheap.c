@@ -45,7 +45,7 @@ typedef struct
 static region_t*      regions         = 0;
 static uint32_t       regionCount     = 0;
 static uint32_t       regionMaxCount  = 0;
-static uint8_t* const heapStart       = KERNEL_heapStart;
+static uint8_t* const heapStart       = KERNEL_HEAP_START;
 static uint32_t       heapSize        = 0;
 static const uint32_t HEAP_MIN_GROWTH = 0x40000;
 

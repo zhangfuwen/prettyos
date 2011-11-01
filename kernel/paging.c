@@ -68,13 +68,13 @@ uint32_t paging_install()
         }
     }
 
-    // Setup the page tables for the kernel heap (3GB-4GB), unmapped
-    size_t kernelpts = max(256, ram_available / 4096 / 1024); // Maximum kernel heap size limited by available memory
+    // Setup the page tables for PCI memory (3 - 3,5 GiB) and kernel heap (3,5 - 4 GiB), unmapped
+    size_t kernelpts = 128 + min(128, ram_available / 4096 / 1024); // PCI memory size + maximum kernel heap size (limited by available memory)
     pageTable_t* heap_pts = malloc(kernelpts*sizeof(pageTable_t), PAGESIZE, "pag-PTheap");
     memset(heap_pts, 0, kernelpts * sizeof(pageTable_t));
     for (uint32_t i = 0; i < kernelpts; i++)
     {
-        kernelPageDirectory->tables[0x300 + i] = &heap_pts[i];
+        kernelPageDirectory->tables[0x300 + i] = heap_pts + i;
         kernelPageDirectory->codes [0x300 + i] = (uint32_t)kernelPageDirectory->tables[0x300 + i] | MEM_PRESENT | MEM_WRITE;
     }
 
@@ -451,7 +451,7 @@ void* paging_getVirtAddr(uintptr_t physAddress)
     }
 
     // check current used heap
-    void* virtAddr = lookForVirtAddr(physAddress, (uintptr_t)KERNEL_heapStart, (uintptr_t)heap_getCurrentEnd());
+    void* virtAddr = lookForVirtAddr(physAddress, (uintptr_t)KERNEL_HEAP_START, (uintptr_t)heap_getCurrentEnd());
     if(virtAddr)
         return (virtAddr);
 
@@ -461,12 +461,12 @@ void* paging_getVirtAddr(uintptr_t physAddress)
         return (virtAddr);
 
     // check between idendity mapping area and heap start
-    lookForVirtAddr(physAddress, IDMAP * 1024 * PAGESIZE, (uintptr_t)KERNEL_heapStart);
+    lookForVirtAddr(physAddress, IDMAP * 1024 * PAGESIZE, (uintptr_t)KERNEL_HEAP_START);
     if(virtAddr)
         return (virtAddr);
 
     // check between current heap end and theoretical heap end
-    lookForVirtAddr(physAddress, (uintptr_t)heap_getCurrentEnd(), (uintptr_t)KERNEL_heapEnd);
+    lookForVirtAddr(physAddress, (uintptr_t)heap_getCurrentEnd(), (uintptr_t)KERNEL_HEAP_END);
     return (virtAddr);
 }
 

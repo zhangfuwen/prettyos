@@ -42,7 +42,7 @@ static struct cdi_net_driver driver;
 /**
  * Initialisiert die Datenstrukturen fuer den e1000-Treiber
  */
-/*static*/ int e1000_driver_init()
+static int e1000_driver_init()
 {
     // Konstruktor der Vaterklasse
     cdi_net_driver_init(&driver);

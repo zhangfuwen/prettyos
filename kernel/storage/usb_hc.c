@@ -77,8 +77,8 @@ void usb_hc_install(pciDev_t* PCIdev)
                   #endif
                     break;
             }
-        }//if
-    }//for
+        }
+    }
 }
 
 

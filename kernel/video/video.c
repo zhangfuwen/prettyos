@@ -90,7 +90,7 @@ static void kputch(char c, uint8_t attrib)
     uint16_t att = attrib << 8;
 
     mutex_lock(videoLock);
-    
+
     switch (uc)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete
@@ -290,12 +290,12 @@ void takeScreenshot()
     int32_t NewLine = 0;
 
     mutex_lock(videoLock);
-    
+
     for (uint16_t i=0; i<4000; i++)
     {
         uint16_t j=i+2*NewLine;
         screenCache[j] = *(char*)(vidmem+i); // only signs, no attributes
-        
+
         if (i % 80 == 79)
         {
             screenCache[j+1]= 0xD; // CR
@@ -303,7 +303,7 @@ void takeScreenshot()
             NewLine++;
         }
     }
-    
+
     mutex_unlock(videoLock);
 
     // additional newline at the end of the screenshot
@@ -316,7 +316,7 @@ diskType_t*    ScreenDest = &FLOPPYDISK; // HACK
 void saveScreenshot()
 {
     char Pfad[20];
-    
+
     for (int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
         if (disks[i] && disks[i]->type == ScreenDest && (disks[i]->partition[0]->subtype == FS_FAT12 || disks[i]->partition[0]->subtype == FS_FAT16 || disks[i]->partition[0]->subtype == FS_FAT32))
@@ -327,7 +327,7 @@ void saveScreenshot()
     }
 
     file_t* file = fopen(Pfad, "a+");
-    
+
     if (file) // check for NULL pointer, otherwise #PF
     {
         fwrite(screenCache, 1, SCREENSHOT_BYTES, file);

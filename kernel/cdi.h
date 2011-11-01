@@ -39,7 +39,7 @@
 #ifndef CDI_H
 #define CDI_H
 
-#include "types.h"
+#include "pci.h"
 #include <cdi-osdep.h>
 #include <cdi/lists.h>
 
@@ -76,7 +76,7 @@ struct cdi_device {
     struct cdi_bus_data*    bus_data;
 
     // PrettyOS specific
-    void*               backdev;
+    void*                   backdev;
 };
 
 // Describes a CDI driver

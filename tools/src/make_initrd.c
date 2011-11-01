@@ -17,14 +17,11 @@ int main(char argc, char **argv)
     int nheaders = (argc-1)/2;
     struct initrd_header headers[N]; // declare N headers in Filesystem
 
-    int i;
-    for (i=0; i<N; ++i)               // set the memory of N headers to binary 0
-    {
-        memset((void*)&headers[i], 0, sizeof(struct initrd_header));
-    }
+	memset(headers, 0, sizeof(struct initrd_header)*N);
 
     unsigned int off = N * sizeof(struct initrd_header) + sizeof(int); // set data offset to N * 76
 
+	int i;
     for (i=0; i<nheaders; ++i)
     {
         printf("writing file %s->%s at 0x%x\n", argv[i*2+1], argv[i*2+2], off);
@@ -44,7 +41,6 @@ int main(char argc, char **argv)
     }
 
     FILE *wstream = fopen("./initrd.dat", "wb");
-    unsigned char *data = (unsigned char *)malloc(off);
     fwrite(&nheaders, sizeof(int), 1, wstream);
     fwrite(headers, sizeof(struct initrd_header), N, wstream); // write N headers
 
@@ -62,7 +58,6 @@ int main(char argc, char **argv)
     }
 
     fclose(wstream);
-    free(data);
 
     return 0;
 }

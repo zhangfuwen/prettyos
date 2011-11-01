@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.161 - Rev: 1362";
+const char* const version = "0.0.3.162 - Rev: 1363";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -182,10 +182,6 @@ static void init(multiboot_t* mb_struct)
     syscall_install();
     log("Syscalls");
 
-    // cdi
-    cdi_init();
-    log("CDI");
-
     // mass storage devices
     deviceManager_install(0);
     log("Devicemanager");
@@ -233,6 +229,8 @@ void main(multiboot_t* mb_struct)
     serial_init();
 
     pci_scan(); // Scan of PCI bus to detect PCI devices. (cf. pci.h)
+
+    cdi_init();
 
     flpydsk_install(); // detect FDDs
 

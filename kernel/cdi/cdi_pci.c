@@ -5,15 +5,54 @@
 
 #include "cdi/pci.h"
 #include "kheap.h"
+#include "../pci.h"
 
 
 void cdi_pci_get_all_devices(cdi_list_t list)
 {
+    for(dlelement_t* e = pci_devices->head; e; e = e->next)
+    {
+        pciDev_t* dev = e->data;
+        struct cdi_pci_device* cdiDev = malloc(sizeof(struct cdi_pci_device), 0, "cdi_pci_device");
+        cdiDev->meta.dev = dev;
+        cdiDev->bus = dev->bus;
+        cdiDev->bus_data.bus_type = CDI_PCI;
+        cdiDev->class_id = dev->classID;
+        cdiDev->dev = dev->device;
+        cdiDev->device_id = dev->deviceID;
+        cdiDev->function = dev->func;
+        cdiDev->interface_id = dev->interfaceID;
+        cdiDev->irq = dev->irq;
+        cdiDev->resources = cdi_list_create();
+        for(uint8_t i = 0; i < 6; i++)
+        {
+            if(dev->bar[i].memoryType != PCI_INVALIDBAR)
+            {
+                struct cdi_pci_resource* res = malloc(sizeof(struct cdi_pci_resource), 0, "cdi_pci_ressource");
+                res->start = dev->bar[i].baseAddress;
+                res->index = i;
+                res->length = dev->bar[i].memorySize;
+                if(dev->bar[i].memoryType == PCI_IO)
+                    res->type = CDI_PCI_IOPORTS;
+                else
+                    res->type = CDI_PCI_MEMORY;
+
+                cdi_list_push(cdiDev->resources, res);
+            }
+        }
+        cdiDev->rev_id = dev->revID;
+        cdiDev->subclass_id = dev->subclassID;
+        cdiDev->vendor_id = dev->vendorID;
+        cdi_list_push(list, cdiDev);
+    }
 }
 
 void cdi_pci_device_destroy(struct cdi_pci_device* device)
 {
-    // TODO Liste abbauen
+    for(int i = 0; i < cdi_list_size(device->resources); i++)
+    {
+        free(cdi_list_get(device->resources, i));
+    }
     free(device);
 }
 
