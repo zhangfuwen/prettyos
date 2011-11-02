@@ -28,10 +28,11 @@ static bool isLeapyear(uint16_t year)
     return (year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0));
 }
 
+// Gregorian calender started 15th October 1582
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
 {
-    day += 6; // 1.1.2000 was a saturday
-    day += (year-2000) * 146097.0/400.0 + days[month-1];
+    day += 6; // 1.1.1600 was a saturday
+    day += (year/*-1600*/) * 146097.0/400.0 + days[month-1];	
 
     if (isLeapyear(year) && (month < 2 || (month == 2 && day <= 28)))
     {
