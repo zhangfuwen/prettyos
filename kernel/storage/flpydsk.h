@@ -3,7 +3,7 @@
 
 #include "os.h"
 #include "devicemanager.h"
-#include "synchronisation.h"
+#include "tasking/synchronisation.h"
 
 #define MAX_FLOPPY                     2
 #define MAX_ATTEMPTS_FLOPPY_DMA_BUFFER 5
@@ -32,11 +32,11 @@ extern floppy_t* floppyDrive[MAX_FLOPPY];
 
 
 void flpydsk_install();
-void flpydsk_motorOn (void* drive);
-void flpydsk_motorOff(void* drive);
-void flpydsk_refreshVolumeName(floppy_t* drive);
-FS_ERROR flpydsk_readSector(uint32_t sector, void* buffer, void* device);
-FS_ERROR flpydsk_writeSector(uint32_t sector, void* buffer, void* device);
+void flpydsk_motorOn (port_t* port);
+void flpydsk_motorOff(port_t* port);
+void flpydsk_refreshVolumeName(disk_t* disk);
+FS_ERROR flpydsk_readSector(uint32_t sector, void* buffer, disk_t* device);
+FS_ERROR flpydsk_writeSector(uint32_t sector, void* buffer, disk_t* device);
 FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option);
 
 

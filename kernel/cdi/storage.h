@@ -9,7 +9,7 @@
 #ifndef CDI_STORAGE_H
 #define CDI_STORAGE_H
 
-#include "types.h"
+#include "util/types.h"
 #include <cdi.h>
 
 // Represents a mass storage device.

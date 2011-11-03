@@ -1,7 +1,7 @@
 #ifndef CDI_CMOS_H
 #define CDI_CMOS_H
 
-#include "types.h"
+#include "util/types.h"
 
 /* Performs CMOS reads
    index:  Index within CMOS RAM to read from.

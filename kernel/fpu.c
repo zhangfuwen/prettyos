@@ -5,9 +5,9 @@
 
 #include "cmos.h"
 #include "cpu.h"
-#include "util.h"
+#include "util/util.h"
 #include "video/console.h"
-#include "task.h"
+#include "tasking/task.h"
 
 
 volatile task_t* FPUTask = 0;

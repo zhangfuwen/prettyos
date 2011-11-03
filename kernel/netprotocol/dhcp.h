@@ -1,7 +1,7 @@
 #ifndef DHCP_H
 #define DHCP_H
 
-#include "types.h"
+#include "os.h"
 #include "network/netutils.h"
 
 // http://tools.ietf.org/html/rfc2131 <--- Dynamic Host Configuration Protocol

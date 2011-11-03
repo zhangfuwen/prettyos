@@ -4,7 +4,7 @@
 */
 
 #include "dma.h"
-#include "util.h"
+#include "util/util.h"
 
 
 /* The DMA (Direct Memory Access) controller allows the FDC to send data to the DMA, which can put the data in memory.

@@ -4,16 +4,15 @@
 */
 
 #include "pci.h"
-#include "util.h"
+#include "util/util.h"
 #include "storage/usb_hc.h"
 #include "network/network.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "ipc.h"
-#include "network\e1000.h"
 
 #ifdef _PCI_VEND_PROD_LIST_
-  #include "pciVendProdList.h" // http://www.pcidatabase.com/pci_c_header.php
+  #include "pciVendProdlist.h" // http://www.pcidatabase.com/pci_c_header.php
 #endif
 
 

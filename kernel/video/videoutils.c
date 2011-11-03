@@ -4,7 +4,7 @@
 */
 
 #include "videoutils.h"
-#include "util.h"
+#include "util/util.h"
 #include "video.h"
 #include "font.h"
 #include "kheap.h"

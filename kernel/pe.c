@@ -3,8 +3,8 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
-#include "task.h"
+#include "util/util.h"
+#include "tasking/task.h"
 #include "pe.h"
 
 

@@ -9,7 +9,7 @@
 #include "paging.h"
 #include "video/console.h"
 #include "timer.h"
-#include "util.h"
+#include "util/util.h"
 
 
 static void analyzeDeviceDescriptor(struct usb_deviceDescriptor* d, usb_device_t* usbDev);

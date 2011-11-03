@@ -1,8 +1,8 @@
 #ifndef EVENTS_H
 #define EVENTS_H
 
-#include "list.h"
-#include "synchronisation.h"
+#include "util/list.h"
+#include "tasking/synchronisation.h"
 
 
 #define MAX_EVENTS 2000 // One queue stores at maximum xx events. If a queue is full, an EVENT_OVERFLOW event is appended and no further events are accepted

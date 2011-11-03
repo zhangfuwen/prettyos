@@ -5,7 +5,7 @@
 
 #include "usb.h"
 #include "ehciQHqTD.h"
-#include "util.h"
+#include "util/util.h"
 #include "timer.h"
 #include "paging.h"
 #include "kheap.h"

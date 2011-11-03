@@ -1,7 +1,7 @@
 #ifndef ARP_H
 #define ARP_H
 
-#include "list.h"
+#include "util/list.h"
 #include "network/netutils.h"
 
 #define ARP_TABLE_TIME_TO_CHECK   2    // time in minutes

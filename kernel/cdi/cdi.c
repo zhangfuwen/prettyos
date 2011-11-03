@@ -4,7 +4,7 @@
 */
 
 #include "cdi.h"
-#include "list.h"
+#include "util/list.h"
 #include "cdi/pci.h"
 #include "cdi/storage.h"
 #include "cdi/fs.h"

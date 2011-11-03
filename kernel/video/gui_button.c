@@ -6,7 +6,7 @@
 #include "gui_button.h"
 #include "videoutils.h"
 #include "kheap.h"
-#include "util.h"
+#include "util/util.h"
 
 
 static const BGRA_t BUTTON_COLOUR = {128, 128, 128, 0};

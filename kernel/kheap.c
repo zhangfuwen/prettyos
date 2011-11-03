@@ -4,12 +4,12 @@
 */
 
 #include "kheap.h"
-#include "util.h"
+#include "util/util.h"
 #include "memory.h"
 #include "video/console.h"
 #include "paging.h"
 #include "serial.h"
-#include "task.h"
+#include "tasking/task.h"
 
 /* The heap provides the malloc/free-functionality, i.e. dynamic allocation of memory.
    It manages a certain amount of continuous virtual memory, starting at "heapStart".

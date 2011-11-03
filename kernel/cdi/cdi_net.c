@@ -6,8 +6,8 @@
 #include "cdi/net.h"
 #include "cdi/pci.h"
 #include "network/network.h"
-#include "list.h"
-#include "util.h"
+#include "util/list.h"
+#include "util/util.h"
 
 
 static uint32_t netcard_id = 0;

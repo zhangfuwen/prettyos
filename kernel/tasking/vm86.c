@@ -17,7 +17,7 @@ a chance to emulate the facilities they affect.
 */
 
 #include "vm86.h"
-#include "util.h"
+#include "util/util.h"
 #include "task.h"
 #ifdef _VM_DIAGNOSIS_
 #include "serial.h"

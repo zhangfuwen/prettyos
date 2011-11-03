@@ -1,7 +1,7 @@
 #ifndef OS_H
 #define OS_H
 
-#include "types.h"
+#include "util/types.h"
 
 
 // Additional features (Should be enabled per default)

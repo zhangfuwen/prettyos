@@ -108,7 +108,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\keyboard_GER.h" />
     <ClInclude Include="..\kernel\keyboard_US.h" />
     <ClInclude Include="..\kernel\kheap.h" />
-    <ClInclude Include="..\kernel\list.h" />
     <ClInclude Include="..\kernel\memory.h" />
     <ClInclude Include="..\kernel\mouse.h" />
     <ClInclude Include="..\kernel\netprotocol\arp.h" />
@@ -133,8 +132,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\pe.h" />
     <ClInclude Include="..\kernel\pit.h" />
     <ClInclude Include="..\kernel\power_management.h" />
-    <ClInclude Include="..\kernel\ring.h" />
-    <ClInclude Include="..\kernel\scheduler.h" />
     <ClInclude Include="..\kernel\serial.h" />
     <ClInclude Include="..\kernel\storage\devicemanager.h" />
     <ClInclude Include="..\kernel\storage\ehci.h" />
@@ -145,14 +142,18 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\storage\usb.h" />
     <ClInclude Include="..\kernel\storage\usb_hc.h" />
     <ClInclude Include="..\kernel\storage\usb_msd.h" />
-    <ClInclude Include="..\kernel\synchronisation.h" />
     <ClInclude Include="..\kernel\syscall.h" />
-    <ClInclude Include="..\kernel\task.h" />
+    <ClInclude Include="..\kernel\tasking\scheduler.h" />
+    <ClInclude Include="..\kernel\tasking\synchronisation.h" />
+    <ClInclude Include="..\kernel\tasking\task.h" />
+    <ClInclude Include="..\kernel\tasking\vm86.h" />
     <ClInclude Include="..\kernel\time.h" />
     <ClInclude Include="..\kernel\timer.h" />
-    <ClInclude Include="..\kernel\todo_list.h" />
-    <ClInclude Include="..\kernel\types.h" />
-    <ClInclude Include="..\kernel\util.h" />
+    <ClInclude Include="..\kernel\util\list.h" />
+    <ClInclude Include="..\kernel\util\ring.h" />
+    <ClInclude Include="..\kernel\util\todo_list.h" />
+    <ClInclude Include="..\kernel\util\types.h" />
+    <ClInclude Include="..\kernel\util\util.h" />
     <ClInclude Include="..\kernel\video\console.h" />
     <ClInclude Include="..\kernel\video\font.h" />
     <ClInclude Include="..\kernel\video\gui.h" />
@@ -164,7 +165,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClInclude Include="..\kernel\video\video.h" />
     <ClInclude Include="..\kernel\video\videomanager.h" />
     <ClInclude Include="..\kernel\video\videoutils.h" />
-    <ClInclude Include="..\kernel\vm86.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\audio\sb16.c" />
@@ -203,7 +203,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\irq.c" />
     <ClCompile Include="..\kernel\keyboard.c" />
     <ClCompile Include="..\kernel\kheap.c" />
-    <ClCompile Include="..\kernel\list.c" />
     <ClCompile Include="..\kernel\mouse.c" />
     <ClCompile Include="..\kernel\netprotocol\arp.c" />
     <ClCompile Include="..\kernel\netprotocol\dhcp.c" />
@@ -224,8 +223,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\pci.c" />
     <ClCompile Include="..\kernel\pe.c" />
     <ClCompile Include="..\kernel\power_management.c" />
-    <ClCompile Include="..\kernel\ring.c" />
-    <ClCompile Include="..\kernel\scheduler.c" />
     <ClCompile Include="..\kernel\serial.c" />
     <ClCompile Include="..\kernel\storage\devicemanager.c" />
     <ClCompile Include="..\kernel\storage\ehci.c" />
@@ -236,13 +233,17 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\storage\usb.c" />
     <ClCompile Include="..\kernel\storage\usb_hc.c" />
     <ClCompile Include="..\kernel\storage\usb_msd.c" />
-    <ClCompile Include="..\kernel\synchronisation.c" />
     <ClCompile Include="..\kernel\syscall.c" />
-    <ClCompile Include="..\kernel\task.c" />
+    <ClCompile Include="..\kernel\tasking\scheduler.c" />
+    <ClCompile Include="..\kernel\tasking\synchronisation.c" />
+    <ClCompile Include="..\kernel\tasking\task.c" />
+    <ClCompile Include="..\kernel\tasking\vm86.c" />
     <ClCompile Include="..\kernel\time.c" />
     <ClCompile Include="..\kernel\timer.c" />
-    <ClCompile Include="..\kernel\todo_list.c" />
-    <ClCompile Include="..\kernel\util.c" />
+    <ClCompile Include="..\kernel\util\list.c" />
+    <ClCompile Include="..\kernel\util\ring.c" />
+    <ClCompile Include="..\kernel\util\todo_list.c" />
+    <ClCompile Include="..\kernel\util\util.c" />
     <ClCompile Include="..\kernel\video\console.c" />
     <ClCompile Include="..\kernel\video\gui.c" />
     <ClCompile Include="..\kernel\video\gui_button.c" />
@@ -253,7 +254,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\video\video.c" />
     <ClCompile Include="..\kernel\video\videomanager.c" />
     <ClCompile Include="..\kernel\video\videoutils.c" />
-    <ClCompile Include="..\kernel\vm86.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

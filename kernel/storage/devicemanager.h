@@ -9,16 +9,18 @@
 #define PARTITIONARRAYSIZE 4
 
 
+struct port;
+
 typedef struct
 {
-    void (*motorOff)(void*);
-    void (*pollDisk)(void*);
+    void (*motorOff)(struct port*);
+    void (*pollDisk)(struct port*);
 } portType_t;
 
 typedef struct
 {
-    FS_ERROR (*readSector) (uint32_t, void*, void*);
-    FS_ERROR (*writeSector)(uint32_t, void*, void*);
+    FS_ERROR (*readSector) (uint32_t, void*, struct disk*);
+    FS_ERROR (*writeSector)(uint32_t, void*, struct disk*);
 } diskType_t;
 
 extern portType_t FDD, USB_UHCI, USB_OHCI, USB_EHCI, RAM;

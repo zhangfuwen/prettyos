@@ -4,10 +4,10 @@
 */
 
 #include "irq.h"
-#include "util.h"
-#include "task.h"
+#include "util/util.h"
+#include "tasking/task.h"
+#include "tasking/vm86.h"
 #include "kheap.h"
-#include "vm86.h"
 #include "timer.h"
 #include "keyboard.h"
 

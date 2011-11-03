@@ -7,9 +7,9 @@
 
 #include "paging.h"
 #include "memory.h"
-#include "util.h"
+#include "util/util.h"
 #include "timer.h"
-#include "task.h"
+#include "tasking/task.h"
 #include "kheap.h"
 #include "ipc.h"
 #include "video/console.h"

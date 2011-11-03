@@ -2,7 +2,7 @@
 #define PCI_H
 
 #include "os.h"
-#include "list.h"
+#include "util/list.h"
 
 
 #define PCI_CONFIGURATION_ADDRESS 0x0CF8   // Address I/O Port

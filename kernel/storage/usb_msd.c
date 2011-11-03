@@ -8,7 +8,7 @@
 #include "paging.h"
 #include "kheap.h"
 #include "video/console.h"
-#include "util.h"
+#include "util/util.h"
 
 
 static const uint32_t CSWMagicNotOK = 0x01010101;
@@ -652,7 +652,7 @@ void testMSD(usb_device_t* device)
     analyzeDisk(device->disk);
 }
 
-FS_ERROR usb_read(uint32_t sector, void* buffer, void* dev)
+FS_ERROR usb_read(uint32_t sector, void* buffer, disk_t* dev)
 {
   #ifdef _USB_TRANSFER_DIAGNOSIS_
     textColor(LIGHT_BLUE);
@@ -660,15 +660,15 @@ FS_ERROR usb_read(uint32_t sector, void* buffer, void* dev)
     textColor(TEXT);
   #endif
 
-    usb_device_t* device = dev;
+    usb_device_t* device = dev->data;
 
-    usb_sendSCSICommand(dev, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
+    usb_sendSCSICommand(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
                         0x28 /*SCSI opcode*/, sector /*LBA*/, 1 /*Blocks In*/, buffer, 0);
 
     return (CE_GOOD);
 }
 
-FS_ERROR usb_write(uint32_t sector, void* buffer, void* dev)
+FS_ERROR usb_write(uint32_t sector, void* buffer, disk_t* dev)
 {
   #ifdef _USB_DIAGNOSIS_
     textColor(IMPORTANT);
@@ -676,7 +676,7 @@ FS_ERROR usb_write(uint32_t sector, void* buffer, void* dev)
     textColor(TEXT);
   #endif
 
-    usb_device_t* device = dev;
+    usb_device_t* device = dev->data;
 
     usb_sendSCSICommand_out(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
                             0x2A /*SCSI opcode*/, sector /*LBA*/, 1 /*Blocks Out*/, buffer, 0);

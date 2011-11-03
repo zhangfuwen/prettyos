@@ -1,7 +1,7 @@
 #ifndef DMA_H
 #define DMA_H
 
-#include "util.h"
+#include "util/util.h"
 
 
 typedef enum

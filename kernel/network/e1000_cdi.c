@@ -27,7 +27,7 @@
  */
 
 #include "os.h"
-#include "util.h"
+#include "util/util.h"
 
 #include "cdi/net.h"
 #include "cdi/pci.h"

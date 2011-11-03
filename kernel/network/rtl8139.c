@@ -4,7 +4,7 @@
 */
 
 #include "rtl8139.h"
-#include "util.h"
+#include "util/util.h"
 #include "timer.h"
 #include "paging.h"
 #include "video/console.h"

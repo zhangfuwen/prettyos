@@ -8,7 +8,7 @@
 // http://lowlevel.brainsware.org/wiki/index.php/Programmierung_der_PS/2-Maus
 
 #include "mouse.h"
-#include "util.h"
+#include "util/util.h"
 #include "irq.h"
 #include "video/console.h"
 #include "video/vbe.h"

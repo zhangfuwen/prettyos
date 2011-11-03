@@ -5,10 +5,10 @@
 
 #include "video.h"
 #include "console.h"
-#include "util.h"
+#include "util/util.h"
 #include "paging.h"
 #include "filesystem/fsmanager.h"
-#include "synchronisation.h"
+#include "tasking/synchronisation.h"
 
 #define SCREENSHOT_BYTES 4102
 

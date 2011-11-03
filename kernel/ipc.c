@@ -4,8 +4,8 @@
  */
 
 #include "ipc.h"
-#include "task.h"
-#include "util.h"
+#include "tasking/task.h"
+#include "util/util.h"
 #include "kheap.h"
 
 

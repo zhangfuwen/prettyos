@@ -4,7 +4,7 @@
 */
 
 #include "cdi/lists.h"
-#include "list.h"
+#include "util/list.h"
 #include "kheap.h"
 
 

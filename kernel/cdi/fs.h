@@ -1,7 +1,7 @@
 #ifndef CDI_FS
 #define CDI_FS
 
-#include "types.h"
+#include "util/types.h"
 #include <cdi.h>
 #include <cdi/lists.h>
 #include <cdi/cache.h>

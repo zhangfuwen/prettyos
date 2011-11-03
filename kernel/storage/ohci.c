@@ -4,10 +4,10 @@
 */
 
 #include "ohci.h"
-#include "util.h"
+#include "util/util.h"
 #include "timer.h"
 #include "kheap.h"
-#include "task.h"
+#include "tasking/task.h"
 #include "irq.h"
 #include "keyboard.h"
 #include "audio/sys_speaker.h"

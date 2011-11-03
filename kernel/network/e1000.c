@@ -28,7 +28,7 @@
 
 #include "os.h"
 #include "video/console.h"
-#include "util.h"
+#include "util/util.h"
 
 #include "cdi.h"
 #include "cdi/misc.h"

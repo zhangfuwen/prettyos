@@ -8,12 +8,12 @@
 #include "udp.h"
 #include "video/console.h"
 #include "kheap.h"
-#include "util.h"
+#include "util/util.h"
+#include "util/list.h"
 #include "ipv4.h"
 #include "netbios.h"
 #include "events.h"
-#include "task.h"
-#include "list.h"
+#include "tasking/task.h"
 
 
 typedef struct

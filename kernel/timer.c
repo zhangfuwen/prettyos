@@ -4,10 +4,10 @@
 */
 
 #include "timer.h"
-#include "util.h"
+#include "util/util.h"
 #include "pit.h"
 #include "irq.h"
-#include "task.h"
+#include "tasking/task.h"
 #include "cpu.h"
 
 

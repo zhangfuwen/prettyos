@@ -4,10 +4,10 @@
 */
 
 #include "vbe.h"
-#include "util.h"
-#include "task.h"
+#include "util/util.h"
 #include "paging.h"
-#include "vm86.h"
+#include "tasking/task.h"
+#include "tasking/vm86.h"
 #include "kheap.h"
 
 // This values are hardcoded adresses from documentation/vidswtch.map

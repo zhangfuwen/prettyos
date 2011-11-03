@@ -4,7 +4,7 @@
 */
 
 #include "cdi/mem.h"
-#include "util.h"
+#include "util/util.h"
 #include "paging.h"
 #include "kheap.h"
 

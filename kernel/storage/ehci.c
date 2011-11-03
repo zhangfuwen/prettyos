@@ -5,10 +5,10 @@
 
 #include "ehci.h"
 #include "ehciQHqTD.h"
-#include "util.h"
+#include "util/util.h"
 #include "timer.h"
 #include "kheap.h"
-#include "task.h"
+#include "tasking/task.h"
 #include "irq.h"
 #include "audio/sys_speaker.h"
 #include "keyboard.h"

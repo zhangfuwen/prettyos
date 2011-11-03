@@ -7,7 +7,7 @@
 
 #include "serial.h"
 #include "video/console.h"
-#include "util.h"
+#include "util/util.h"
 
 
 static uint8_t  serialPorts;

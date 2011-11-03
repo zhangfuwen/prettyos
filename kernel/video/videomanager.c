@@ -4,11 +4,11 @@
 */
 
 #include "videomanager.h"
-#include "list.h"
+#include "util/list.h"
 #include "kheap.h"
 #include "console.h"
 #include "keyboard.h"
-#include "util.h"
+#include "util/util.h"
 #include "timer.h"
 #include "vbe.h"
 #include "gui.h"

@@ -1,7 +1,7 @@
 #ifndef CDI_BIOS_H
 #define CDI_BIOS_H
 
-#include "types.h"
+#include "util/types.h"
 #include <cdi/lists.h>
 
 struct cdi_bios_registers {

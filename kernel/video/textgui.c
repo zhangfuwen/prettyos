@@ -6,7 +6,7 @@
 #include "textgui.h"
 #include "keyboard.h"
 #include "events.h"
-#include "util.h"
+#include "util/util.h"
 #include "console.h"
 #include "kheap.h"
 

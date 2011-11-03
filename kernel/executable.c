@@ -4,10 +4,10 @@
 */
 
 #include "executable.h"
-#include "util.h"
+#include "util/util.h"
 #include "memory.h"
 #include "kheap.h"
-#include "task.h"
+#include "tasking/task.h"
 #include "video/console.h"
 #include "paging.h"
 #include "elf.h"

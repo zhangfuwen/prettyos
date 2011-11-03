@@ -4,7 +4,7 @@
 */
 
 #include "dhcp.h"
-#include "util.h"
+#include "util/util.h"
 #include "udp.h"
 #include "video/console.h"
 

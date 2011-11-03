@@ -4,7 +4,7 @@
 */
 
 #include "task.h"
-#include "util.h"
+#include "util/util.h"
 #include "memory.h"
 #include "descriptor_tables.h"
 #include "kheap.h"
@@ -22,7 +22,7 @@ static const uint32_t kernelStackSize = 0x1000; // Tasks get a 4 KB kernel stack
 
 bool task_switching = false; // We allow task switching when tasking and scheduler are installed.
 
-task_t kernelTask =          // Needed to find out when the kernel task is exited
+task_t kernelTask =
 {
     .pid           = 0,
     .esp           = 0,
@@ -33,7 +33,7 @@ task_t kernelTask =          // Needed to find out when the kernel task is exite
     .eventQueue    = 0,
     .type          = PROCESS,
     .blocker.type  = 0,      // The task is not blocked (scheduler.h/c)
-    .kernelStack   = 0,      // The kerneltask does not need a kernel-stack because it does not call his own functions by syscall
+    .kernelStack   = 0,      // The kernel task does not need a kernel stack because it does not call his own functions by syscall
     .threads       = 0       // No threads associated with the task at the moment. List is created later if necessary
 };
 
@@ -160,11 +160,8 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     newTask->ss  = data_segment;
 
     newTask->console = console;
-    
     if(console)
-    {
         list_append(console->tasks, newTask);
-    }
 
     list_append(tasks, newTask);
 
@@ -271,11 +268,8 @@ uint32_t task_switch(task_t* newTask)
 {
     task_switching = false;
 
-    // Switch page directory only if the new task has a different one than the current task
-    if (newTask->pageDirectory != currentTask->pageDirectory) 
-    {
+    if (newTask->pageDirectory != currentTask->pageDirectory) // Switch page directory only if the new task has a different one than the current task
         paging_switch (newTask->pageDirectory);
-    }
 
     currentTask = newTask;
 
@@ -301,7 +295,7 @@ uint32_t task_switch(task_t* newTask)
     }
 
     task_switching = true;
-    
+
     return (currentTask->esp); // Return new task's esp
 }
 
@@ -331,11 +325,9 @@ void kill(task_t* task)
     udp_cleanup(task);
     tcp_cleanup(task);
     fsmanager_cleanup(task);
-    
+
     if(task->speaker)
-    {
         noSound();
-    }
 
     // Free user memory, if this task has an own PD
     if (task->type != THREAD && task->type != VM86 && task->pageDirectory != kernelPageDirectory)
@@ -455,12 +447,9 @@ void task_log(task_t* t)
     if (t->type == THREAD)
     {
         printf("parent task: ");
-        
+
         if (!t->parent->pid)
-        {
             textColor(IMPORTANT);
-        }
-        
         printf("  %u", t->parent->pid);
         textColor(TEXT);
     }
@@ -468,13 +457,12 @@ void task_log(task_t* t)
     if (t->threads && t->threads->head)
     {
         printf("child-threads:");
+
         textColor(IMPORTANT);
-        
         for (dlelement_t* e = t->threads->head; e != 0; e = e->next)
         {
             printf(" %u", ((task_t*)e->data)->pid);
         }
-        
         textColor(TEXT);
     }
 

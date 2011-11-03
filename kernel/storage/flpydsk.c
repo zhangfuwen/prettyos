@@ -4,7 +4,7 @@
 */
 
 #include "flpydsk.h"
-#include "util.h"
+#include "util/util.h"
 #include "video/console.h"
 #include "cmos.h"
 #include "timer.h"
@@ -267,11 +267,11 @@ static void flpydsk_checkInt(uint8_t* st0, uint8_t* cyl)
 }
 
 // turns the current floppy drives motor on
-void flpydsk_motorOn(void* drive)
+void flpydsk_motorOn(port_t* port)
 {
-    if (drive == 0) return;
+    if (port == 0) return;
 
-    floppy_t* fdrive = drive;
+	floppy_t* fdrive = port->data;
 
   #ifdef _FLOPPY_DIAGNOSIS_
     if (fdrive->motor == false)
@@ -285,7 +285,7 @@ void flpydsk_motorOn(void* drive)
     if (fdrive->motor == true) return;
 
     uint32_t motor = 0;
-    switch (((floppy_t*)drive)->ID) // select the correct mask based on current drive
+    switch (fdrive->ID) // select the correct mask based on current drive
     {
         case 0: motor = FLPYDSK_DOR_MASK_DRIVE0_MOTOR; break;
         case 1: motor = FLPYDSK_DOR_MASK_DRIVE1_MOTOR; break;
@@ -297,11 +297,11 @@ void flpydsk_motorOn(void* drive)
     sleepMilliSeconds(MOTOR_SPIN_UP_TURN_OFF_TIME); // wait for the motor to spin up/turn off
 }
 // turns the current floppy drives motor on
-void flpydsk_motorOff(void* drive)
+void flpydsk_motorOff(port_t* port)
 {
-    if (drive == 0) return;
+    if (port == 0) return;
 
-    floppy_t* fdrive = drive;
+    floppy_t* fdrive = port->data;
 
   #ifdef _FLOPPY_DIAGNOSIS_
     if (fdrive->motor == true)
@@ -453,7 +453,7 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
         return -2;
     }
 
-    flpydsk_motorOn(drive);
+	flpydsk_motorOn(&drive->drive);
 
     uint8_t st0, cyl, timeout = 10;
     do
@@ -493,7 +493,7 @@ static int32_t flpydsk_seek(uint32_t cyl, uint32_t head)
         return (-2);
     }
 
-    flpydsk_motorOn(CurrentDrive);
+    flpydsk_motorOn(&CurrentDrive->drive);
 
     uint8_t st0, cyl0, timeout = 10;
     do
@@ -525,7 +525,7 @@ static int32_t flpydsk_transferSector(uint8_t head, uint8_t track, uint8_t secto
 {
     mutex_lock(CurrentDrive->RW_Lock);
 
-    flpydsk_motorOn(CurrentDrive);
+    flpydsk_motorOn(&CurrentDrive->drive);
 
     irq_resetCounter(IRQ_FLOPPY);
 
@@ -633,9 +633,9 @@ static FS_ERROR flpydsk_write(uint32_t sectorLBA, uint8_t numberOfSectors)
 
 
 /// Functions accessed from outside the floppy driver
-FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
+FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, disk_t* device)
 {
-    CurrentDrive = (floppy_t*)device;
+	CurrentDrive = device->data;
 
     FS_ERROR retVal = CE_GOOD;
 
@@ -685,9 +685,9 @@ FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, void* device)
     return (retVal);
 }
 
-FS_ERROR flpydsk_writeSector(uint32_t sector, void* buffer, void* device)
+FS_ERROR flpydsk_writeSector(uint32_t sector, void* buffer, disk_t* device)
 {
-    CurrentDrive = (floppy_t*)device;
+    CurrentDrive = device->data;
     return (flpydsk_write_ia(sector, buffer, SECTOR));
 }
 
@@ -730,17 +730,17 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
     return retVal;
 }
 
-void flpydsk_refreshVolumeName(floppy_t* drive)
+void flpydsk_refreshVolumeName(disk_t* disk)
 {
     floppy_t* currentDrive = CurrentDrive;
 
-    drive->drive.insertedDisk->accessRemaining++;
+    disk->accessRemaining++;
 
     char buffer[512];
-    flpydsk_readSector(19, buffer, drive); // start at 0x2600: root directory (14 sectors)
+    flpydsk_readSector(19, buffer, disk); // start at 0x2600: root directory (14 sectors)
 
-    strncpy(drive->drive.insertedDisk->name, buffer, 11);
-    drive->drive.insertedDisk->name[11] = 0; // end of string
+    strncpy(disk->name, buffer, 11);
+    disk->name[11] = 0; // end of string
 
     CurrentDrive = currentDrive;
 }

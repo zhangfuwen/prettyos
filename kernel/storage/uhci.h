@@ -3,7 +3,7 @@
 
 #include "os.h"
 #include "pci.h"
-#include "synchronisation.h"
+#include "tasking/synchronisation.h"
 #include "devicemanager.h"
 #include "usb_hc.h"
 
@@ -201,7 +201,7 @@ typedef struct uhci
 
 
 void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize);
-void uhci_pollDisk(void* dev);
+void uhci_pollDisk(port_t* dev);
 void uhci_initHC(uhci_t* u);
 void uhci_resetHC(uhci_t* u);
 void uhci_enablePorts(uhci_t* u);

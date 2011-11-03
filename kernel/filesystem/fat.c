@@ -23,7 +23,7 @@
 
 
 #include "fat.h"
-#include "util.h"
+#include "util/util.h"
 #include "kheap.h"
 #include "video/console.h"
 #include "time.h"

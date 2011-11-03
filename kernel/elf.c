@@ -4,8 +4,8 @@
 */
 
 #include "elf.h"
-#include "util.h"
-#include "task.h"
+#include "util/util.h"
+#include "tasking/task.h"
 
 
 enum elf_headerType

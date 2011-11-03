@@ -4,11 +4,11 @@
 */
 
 #include "power_management.h"
-#include "util.h"
+#include "util/util.h"
 #include "video/video.h"
 #include "video/console.h"
-#include "task.h"
-#include "vm86.h"
+#include "tasking/task.h"
+#include "tasking/vm86.h"
 
 
 // No power management

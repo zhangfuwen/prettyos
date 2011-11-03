@@ -7,9 +7,9 @@
 #include "ethernet.h"
 #include "video/console.h"
 #include "timer.h"
-#include "util.h"
+#include "util/util.h"
 #include "kheap.h"
-#include "scheduler.h"
+#include "tasking/scheduler.h"
 #include "network/netutils.h"
 
 

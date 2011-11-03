@@ -7,8 +7,8 @@
 #include "storage/devicemanager.h"
 #include "fat.h"
 #include "kheap.h"
-#include "util.h"
-#include "task.h"
+#include "util/util.h"
+#include "tasking/task.h"
 
 
 fileSystem_t FAT    = {.fopen        = &FAT_fopen,

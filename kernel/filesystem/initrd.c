@@ -4,7 +4,7 @@
 */
 
 #include "initrd.h"
-#include "util.h"
+#include "util/util.h"
 #include "kheap.h"
 #include "paging.h"
 #include "storage/devicemanager.h"

@@ -11,7 +11,7 @@
 #include "ethernet.h"
 #include "video/console.h"
 #include "kheap.h"
-#include "util.h"
+#include "util/util.h"
 
 
 extern Packet_t lastPacket; // network.c

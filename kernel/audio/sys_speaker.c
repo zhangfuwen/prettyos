@@ -6,10 +6,10 @@
 // Enable pc-speaker-simulation in qemu: -soundhw pcspk
 
 #include "sys_speaker.h"
-#include "util.h"
+#include "util/util.h"
 #include "timer.h"
 #include "pit.h"
-#include "task.h"
+#include "tasking/task.h"
 
 
 void sound(uint32_t frequency)

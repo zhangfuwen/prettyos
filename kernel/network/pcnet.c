@@ -4,7 +4,7 @@
 */
 
 #include "pcnet.h"
-#include "util.h"
+#include "util/util.h"
 #include "irq.h"
 #include "timer.h"
 #include "kheap.h"

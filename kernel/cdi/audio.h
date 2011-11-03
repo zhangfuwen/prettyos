@@ -1,7 +1,7 @@
 #ifndef CDI_AUDIO_H
 #define CDI_AUDIO_H
 
-#include "types.h"
+#include "util/types.h"
 
 #include "cdi.h"
 #include "cdi/lists.h"

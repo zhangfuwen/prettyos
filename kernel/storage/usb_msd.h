@@ -46,8 +46,8 @@ void          usb_sendSCSICommand_out(usb_device_t* device,
                                       void*         dataBuffer,
                                       void*         statusBuffer);
 
-FS_ERROR      usb_read (uint32_t sector, void* buffer, void* device);
-FS_ERROR      usb_write(uint32_t sector, void* buffer, void* device);
+FS_ERROR      usb_read (uint32_t sector, void* buffer, disk_t* device);
+FS_ERROR      usb_write(uint32_t sector, void* buffer, disk_t* device);
 
 void          testMSD(usb_device_t* device);
 

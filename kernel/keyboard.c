@@ -4,8 +4,8 @@
 */
 
 #include "keyboard.h"
-#include "util.h"
-#include "task.h"
+#include "util/util.h"
+#include "tasking/task.h"
 #include "irq.h"
 
 #if KEYMAP == GER

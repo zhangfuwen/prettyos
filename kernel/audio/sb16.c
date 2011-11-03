@@ -4,7 +4,7 @@
 */
 
 #include "sb16.h"
-#include "util.h"
+#include "util/util.h"
 
 void install_SB16(pciDev_t* device)
 {

@@ -6,7 +6,7 @@
 #include "synchronisation.h"
 #include "kheap.h"
 #include "task.h"
-#include "util.h"
+#include "util/util.h"
 
 
 // Semaphore

@@ -4,7 +4,7 @@
 */
 
 #include "time.h"
-#include "util.h"
+#include "util/util.h"
 #include "cmos.h"
 
 
@@ -21,7 +21,7 @@ void cmosTime(tm_t* ptm)
     ptm->century    = BCDtoDecimal(cmos_read(CMOS_CENTURY));
 }
 
-static uint16_t days[12] = {  0,  31,  59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+static uint16_t days[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
 static bool isLeapyear(uint16_t year)
 {
@@ -32,26 +32,22 @@ static bool isLeapyear(uint16_t year)
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
 {
     day += 6; // 1.1.1600 was a saturday
-    day += (year/*-1600*/) * 146097.0/400.0 + days[month-1];	
+    day += (year/*-1600*/ * 146097)/400 + days[month-1];	
 
     if (isLeapyear(year) && (month < 2 || (month == 2 && day <= 28)))
     {
         day--;
     }
 
-    return ( day % 7 + 1 );
+    return (day % 7 + 1);
 }
 
 static void writeInt(uint16_t val, char* dest, size_t strsize)
 {
     if (val<10)
-    {
         snprintf(dest, strsize, "0%u", val);
-    }
     else
-    {
         snprintf(dest, strsize, "%u",  val);
-    }
 }
 
 static const char* const weekdays[] =

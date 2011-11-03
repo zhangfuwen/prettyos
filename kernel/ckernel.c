@@ -4,8 +4,8 @@
  */
 
 // Utilities
-#include "util.h"               // sti, memset, strcmp, strlen, rdtsc, ...
-#include "todo_list.h"          // todoList_execute
+#include "util/util.h"          // sti, memset, strcmp, strlen, rdtsc, ...
+#include "util/todo_list.h"     // todoList_execute
 
 // Internal devices
 #include "cpu.h"                // cpu_analyze
@@ -18,7 +18,7 @@
 
 // Base system
 #include "kheap.h"              // heap_install, malloc, free, logHeapRegions
-#include "task.h"               // tasking_install & others
+#include "tasking/task.h"       // tasking_install & others
 #include "elf.h"                // elf_prepare
 #include "syscall.h"            // syscall_install
 #include "ipc.h"                // ipc_print
@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.167 - Rev: 1368";
+const char* const version = "0.0.3.168 - Rev: 1368";
 
 // .bss
 extern uintptr_t _bss_start; // linker script

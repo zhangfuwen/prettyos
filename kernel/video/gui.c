@@ -4,7 +4,7 @@
 */
 
 #include "gui.h"
-#include "util.h"
+#include "util/util.h"
 #include "mouse.h"
 #include "keyboard.h"
 #include "videoutils.h"

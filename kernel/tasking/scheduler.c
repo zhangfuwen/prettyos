@@ -3,12 +3,12 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
+#include "util/util.h"
+#include "util/ring.h"
+#include "util/todo_list.h"
 #include "timer.h"
 #include "task.h"
-#include "todo_list.h"
 #include "irq.h"
-#include "ring.h"
 #include "scheduler.h"
 
 static ring_t* runningTasks = 0;

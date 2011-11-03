@@ -3,7 +3,7 @@
 #ifndef CDI_LISTS
 #define CDI_LISTS
 
-#include "list.h"
+#include "util/list.h"
 
 
 /* Represents a list.

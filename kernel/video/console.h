@@ -2,8 +2,8 @@
 #define CONSOLE_H
 
 #include "video.h"
-#include "synchronisation.h"
-#include "list.h"
+#include "tasking/synchronisation.h"
+#include "util/list.h"
 
 
 #define KERNELCONSOLE_ID 0

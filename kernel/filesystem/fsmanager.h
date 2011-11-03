@@ -2,8 +2,8 @@
 #define FSMANAGER_H
 
 #include "os.h"
-#include "list.h"
-#include "scheduler.h"
+#include "util/list.h"
+#include "tasking/scheduler.h"
 
 
 typedef enum

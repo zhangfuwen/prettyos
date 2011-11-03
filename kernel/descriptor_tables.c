@@ -3,7 +3,7 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-#include "util.h"
+#include "util/util.h"
 #include "descriptor_tables.h"
 #include "video/console.h"
 

@@ -5,7 +5,7 @@
 
 #include "network/netutils.h"
 #include "video/console.h"
-#include "util.h"
+#include "util/util.h"
 #include "netbios.h"
 
 

@@ -1,7 +1,7 @@
 #ifndef CDI_MISC_H
 #define CDI_MISC_H
 
-#include "types.h"
+#include "util/types.h"
 #include <cdi.h>
 
 /* Registiert einen neuen IRQ-Handler.

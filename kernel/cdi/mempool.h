@@ -23,7 +23,7 @@
 #ifndef CDI_MEMPOOL_H
 #define CDI_MEMPOOL_H
 
-#include "types.h"
+#include "util/types.h"
 
 struct cdi_mempool;
 

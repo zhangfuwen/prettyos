@@ -1,7 +1,7 @@
 #ifndef CDI_DMA_H
 #define CDI_DMA_H
 
-#include "types.h"
+#include "util/types.h"
 #include <cdi.h>
 #include <cdi-osdep.h>
 

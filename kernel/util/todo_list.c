@@ -6,7 +6,7 @@
 #include "todo_list.h"
 #include "kheap.h"
 #include "util.h"
-#include "scheduler.h"
+#include "tasking/scheduler.h"
 #include "timer.h"
 
 

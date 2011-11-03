@@ -1,7 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
 
-#include "util.h"
+#include "util/util.h"
 
 
 typedef enum

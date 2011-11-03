@@ -4,9 +4,9 @@
 */
 
 #include "events.h"
-#include "util.h"
+#include "util/util.h"
 #include "kheap.h"
-#include "task.h"
+#include "tasking/task.h"
 
 
 event_queue_t* event_createQueue()

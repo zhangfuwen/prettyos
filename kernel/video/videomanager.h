@@ -2,7 +2,7 @@
 #define VIDEOMANAGER_H
 
 #include "os.h"
-#include "list.h"
+#include "util/list.h"
 
 
 typedef struct

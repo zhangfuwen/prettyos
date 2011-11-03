@@ -9,7 +9,7 @@
 #include "ehci.h"
 #include "video/console.h"
 #include "kheap.h"
-#include "util.h"
+#include "util/util.h"
 #include "usb.h"
 
 

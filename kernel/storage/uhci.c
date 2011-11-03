@@ -4,10 +4,10 @@
 */
 
 #include "uhci.h"
-#include "util.h"
+#include "util/util.h"
 #include "timer.h"
 #include "kheap.h"
-#include "task.h"
+#include "tasking/task.h"
 #include "irq.h"
 #include "keyboard.h"
 #include "audio/sys_speaker.h"
@@ -420,9 +420,9 @@ static void uhci_showPortState(uhci_t* u, uint8_t j)
     else                                 {printf(", NO DEVICE ATTACHED");}
 }
 
-void uhci_pollDisk(void* dev)
+void uhci_pollDisk(port_t* dev)
 {
-    uhci_t* u = ((uhci_port_t*)dev)->uhci;
+	uhci_t* u = ((uhci_port_t*)dev->data)->uhci;
 
     for (uint8_t j=0; j < u->rootPorts; j++)
     {

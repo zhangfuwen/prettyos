@@ -4,7 +4,7 @@
 */
 
 #include "console.h"
-#include "util.h"
+#include "util/util.h"
 #include "videoutils.h"
 #include "kheap.h"
 #include "keyboard.h"

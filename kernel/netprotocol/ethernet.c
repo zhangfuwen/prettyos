@@ -11,7 +11,7 @@
 #include "arp.h"
 #include "ipv4.h"
 #include "kheap.h"
-#include "util.h"
+#include "util/util.h"
 
 
 extern Packet_t lastPacket; // network.c

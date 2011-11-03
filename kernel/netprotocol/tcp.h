@@ -2,7 +2,7 @@
 #define TCP_H
 
 #include "network/network.h"
-#include "task.h"
+#include "tasking/task.h"
 
 // http://tools.ietf.org/html/rfc793
 // http://www.medianet.kent.edu/techreports/TR2005-07-22-tcp-EFSM.pdf

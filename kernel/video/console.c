@@ -4,9 +4,9 @@
 */
 
 #include "console.h"
-#include "util.h"
+#include "util/util.h"
 #include "kheap.h"
-#include "task.h"
+#include "tasking/task.h"
 #include "network/netutils.h"
 
 

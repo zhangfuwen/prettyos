@@ -10,13 +10,13 @@
 #include "tcp.h"
 #include "video/console.h"
 #include "kheap.h"
-#include "util.h"
+#include "util/util.h"
+#include "util/todo_list.h"
 #include "events.h"
 #include "timer.h"
 #include "ipv4.h"
-#include "task.h"
+#include "tasking/task.h"
 #include "serial.h"
-#include "todo_list.h"
 
 
 // Sliding window

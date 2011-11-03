@@ -3,7 +3,7 @@
 #ifndef CDI_NET_H
 #define CDI_NET_H
 
-#include "types.h"
+#include "util/types.h"
 #include <cdi.h>
 
 struct cdi_net_device

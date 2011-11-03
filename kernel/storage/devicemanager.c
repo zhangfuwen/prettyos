@@ -5,7 +5,7 @@
 
 #include "devicemanager.h"
 #include "video/console.h"
-#include "util.h"
+#include "util/util.h"
 #include "kheap.h"
 #include "usb_msd.h"
 #include "flpydsk.h"
@@ -64,12 +64,12 @@ void deviceManager_checkDrives()
     {
         if(ports[i] != 0 && ports[i]->type->pollDisk != 0)
         {
-            ports[i]->type->pollDisk(ports[i]->data);
+            ports[i]->type->pollDisk(ports[i]);
         }
 
         if (ports[i] != 0 && ports[i]->type->motorOff != 0 && ports[i]->insertedDisk->accessRemaining == 0)
         {
-            ports[i]->type->motorOff(ports[i]->data);
+            ports[i]->type->motorOff(ports[i]);
         }
     }
 }
@@ -143,7 +143,7 @@ void showPortList()
             if (ports[i]->insertedDisk != 0)
             {
                 if(ports[i]->type == &FDD)
-                    flpydsk_refreshVolumeName(ports[i]->data);
+                    flpydsk_refreshVolumeName(ports[i]->insertedDisk);
                 printf("\t%s", ports[i]->insertedDisk->name); // Attached disk
             }
             else
@@ -172,7 +172,7 @@ void showDiskList()
         {
             if (disks[i]->type == &FLOPPYDISK) /// Todo: Move to flpydsk.c, name set on floppy insertion
             {
-                flpydsk_refreshVolumeName(disks[i]->data);
+                flpydsk_refreshVolumeName(disks[i]);
             }
 
             if (disks[i]->type == &FLOPPYDISK && *disks[i]->name == 0) // Floppy workaround
@@ -436,7 +436,7 @@ FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
         }
     }
 
-    return disk->type->writeSector(sector, buffer, disk->data);
+    return disk->type->writeSector(sector, buffer, disk);
 }
 
 FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
@@ -467,7 +467,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
         }
     }
 
-    FS_ERROR error = disk->type->readSector(sector, buffer, disk->data);
+    FS_ERROR error = disk->type->readSector(sector, buffer, disk);
     if (error == CE_GOOD)
     {
         fillReadCache(sector, disk, buffer);

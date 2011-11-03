@@ -1,7 +1,7 @@
 #ifndef NETUTILS_H
 #define NETUTILS_H
 
-#include "types.h"
+#include "util/types.h"
 
 // hton = Host To Network
 #define htons(v) ((((v) >> 8) & 0xFF) | (((v) & 0xFF) << 8))
