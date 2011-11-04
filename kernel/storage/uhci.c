@@ -422,7 +422,7 @@ static void uhci_showPortState(uhci_t* u, uint8_t j)
 
 void uhci_pollDisk(port_t* dev)
 {
-	uhci_t* u = ((uhci_port_t*)dev->data)->uhci;
+    uhci_t* u = ((uhci_port_t*)dev->data)->uhci;
 
     for (uint8_t j=0; j < u->rootPorts; j++)
     {

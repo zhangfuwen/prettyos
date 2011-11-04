@@ -115,8 +115,8 @@ void* memset(void* dest, int8_t val, size_t bytes)
     size_t dwords = bytes/4; // Number of dwords (4 Byte blocks) to be written
     bytes %= 4;              // Remaining bytes
     uint32_t dval = (val<<24)|(val<<16)|(val<<8)|val; // Create dword from byte value
-    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
-    __asm__ volatile("rep stosb" : : "al"(val), "c" (bytes));
+    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "a"(dval), "c" (dwords));
+    __asm__ volatile("rep stosb" : : "a"(val), "c" (bytes));
     return dest;
 }
 
@@ -125,14 +125,14 @@ uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words)
     size_t dwords = words/2; // Number of dwords (4 Byte blocks) to be written
     words %= 2;              // Remaining words
     uint32_t dval = (val<<16)|val; // Create dword from byte value
-    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
-    __asm__ volatile("rep stosw" : : "ax"(val), "c" (words));
+    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "ea"(dval), "c" (dwords));
+    __asm__ volatile("rep stosw" : : "a"(val), "c" (words));
     return dest;
 }
 
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t dwords)
 {
-    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "eax"(val), "c" (dwords));
+    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "a"(val), "c" (dwords));
     return dest;
 }
 

@@ -83,7 +83,7 @@ void* memset(void* dest, char value, size_t bytes)
     size_t dwords = bytes/4; // Number of dwords (4 Byte blocks) to be written
     bytes %= 4;              // Remaining bytes
     uint32_t dval = (value<<24)|(value<<16)|(value<<8)|value; // Create dword from byte value
-    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "eax"(dval), "c" (dwords));
+    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "a"(dval), "c" (dwords));
     __asm__ volatile("rep stosb" : : "al"(value), "c" (bytes));
     return dest;
 }

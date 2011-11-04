@@ -2,16 +2,16 @@
 ifeq ($(OS),WINDOWS)
     RM= - del
     NASM= nasm
-    GCC= i586-elf-gcc
+    CC= i586-elf-gcc
     AR= i586-elf-ar
 else
     RM= rm -f
     NASM= nasm
     ifeq ($(OS),MACOSX)
-        GCC= i586-elf-gcc
+        CC= i586-elf-gcc
         AR= i586-elf-ar
     else
-        GCC= gcc
+        CC= gcc
         AR= ar
     endif
 endif
@@ -32,11 +32,11 @@ endif
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
 ifeq ($(COMPILER),CLANG)
-	GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
-	GPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc -Xclang -triple=i386-pc-unknown
+	CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+	CPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -Xclang -triple=i386-pc-unknown
 else
-	GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
-	GPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
+	CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+	CPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
 endif
 ARFLAGS= rs
 
@@ -46,9 +46,9 @@ CPPTARGET= prettylib++.a
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c
-	$(GCC) $< $(GCCFLAGS) -I $(STDLIBC) -o $(OBJDIR)/$@
+	$(CC) $< $(CCFLAGS) -I $(STDLIBC) -o $(OBJDIR)/$@
 %.o: %.cpp
-	$(GCC) $< $(GPPFLAGS) -I $(STDLIBC) -o $(OBJDIR)/$@
+	$(CC) $< $(CPPFLAGS) -I $(STDLIBC) -o $(OBJDIR)/$@
 %.o: %.asm
 	$(NASM) $< $(NASMFLAGS) -o $(OBJDIR)/$@
 

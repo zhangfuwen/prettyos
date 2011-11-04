@@ -10,7 +10,7 @@
 
 // http://www.lowlevel.eu/wiki/Cpuid
 
-static bool cpuid_available = true;
+static bool cpuid_available = false;
 
 int64_t* cpu_frequency;
 
@@ -24,18 +24,19 @@ void cpu_analyze()
     ipc_createNode("PrettyOS/CPU/Frequency (kHz)", &node, IPC_INTEGER);
     cpu_frequency = &node->data.integer;
 
+	uint32_t result = 0;
     // Test if the CPU supports the CPUID-Command
-    __asm__ volatile ("pushfl\n\t"
-                      "pop %ecx\n\t"
-                      "mov %ecx, %eax\n\t"
-                      "xor %eax, 0x200000\n\t"
-                      "push %eax\n\t"
-                      "popfl\n\t"
-                      "pushfl\n\t"
-                      "pop %eax\n\t");
-    register uint32_t eax __asm__("%eax");
-    register uint32_t ecx __asm__("%ecx");
-    cpuid_available = (eax==ecx);
+    __asm__ volatile ("pushfl\n"
+                      "pop %%ecx\n"
+                      "mov %%ecx, %%eax\n"
+                      "xor %%eax, 0x200000\n"
+                      "push %%eax\n"
+                      "popfl\n"
+                      "pushfl\n"
+                      "pop %%eax\n"
+                      "sub %%ecx, %%eax\n"
+                      "mov %%eax, %0\n" : "=r"(result) : : "%eax", "%ecx");
+    cpuid_available = (result == 0);
 
     if (!cpuid_available)
     {
@@ -57,7 +58,7 @@ void cpu_analyze()
     textColor(LIGHT_GRAY);
     printf("     => VendorID: ");
     textColor(TEXT);
-    printf("%s\n\n", cpu_vendor);
+    printf("%s\n", cpu_vendor);
 }
 
 void cpu_calculateFrequency()
@@ -88,28 +89,38 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
 {
     if (!cpuid_available) return (0);
 
-    __asm__ ("movl %0, %%eax" : : "r"(function) : "%eax");
-    __asm__ ("cpuid");
     switch (reg)
     {
         case CR_EAX:
         {
-            register uint32_t temp __asm__("%eax");
+			register uint32_t temp;
+			__asm__ ("movl %1, %%eax\n"
+					 "cpuid\n"
+					 "mov %%eax, %0" : "=r"(temp) : "r"(function) : "%eax");
             return (temp);
         }
         case CR_EBX:
         {
-            register uint32_t temp __asm__("%ebx");
+			register uint32_t temp;
+			__asm__ ("movl %1, %%eax\n"
+					 "cpuid\n"
+					 "mov %%ebx, %0" : "=r"(temp) : "r"(function) : "%eax", "%ebx");
             return (temp);
         }
         case CR_ECX:
         {
-            register uint32_t temp __asm__("%ecx");
+			register uint32_t temp;
+			__asm__ ("movl %1, %%eax\n"
+					 "cpuid\n"
+					 "mov %%ecx, %0" : "=r"(temp) : "r"(function) : "%eax", "%ecx");
             return (temp);
         }
         case CR_EDX:
         {
-            register uint32_t temp __asm__("%edx");
+			register uint32_t temp;
+			__asm__ ("movl %1, %%eax\n"
+					 "cpuid\n"
+					 "mov %%edx, %0" : "=r"(temp) : "r"(function) : "%eax", "%edx");
             return (temp);
         }
         default:

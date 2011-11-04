@@ -1,8 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
+    <ProjectConfiguration Include="Clang-Release|Win32">
+      <Configuration>Clang-Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Clang|Win32">
+      <Configuration>Clang</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="GCC-Release|Win32">
+      <Configuration>GCC-Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="GCC|Win32">
+      <Configuration>GCC</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -11,23 +23,66 @@
     <Keyword>MakeFileProj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC-Release|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC-Release|Win32'">
     <NMakeIncludeSearchPath>$(SolutionDir)\..\user\user_tools;$(SolutionDir)\..\user\stdlibc</NMakeIncludeSearchPath>
-    <IncludePath>$(SolutionDir)\..\user\user_tools;$(SolutionDir)\..\user\stdlibc</IncludePath>
     <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
+    <IncludePath />
+    <SourcePath>..\user</SourcePath>
   </PropertyGroup>
-  <ItemDefinitionGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Release|Win32'">
+    <NMakeIncludeSearchPath>$(SolutionDir)\..\user\user_tools;$(SolutionDir)\..\user\stdlibc</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
+    <IncludePath />
+    <SourcePath>..\user</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC|Win32'">
+    <NMakeIncludeSearchPath>$(SolutionDir)\..\user\user_tools;$(SolutionDir)\..\user\stdlibc</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
+    <IncludePath />
+    <SourcePath>..\user</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang|Win32'">
+    <NMakeIncludeSearchPath>$(SolutionDir)\..\user\user_tools;$(SolutionDir)\..\user\stdlibc</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
+    <IncludePath />
+    <SourcePath>..\user</SourcePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GCC-Release|Win32'">
+    <BuildLog>
+      <Path>
+      </Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Release|Win32'">
+    <BuildLog>
+      <Path>
+      </Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GCC|Win32'">
+    <BuildLog>
+      <Path>
+      </Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Clang|Win32'">
+    <BuildLog>
+      <Path>
+      </Path>
+    </BuildLog>
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="..\user\dummy_cpp\makefile" />
@@ -36,16 +91,10 @@
     <None Include="..\user\shell\makefile" />
     <None Include="..\user\stdlibc\makefile" />
     <None Include="..\user\user_tools\makefile" />
-    <None Include="..\user\user_tools\start.asm">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\user\user_tools\user.ld">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="..\user\user_tools\start.asm" />
+    <None Include="..\user\user_tools\user.ld" />
     <None Include="..\user\vm86\apm.asm" />
-    <None Include="..\user\vm86\vidswtch.asm">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="..\user\vm86\vidswtch.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\user\dummy_cpp\dummy.cpp" />
@@ -116,6 +165,4 @@
     <ClInclude Include="..\user\user_tools\userlib.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
 </Project>

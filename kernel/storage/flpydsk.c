@@ -271,7 +271,7 @@ void flpydsk_motorOn(port_t* port)
 {
     if (port == 0) return;
 
-	floppy_t* fdrive = port->data;
+    floppy_t* fdrive = port->data;
 
   #ifdef _FLOPPY_DIAGNOSIS_
     if (fdrive->motor == false)
@@ -453,7 +453,7 @@ static int32_t flpydsk_calibrate(floppy_t* drive)
         return -2;
     }
 
-	flpydsk_motorOn(&drive->drive);
+    flpydsk_motorOn(&drive->drive);
 
     uint8_t st0, cyl, timeout = 10;
     do
@@ -635,7 +635,7 @@ static FS_ERROR flpydsk_write(uint32_t sectorLBA, uint8_t numberOfSectors)
 /// Functions accessed from outside the floppy driver
 FS_ERROR flpydsk_readSector(uint32_t sector, void* destBuffer, disk_t* device)
 {
-	CurrentDrive = device->data;
+    CurrentDrive = device->data;
 
     FS_ERROR retVal = CE_GOOD;
 

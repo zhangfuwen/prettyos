@@ -32,7 +32,7 @@ static bool isLeapyear(uint16_t year)
 static uint8_t calculateWeekday(uint16_t year, uint8_t month, int32_t day)
 {
     day += 6; // 1.1.1600 was a saturday
-    day += (year/*-1600*/ * 146097)/400 + days[month-1];	
+    day += (year/*-1600*/ * 146097)/400 + days[month-1];
 
     if (isLeapyear(year) && (month < 2 || (month == 2 && day <= 28)))
     {
@@ -61,18 +61,24 @@ static const char* const months[] =
 
 void getCurrentDateAndTime(char* pStr, size_t strsize)
 {
-    tm_t pct;
-    cmosTime(&pct);
-    pct.weekday = calculateWeekday(100*pct.century+pct.year, pct.month, pct.dayofmonth);
+    static tm_t pct = {.dayofmonth = 0xFF};
+    static char dayofmonth[3];
 
-    // Prepare some numbers
-    char dayofmonth[3], hour[3], minute[3], second[3];
-    writeInt(pct.dayofmonth, dayofmonth, 3);
+    uint8_t temp = pct.dayofmonth;
+    cmosTime(&pct);
+
+    if(temp != pct.dayofmonth)
+    {
+        pct.weekday = calculateWeekday(100*pct.century+pct.year, pct.month, pct.dayofmonth);
+
+        writeInt(pct.dayofmonth, dayofmonth, 3);
+    }
+    char hour[3], minute[3], second[3];
     writeInt(pct.hour, hour, 3);
     writeInt(pct.minute, minute, 3);
     writeInt(pct.second, second, 3);
 
-    snprintf(pStr, strsize, "%s, %s %s, %u, %s:%s:%s", weekdays[pct.weekday-1], months[pct.month-1], dayofmonth, 
+    snprintf(pStr, strsize, "%s, %s %s, %u, %s:%s:%s", weekdays[pct.weekday-1], months[pct.month-1], dayofmonth,
                                                        pct.century*100+pct.year, hour, minute, second);
 }
 

@@ -18,7 +18,7 @@ int32_t flpydsk_read_directory()
     floppyDrive[0]->drive.insertedDisk->accessRemaining += 18;
     for (int i = 0; i < 18; i++) // Read one track
     {
-		flpydsk_readSector(19+i, track+i*0x200, floppyDrive[0]->drive.insertedDisk); // start at 0x2600: root directory (14 sectors)
+        flpydsk_readSector(19+i, track+i*0x200, floppyDrive[0]->drive.insertedDisk); // start at 0x2600: root directory (14 sectors)
     }
 
     textColor(HEADLINE);

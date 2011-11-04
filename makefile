@@ -58,9 +58,9 @@ KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/
 NASMFLAGS= -Ox -f elf
 ifeq ($(COMPILER),CLANG)
 	ifeq ($(CONFIG),RELEASE)
-		CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+		CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
 	else
-		CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+		CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
 	endif
 else
 	ifeq ($(CONFIG),RELEASE)

@@ -1,8 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
+    <ProjectConfiguration Include="Clang-Release|Win32">
+      <Configuration>Clang-Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Clang|Win32">
+      <Configuration>Clang</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="GCC-Release|Win32">
+      <Configuration>GCC-Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="GCC|Win32">
+      <Configuration>GCC</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -12,17 +24,46 @@
     <Keyword>MakeFileProj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC-Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets" />
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC-Release|Win32'">
+    <NMakeBuildCommandLine>cd ..
+build.bat -release</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd ..
+rebuild.bat -release</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd ..
+clean.bat</NMakeCleanCommandLine>
+    <NMakeOutput />
+    <NMakeIncludeSearchPath>$(SolutionDir)\..\kernel</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
+    <IncludePath />
+    <SourcePath>..\kernel</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Release|Win32'">
+    <NMakeBuildCommandLine>cd ..
+build.bat -release -clang</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd ..
+rebuild.bat -release -clang</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd ..
+clean.bat</NMakeCleanCommandLine>
+    <NMakeOutput />
+    <NMakeIncludeSearchPath>$(SolutionDir)\..\kernel</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
+    <IncludePath />
+    <SourcePath>..\kernel</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC|Win32'">
     <NMakeBuildCommandLine>cd ..
 build.bat</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>cd ..
@@ -35,7 +76,38 @@ clean.bat</NMakeCleanCommandLine>
     <IncludePath />
     <SourcePath>..\kernel</SourcePath>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang|Win32'">
+    <NMakeBuildCommandLine>cd ..
+build.bat -clang</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd ..
+rebuild.bat -clang</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd ..
+clean.bat</NMakeCleanCommandLine>
+    <NMakeOutput />
+    <NMakeIncludeSearchPath>$(SolutionDir)\..\kernel</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
+    <IncludePath />
+    <SourcePath>..\kernel</SourcePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GCC-Release|Win32'">
+    <BuildLog>
+      <Path>
+      </Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Release|Win32'">
+    <BuildLog>
+      <Path>
+      </Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GCC|Win32'">
+    <BuildLog>
+      <Path>
+      </Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Clang|Win32'">
     <BuildLog>
       <Path>
       </Path>
@@ -48,27 +120,13 @@ clean.bat</NMakeCleanCommandLine>
     <None Include="..\kernel\kernel.asm" />
     <None Include="..\kernel\kernel.ld" />
     <None Include="..\makefile" />
-    <None Include="..\stage1_bootloader\boot.asm">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\stage1_bootloader\Fat12_BPB.inc">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\stage2_bootloader\A20.inc">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\stage2_bootloader\boot2.asm">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\stage2_bootloader\Fat12.inc">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\stage2_bootloader\gdt.inc">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\stage2_bootloader\GetMemoryMap.inc">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="..\stage1_bootloader\boot.asm" />
+    <None Include="..\stage1_bootloader\Fat12_BPB.inc" />
+    <None Include="..\stage2_bootloader\A20.inc" />
+    <None Include="..\stage2_bootloader\boot2.asm" />
+    <None Include="..\stage2_bootloader\Fat12.inc" />
+    <None Include="..\stage2_bootloader\gdt.inc" />
+    <None Include="..\stage2_bootloader\GetMemoryMap.inc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\kernel\audio\sb16.h" />
@@ -256,6 +314,4 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\video\videoutils.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
 </Project>

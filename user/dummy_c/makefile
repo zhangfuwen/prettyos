@@ -2,18 +2,18 @@
 ifeq ($(OS),WINDOWS)
     RM= - del
     NASM= nasm
-    GCC= i586-elf-gcc
+    CC= i586-elf-gcc
     LD= i586-elf-ld
     STRIP= i586-elf-strip
 else
     RM= rm -f
     NASM= nasm
     ifeq ($(OS),MACOSX)
-        GCC= i586-elf-gcc
+        CC= i586-elf-gcc
         LD= i586-elf-ld
         STRIP= i586-elf-strip
     else
-        GCC= gcc
+        CC= gcc
         LD= ld
         STRIP= strip
     endif
@@ -40,9 +40,9 @@ endif
 
 # Compiler-/Linker-Flags
 ifeq ($(COMPILER),CLANG)
-	GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+	CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
 else
-	GCCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+	CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
 endif
 LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 
@@ -51,7 +51,7 @@ TARGET= CDUMMY.ELF
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c
-	$(GCC) $< $(GCCFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
+	$(CC) $< $(CCFLAGS) -I $(STDLIBC) -I $(USERTOOLS) -o $(OBJDIR)/$@
 
 # dependancies
 TARGETOBJ := $(patsubst %.c, %.o, $(wildcard *.c))

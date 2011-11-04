@@ -1,5 +1,15 @@
 del FloppyImage.img
-tools\mingw32-make --jobs FloppyImage.img OS=WINDOWS
+SET flags=OS=WINDOWS
+IF [%1]==[-release] (
+	SET flags=OS=WINDOWS CONFIG=RELEASE
+	IF [%2]==[-clang] (
+		SET flags=OS=WINDOWS CONFIG=RELEASE COMPILER=CLANG
+	)
+)
+IF [%1]==[-clang] (
+	SET flags=OS=WINDOWS COMPILER=CLANG
+)
+tools\mingw32-make FloppyImage.img %flags%
 
 @echo off
 :Loop

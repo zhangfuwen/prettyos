@@ -1,2 +1,2 @@
 cmd /c clean.bat
-build.bat
+build.bat %1 %2

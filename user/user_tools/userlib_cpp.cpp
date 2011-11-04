@@ -6,12 +6,13 @@
 #include "userlib.hpp"
 #include "stdlib.h"
 
-#if __unix__
-void* operator new(size_t size)
+
+#if (__GNUC__ >= 4 && __GNUC_MINOR__ >= 5) || __clang__
+void* operator new(unsigned int size)
 {
     return malloc(size);
 }
-void* operator new[](size_t size)
+void* operator new[](unsigned int size)
 {
     return malloc(size);
 }
@@ -40,12 +41,11 @@ void operator delete[](void* ptr)
 {
     free(ptr);
 }
-
 #endif
 
 
 /*
-* Copyright (c) 2009 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
