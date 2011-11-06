@@ -11,16 +11,17 @@
 
 
 console_t* reachableConsoles[11]; // Mainconsole + up to 10 subconsoles
+
 console_t kernelConsole = // The console of the kernel task. It is a global variable because it should be initialized as soon as possible.
 {
     .ID = KERNELCONSOLE_ID, .name = 0, .properties = CONSOLE_AUTOSCROLL|CONSOLE_AUTOREFRESH|CONSOLE_SHOWINFOBAR,
     .scrollBegin = 0, .scrollEnd = 39, .cursor = {0, 0}, .mutex = 0, .tasks = 0
 };
+
 volatile console_t* console_current   = &kernelConsole; // The console of the active task
 volatile console_t* console_displayed = &kernelConsole; // Currently visible console
 
 static bool scroll_flag = true;
-
 
 static void scroll();
 
@@ -43,7 +44,6 @@ void kernel_console_init()
     kernelConsole.tasks = list_create();
     kernelConsole.mutex = mutex_create(1);
     memset(kernelConsole.vidmem, 0, COLUMNS * LINES * sizeof(uint16_t));
-
     reachableConsoles[KERNELCONSOLE_ID] = &kernelConsole;
     memset(reachableConsoles+1, 0, 10*sizeof(console_t*));
 }
@@ -61,8 +61,8 @@ void console_init(console_t* console, const char* name)
     strcpy(console->name, name);
     memset(console->vidmem, 0, COLUMNS * LINES * 2);
 
-    for (uint8_t i = 1; i < 11; i++)
-    { // The next free place in our console-list will be filled with the new console
+    for (uint8_t i = 1; i < 11; i++) // The next free place in our console-list will be filled with the new console
+    { 
         if (reachableConsoles[i] == 0)
         {
             console->ID = i;
@@ -71,6 +71,7 @@ void console_init(console_t* console, const char* name)
             return;
         }
     }
+    
     console->ID = 255;
 }
 
@@ -84,6 +85,7 @@ void console_exit(console_t* console)
 void console_cleanup(task_t* task)
 {
     list_delete(task->console->tasks, list_find(task->console->tasks, task));
+    
     if (task->console->tasks->head == 0)
     {
         // Delete current task's console from list of our reachable consoles, if it is in that list
@@ -95,11 +97,13 @@ void console_cleanup(task_t* task)
                 break;
             }
         }
-        // Switch back to kernel console if the tasks console is displayed at the moment
+        
+        // Switch back to kernel console, if the tasks console is displayed at the moment
         if (task->console == console_displayed)
         {
             console_display(KERNELCONSOLE_ID);
         }
+        
         // Free memory
         console_exit(task->console);
         free(task->console);
@@ -113,9 +117,14 @@ bool console_display(uint8_t ID)
     {
         return (false);
     }
+    
     console_displayed = reachableConsoles[ID];
+    
     if(console_displayed->properties & CONSOLE_AUTOREFRESH)
+    {
         refreshUserScreen();
+    }
+
     vga_updateCursor();
     return (true);
 }
@@ -129,10 +138,16 @@ void setScrollField(uint8_t begin, uint8_t end)
 void console_setProperties(console_properties_t properties)
 {
     console_current->properties = properties;
+    
     if(properties & CONSOLE_SHOWINFOBAR)
+    {
         console_current->scrollEnd = min(console_current->scrollEnd, 42);
+    }
+    
     if(properties & CONSOLE_AUTOREFRESH)
+    {
         refreshUserScreen();
+    }
 }
 
 void console_clear(uint8_t backcolor)
@@ -142,25 +157,31 @@ void console_clear(uint8_t backcolor)
     memsetw((uint16_t*)console_current->vidmem, 0x20 | (backcolor << 8), COLUMNS * LINES);
     console_current->cursor.x = 0;
     console_current->cursor.y = 0;
+    
     if (console_current == console_displayed && (console_current->properties & CONSOLE_AUTOREFRESH)) // If it is also displayed at the moment, refresh screen
     {
         refreshUserScreen();
         vga_updateCursor();
     }
+    
     mutex_unlock(console_current->mutex);
 }
 
 static void move_cursor_right()
 {
     ++console_current->cursor.x;
+    
     if (console_current->cursor.x >= COLUMNS)
     {
         ++console_current->cursor.y;
         console_current->cursor.x = 0;
         scroll();
     }
+    
     if(console_current == console_displayed)
+    {
         vga_updateCursor();
+    }
 }
 
 static void move_cursor_left()
@@ -174,15 +195,21 @@ static void move_cursor_left()
         console_current->cursor.x = COLUMNS-1;
         --console_current->cursor.y;
     }
+    
     if(console_current == console_displayed)
+    {
         vga_updateCursor();
+    }
 }
 
 static void move_cursor_home()
 {
     console_current->cursor.x = 0;
+    
     if(console_current == console_displayed)
+    {
         vga_updateCursor();
+    }
 }
 
 void setCursor(position_t pos)
@@ -190,8 +217,11 @@ void setCursor(position_t pos)
     pos.x = min(COLUMNS-1, pos.x);
     pos.y = min(LINES-1, pos.y);
     console_current->cursor = pos;
+   
     if(console_current == console_displayed)
+    {
         vga_updateCursor();
+    }
 }
 
 void getCursor(position_t* pos)
@@ -204,6 +234,7 @@ void console_setPixel(uint8_t x, uint8_t y, uint16_t value)
     mutex_lock(console_current->mutex);
     console_current->vidmem[y*COLUMNS + x] = value;
     mutex_unlock(console_current->mutex);
+    
     if (console_current == console_displayed && (console_current->properties & CONSOLE_AUTOREFRESH))
     {
         vga_setPixel(x, y+2, value);
@@ -213,15 +244,17 @@ void console_setPixel(uint8_t x, uint8_t y, uint16_t value)
 void putch(char c)
 {
     uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
-
     mutex_lock(console_current->mutex);
+    
     switch (uc)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete
             move_cursor_left();
             *(console_current->vidmem + console_current->cursor.y * COLUMNS + console_current->cursor.x) = ' ' | getTextColor() << 8;
             if (console_displayed == console_current && (console_current->properties & CONSOLE_AUTOREFRESH)) // Print to screen, if current console is displayed at the moment
+            {
                 vga_setPixel(console_current->cursor.x, console_current->cursor.y+2, ' ' | getTextColor() << 8);
+            }
             break;
         case 0x09: // tab: increment cursor.x (divisible by 8)
             console_current->cursor.x = alignUp(console_current->cursor.x+1, 8);
@@ -231,7 +264,9 @@ void putch(char c)
                 console_current->cursor.x=0;
                 scroll();
                 if(console_displayed == console_current)
+                {
                     vga_updateCursor();
+                }
             }
             break;
         case '\r': // cr: cursor back to the margin
@@ -247,11 +282,14 @@ void putch(char c)
                 uint32_t att = getTextColor() << 8;
                 *(console_current->vidmem + console_current->cursor.y * COLUMNS + console_current->cursor.x) = uc | att; // character AND attributes: color
                 if (console_displayed == console_current && (console_current->properties & CONSOLE_AUTOREFRESH)) // Print to screen, if current console is displayed at the moment
+                {
                     vga_setPixel(console_current->cursor.x, console_current->cursor.y+2, uc | att); // character AND attributes: color
+                }
                 move_cursor_right();
             }
             break;
     }
+   
     mutex_unlock(console_current->mutex);
 }
 
@@ -265,16 +303,19 @@ void puts(const char* text)
 static void scroll()
 {
     mutex_lock(console_current->mutex);
+    
     if ((console_current->properties & CONSOLE_AUTOSCROLL) && scroll_flag)
     {
         uint8_t scroll_begin = console_current->scrollBegin;
         uint8_t scroll_end = min(console_current->scrollEnd, ((console_current->properties & CONSOLE_FULLSCREEN)?LINES:(USER_END-USER_BEGIN)));
+        
         if (console_current->cursor.y >= scroll_end)
         {
             uint8_t lines = console_current->cursor.y - scroll_end + 1;
             memcpy((uint16_t*)console_current->vidmem + scroll_begin*COLUMNS, (uint16_t*)console_current->vidmem + scroll_begin*COLUMNS + lines * COLUMNS, (scroll_end - lines) * COLUMNS * sizeof(uint16_t));
             memsetw((uint16_t*)console_current->vidmem + (scroll_end - lines) * COLUMNS, getTextColor() << 8, COLUMNS);
             console_current->cursor.y = scroll_end - 1;
+            
             if(console_current == console_displayed && (console_current->properties & CONSOLE_AUTOREFRESH))
             {
                 refreshUserScreen();
@@ -282,6 +323,7 @@ static void scroll()
             }
         }
     }
+    
     mutex_unlock(console_current->mutex);
 }
 
@@ -294,44 +336,58 @@ size_t vprintf(const char* args, va_list ap)
     uint8_t attribute = getTextColor();
     char buffer[32]; // Larger is not needed at the moment
 
-    size_t pos;
+    size_t pos; // variable used for return value
+    
     for (pos = 0; *args; ++args)
     {
         switch (*args)
         {
             case '%':
+            {
                 switch (*(++args))
                 {
                     case 'u':
+                    {
                         utoa(va_arg(ap, uint32_t), buffer);
                         puts(buffer);
                         pos += strlen(buffer);
                         break;
+                    }
                     case 'f':
+                    {
                         ftoa(va_arg(ap, double), buffer);
                         puts(buffer);
                         pos += strlen(buffer);
                         break;
+                    }
                     case 'i': case 'd':
+                    {
                         itoa(va_arg(ap, int32_t), buffer);
                         puts(buffer);
                         pos += strlen(buffer);
                         break;
+                    }
                     case 'X': /// TODO: make it standardized
+                    {
                         i2hex(va_arg(ap, int32_t), buffer, 8);
                         puts(buffer);
                         pos += strlen(buffer);
                         break;
+                    }
                     case 'x':
+                    {
                         i2hex(va_arg(ap, int32_t), buffer, 4);
                         puts(buffer);
                         pos += strlen(buffer);
                         break;
+                    }
                     case 'y':
+                    {
                         i2hex(va_arg(ap, int32_t), buffer, 2);
                         puts(buffer);
                         pos += strlen(buffer);
                         break;
+                    }
                     case 's':
                     {
                         char* temp = va_arg(ap, char*);
@@ -340,15 +396,19 @@ size_t vprintf(const char* args, va_list ap)
                         break;
                     }
                     case 'c':
+                    {
                         putch((int8_t)va_arg(ap, int32_t));
                         pos++;
                         break;
+                    }
                     case 'v':
+                    {
                         textColor((attribute >> 4) | (attribute << 4));
                         putch(*(++args));
                         textColor(attribute);
                         pos++;
                         break;
+                    }
                     case 'I': // IP address
                     {
                         IP_t IP = va_arg(ap, IP_t);
@@ -362,21 +422,29 @@ size_t vprintf(const char* args, va_list ap)
                         break;
                     }
                     case '%':
+                    {
                         putch('%');
                         pos++;
                         break;
+                    }
                     default:
+                    {
                         --args;
                         --pos;
                         break;
+                    }
                 }
                 break;
+            }//case
             default:
+            {
                 putch(*args);
                 pos++;
                 break;
-        }
-    }
+            }
+        }//switch
+    }//for
+    
     mutex_unlock(console_current->mutex);
     return (pos);
 }

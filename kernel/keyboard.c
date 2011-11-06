@@ -9,51 +9,54 @@
 #include "irq.h"
 
 #if KEYMAP == GER
-#include "keyboard_GER.h"
+  #include "keyboard_GER.h"
 #else //US-Keyboard if nothing else is defined
-#include "keyboard_US.h"
+  #include "keyboard_US.h"
 #endif
 
-static const KEY_t scancodeToKey_default[] =
+
+static const KEY_t scancodeToKey_default[] = // cf. http://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html#ss1.4
 {
-//  0  1  2  3  4  5  6  7
-    0, KEY_ESC, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, // 0
-    KEY_7, KEY_8, KEY_9, KEY_0, KEY_MINUS, KEY_EQUAL, KEY_BACK, KEY_TAB,
-    KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_U, KEY_I, // 1
-    KEY_O, KEY_P, KEY_OSQBRA, KEY_CSQBRA, KEY_ENTER, KEY_LCTRL, KEY_A, KEY_S,
-    KEY_D, KEY_F, KEY_G, KEY_H, KEY_J, KEY_K, KEY_L, KEY_SEMI, // 2
-    KEY_APPOS, KEY_ACC, KEY_LSHIFT, KEY_BACKSL, KEY_Z, KEY_X, KEY_C, KEY_V,
-    KEY_B, KEY_N, KEY_M, KEY_COMMA, KEY_DOT, KEY_SLASH, KEY_RSHIFT, KEY_KPMULT, // 3
-    KEY_LALT, KEY_SPACE, KEY_CAPS, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
-    KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_NUM, KEY_SCROLL, KEY_KP7, // 4
-    KEY_KP8, KEY_KP9, KEY_KPMIN, KEY_KP4, KEY_KP5, KEY_KP6, KEY_KPPLUS, KEY_KP1,
-    KEY_KP2, KEY_KP3, KEY_KP0, KEY_KPDOT, 0, 0, KEY_GER_ABRA, KEY_F11, // 5
-    KEY_F12, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, // 6
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, // 7
-    0, 0, 0, 0, 0, 0, 0, 0,
+//  0           1           2           3           4           5            6             7
+//---------------------------------------------------------------------------------------------------------
+    0,          KEY_ESC,    KEY_1,      KEY_2,      KEY_3,      KEY_4,       KEY_5,        KEY_6,      // 0
+    KEY_7,      KEY_8,      KEY_9,      KEY_0,      KEY_MINUS,  KEY_EQUAL,   KEY_BACK,     KEY_TAB,
+    KEY_Q,      KEY_W,      KEY_E,      KEY_R,      KEY_T,      KEY_Y,       KEY_U,        KEY_I,      // 1
+    KEY_O,      KEY_P,      KEY_OSQBRA, KEY_CSQBRA, KEY_ENTER,  KEY_LCTRL,   KEY_A,        KEY_S,
+    KEY_D,      KEY_F,      KEY_G,      KEY_H,      KEY_J,      KEY_K,       KEY_L,        KEY_SEMI,   // 2
+    KEY_APPOS,  KEY_ACC,    KEY_LSHIFT, KEY_BACKSL, KEY_Z,      KEY_X,       KEY_C,        KEY_V,
+    KEY_B,      KEY_N,      KEY_M,      KEY_COMMA,  KEY_DOT,    KEY_SLASH,   KEY_RSHIFT,   KEY_KPMULT, // 3
+    KEY_LALT,   KEY_SPACE,  KEY_CAPS,   KEY_F1,     KEY_F2,     KEY_F3,      KEY_F4,       KEY_F5,
+    KEY_F6,     KEY_F7,     KEY_F8,     KEY_F9,     KEY_F10,    KEY_NUM,     KEY_SCROLL,   KEY_KP7,    // 4
+    KEY_KP8,    KEY_KP9,    KEY_KPMIN,  KEY_KP4,    KEY_KP5,    KEY_KP6,     KEY_KPPLUS,   KEY_KP1,
+    KEY_KP2,    KEY_KP3,    KEY_KP0,    KEY_KPDOT,  0,          0,           KEY_GER_ABRA, KEY_F11,    // 5
+    KEY_F12,    0,          0,          0,          0,          0,           0,            0,
+    0,          0,          0,          0,          0,          0,           0,            0,          // 6
+    0,          0,          0,          0,          0,          0,           0,            0,
+    0,          0,          0,          0,          0,          0,           0,            0,          // 7
+    0,          0,          0,          0,          0,          0,           0,            0,
 };
 
-static const KEY_t scancodeToKey_E0[] =
+static const KEY_t scancodeToKey_E0[] =      // cf. http://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html#ss1.5
 {
-//  0  1  2  3  4  5  6  7
-    0, 0, 0, 0, 0, 0, 0, 0, // 0
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, // 1
-    0, 0, 0, 0, KEY_KPEN, KEY_RCTRL, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, // 2
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, KEY_KPSLASH, 0, KEY_PRINT, // 3
-    KEY_ALTGR, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, KEY_HOME, // 4
-    KEY_ARRU, KEY_PGUP, 0, KEY_ARRL, 0, KEY_ARRR, 0, KEY_END,
-    KEY_ARRD, KEY_PGDWN, KEY_INS, KEY_DEL, 0, 0, 0, 0, // 5
-    0, 0, 0, KEY_LGUI, KEY_RGUI, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, // 6
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, // 7
-    0, 0, 0, 0, 0, 0, 0, 0,
+//  0           1           2           3           4           5            6             7
+//---------------------------------------------------------------------------------------------------------
+    0,          0,          0,          0,          0,          0,           0,            0,          // 0
+    0,          0,          0,          0,          0,          0,           0,            0,
+    0,          0,          0,          0,          0,          0,           0,            0,          // 1
+    0,          0,          0,          0,          KEY_KPEN,   KEY_RCTRL,   0,            0,
+    0,          0,          0,          0,          0,          0,           0,            0,          // 2
+    0,          0,          0,          0,          0,          0,           0,            0,
+    0,          0,          0,          0,          0,          KEY_KPSLASH, 0,            KEY_PRINT,  // 3
+    KEY_ALTGR,  0,          0,          0,          0,          0,           0,            0,
+    0,          0,          0,          0,          0,          0,           0,            KEY_HOME,   // 4
+    KEY_ARRU,   KEY_PGUP,   0,          KEY_ARRL,   0,          KEY_ARRR,    0,            KEY_END,
+    KEY_ARRD,   KEY_PGDWN,  KEY_INS,    KEY_DEL,    0,          0,           0,            0,          // 5
+    0,          0,          0,          KEY_LGUI,   KEY_RGUI,   0,           0,            0,
+    0,          0,          0,          0,          0,          0,           0,            0,          // 6
+    0,          0,          0,          0,          0,          0,           0,            0,
+    0,          0,          0,          0,          0,          0,           0,            0,          // 7
+    0,          0,          0,          0,          0,          0,           0,            0,
 };
 
 static bool pressedKeys[__KEY_LAST]; // for monitoring pressed keys
@@ -102,7 +105,7 @@ static KEY_t scancodeToKey(uint8_t scancode, bool* make)
     else if (scancode == 0xE1) // First byte of E1 code
     {
         prevScancode = 0xE1;
-        byteCounter = 1;
+        byteCounter  = 1;
     }
     else
     {
@@ -115,8 +118,11 @@ static KEY_t scancodeToKey(uint8_t scancode, bool* make)
         else if (prevScancode == 0xE1) // Second or third byte of E1 code. HACK: We assume, that all E1 codes mean the pause key
         {
             byteCounter++;
+            
             if (byteCounter == 3)
+            {
                 return (KEY_PAUSE);
+            }
         }
         else // Default code
         {
@@ -139,6 +145,7 @@ static char keyToASCII(KEY_t key)
         {
             retchar = keyToASCII_shiftAltGr[key];
         }
+        
         if (!(pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT]) || retchar == 0) // if shift is not pressed or if there is no key specified for ShiftAltGr (so retchar is still 0)
         {
             retchar = keyToASCII_altGr[key];
@@ -150,6 +157,7 @@ static char keyToASCII(KEY_t key)
         {
             retchar = keyToASCII_shift[key];
         }
+        
         if (!(pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT]) || retchar == 0) // if shift is not pressed or if retchar is still 0
         {
             retchar = keyToASCII_default[key];
@@ -164,6 +172,7 @@ static char keyToASCII(KEY_t key)
             console_display(KERNELCONSOLE_ID);
             return (0);
         }
+        
         if (ctoi(retchar) != -1)
         {
             console_display(1+ctoi(retchar));
@@ -175,17 +184,22 @@ static char keyToASCII(KEY_t key)
         if(key == KEY_ESC || retchar == 'e')
         {
             list_t* list = console_displayed->tasks;
+            
             for(dlelement_t* e = list->head; e != 0;)
             {
                 task_t* task = e->data;
+                
                 if(task->pid != 0)
                 {
                     kill(task);
                     e = list->head; // Restart at beginning, because list has been modified by kill()
                 }
                 else
+                {
                     e = e->next;
+                }
             }
+
             return (0);
         }
     }
@@ -225,11 +239,13 @@ static void keyboard_handler(registers_t* r)
         {
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_UP, &key, sizeof(KEY_t));
         }
+        
         return;
     }
 
     // Find out ASCII representation of key. Issue events.
     char ascii = keyToASCII(key);
+    
     if (ascii)
     {
         for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
@@ -250,6 +266,7 @@ char getch()
         {
             waitForEvent(0);
         }
+        
         ev = event_poll(&ret, 1, EVENT_NONE);
     }
     return (ret);

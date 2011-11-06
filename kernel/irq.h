@@ -4,12 +4,12 @@
 #include "pci.h"
 
 
-#define PIC_MASTER_CMD     0x20
-#define PIC_MASTER_DATA 0x21
-#define PIC_SLAVE_CMD   0xA0
-#define PIC_SLAVE_DATA  0xA1
+#define PIC_MASTER_CMD   0x20
+#define PIC_MASTER_DATA  0x21
+#define PIC_SLAVE_CMD    0xA0
+#define PIC_SLAVE_DATA   0xA1
 
-#define PIC_EOI         0x20  // End-of-interrupt (command code)
+#define PIC_EOI          0x20  // End-of-interrupt (command code)
 
 
 struct cdi_device;
@@ -28,7 +28,7 @@ typedef enum
     IRQ_KEYBOARD = 1,
     IRQ_FLOPPY   = 6,
     IRQ_MOUSE    = 12,
-    IRQ_SYSCALL  = 95
+    IRQ_SYSCALL  = 95 // PrettyOS SYSCALL_NUMBER 127 minus 32 // cf. interrupts.asm
 } IRQ_NUM_t;
 
 // This defines what the stack looks like after an ISR was running
