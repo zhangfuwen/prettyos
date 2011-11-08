@@ -17,6 +17,7 @@
 #define IDMAP  5  // 0 MiB - 20 MiB, identity mapping
 
 pageDirectory_t* kernelPageDirectory;
+pageDirectory_t* currentPageDirectory = 0;
 
 // Memory Map
 memoryMapEntry_t* memoryMapAdress;
@@ -30,16 +31,6 @@ static uint32_t*      bittable;
 static uint32_t       firstFreeDWORD = 10 * 1024 * 1024 / PAGESIZE / 32; // Exclude the first 10 MiB from being allocated (needed for DMA later on)
 static uint32_t       physMemInit();
 
-
-void paging_switch(pageDirectory_t* pd)
-{
-  #ifdef _PAGING_DIAGNOSIS_
-    textColor(MAGENTA);
-    printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X", pd, pd->physAddr);
-    textColor(TEXT);
-  #endif
-    __asm__ volatile("mov %0, %%cr3" : : "r" (pd->physAddr));
-}
 
 uint32_t paging_install()
 {
@@ -209,6 +200,24 @@ static uint32_t physMemInit()
     return (dwordCount * 32 * 4096);
 }
 
+
+void paging_switch(pageDirectory_t* pd)
+{
+  #ifdef _PAGING_DIAGNOSIS_
+    textColor(MAGENTA);
+    printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X", pd, pd->physAddr);
+    textColor(TEXT);
+  #endif
+    currentPageDirectory = pd;
+    __asm__ volatile("mov %0, %%cr3" : : "r" (pd->physAddr));
+}
+
+static void invalidateTLBEntry(uint8_t* p)
+{
+    __asm__ volatile("invlpg %0" : : "m"(*p));
+}
+
+
 static uint32_t physMemAlloc()
 {
     // Search for a free uint32_t, i.e. one that not only contains ones
@@ -299,10 +308,11 @@ bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAG
         // Setup the page
         pt->pages[pagenr%1024] = physAddress | flags | MEM_PRESENT;
 
+        if(pd == currentTask->pageDirectory)
+            invalidateTLBEntry(virtAddress + done*PAGESIZE);
+
         if (flags & MEM_USER)
-        {
             kdebug(3, "pagenumber now allocated: %u physAddress: %Xh\n", pagenr, physAddress);
-        }
     }
     return (true);
 }
@@ -322,6 +332,8 @@ void paging_free(pageDirectory_t* pd, void* virtAddress, uint32_t size)
         uint32_t* page = &pd->tables[pagenr/1024]->pages[pagenr%1024];
         uint32_t physAddress = *page & 0xFFFFF000;
         *page = 0;
+        if(pd == currentTask->pageDirectory)
+            invalidateTLBEntry((uint8_t*)(pagenr*PAGESIZE));
 
         // Free memory and adjust variables for next loop run
         physMemFree(physAddress);
@@ -351,6 +363,8 @@ void paging_destroyUserPageDirectory(pageDirectory_t* pd)
 {
     // The kernel's page directory must not be destroyed
     ASSERT(pd != kernelPageDirectory);
+    if(pd == currentPageDirectory)
+        paging_switch(kernelPageDirectory);
 
     // Free all memory that is not from the kernel
     for (uint32_t i=0; i<1024; i++)
@@ -396,6 +410,8 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
         // Check the page table and setup the page
         ASSERT(kernelPageDirectory->tables[pagenr/1024]);
         kernelPageDirectory->tables[pagenr/1024]->pages[pagenr%1024] = physAddress | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
+
+        invalidateTLBEntry(virtAddress);
 
         // next page
         virtAddress += PAGESIZE;

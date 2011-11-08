@@ -13,19 +13,17 @@
 #include "video/console.h"
 #include "video/vbe.h"
 #include "video/video.h"
+#include "tasking/task.h"
+#include "events.h"
 
 
 enum {NORMAL, WHEEL, WHEELS5BUTTON} mousetype = NORMAL;
 
-int32_t mouse_x=10; // Mouse X
-int32_t mouse_y=10; // Mouse Y
-int32_t mouse_zv=0; // Mouse Zv (vertical mousewheel)
-int32_t mouse_zh=0; // Mouse Zh (horizontal mousewheel)
-bool mouse_bl=0;    // Mouse Left Button
-bool mouse_bm=0;    // Mouse Middle Button
-bool mouse_br=0;    // Mouse Right Button
-bool mouse_b4=0;    // Mouse Button 4
-bool mouse_b5=0;    // Mouse button 5
+int32_t mouse_x = 10;
+int32_t mouse_y = 10;
+int32_t mouse_zv = 0; // vertical mousewheel
+int32_t mouse_zh = 0; // horizontal mousewheel
+mouse_button_t mouse_buttons = 0; // Status of mouse buttons
 
 
 static void mouse_wait(uint8_t type);
@@ -82,6 +80,58 @@ void mouse_install()
     mouse_read();
 }
 
+static void mouse_buttonEvent(bool pressed, mouse_button_t button)
+{
+    if(((mouse_buttons&button) != 0) != pressed)
+    {
+        if(pressed)
+        {
+            for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+                event_issue(((task_t*)(e->data))->eventQueue, EVENT_MOUSE_BUTTON_DOWN, &button, sizeof(button));
+            mouse_buttons = mouse_buttons | button;
+        }
+        else
+        {
+            for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+                event_issue(((task_t*)(e->data))->eventQueue, EVENT_MOUSE_BUTTON_UP, &button, sizeof(button));
+            mouse_buttons = mouse_buttons & ~button;
+        }
+
+    }
+}
+
+static void mouse_wheelEvent(int8_t v, int8_t h)
+{
+    if(v != 0 || h != 0)
+    {
+        mouse_zh += h;
+        mouse_zv += v;
+
+        int16_t composedMovement = (((int16_t)h)<<8) | v;
+        for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+            event_issue(((task_t*)(e->data))->eventQueue, EVENT_MOUSE_MOVE, &composedMovement, sizeof(composedMovement));
+    }
+}
+
+static void mouse_moveEvent(int8_t x, int8_t y)
+{
+    if(y != 0 || x != 0)
+    {
+        mouse_y += y;
+        mouse_x += x;
+
+        int16_t composedMovement = (((int16_t)x)<<8) | y;
+        for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
+            event_issue(((task_t*)(e->data))->eventQueue, EVENT_MOUSE_MOVE, &composedMovement, sizeof(composedMovement));
+
+        if (videomode == VM_VBE)
+        {
+            mouse_y = max(0, min(mouse_y, video_currentMode->yRes-1)); // clamp mouse position to height of screen
+            mouse_x = max(0, min(mouse_x, video_currentMode->xRes-1)); // same with width
+        }
+    }
+}
+
 static void mouse_handler(registers_t* r)
 {
     static bool erroroccurred = false;
@@ -94,65 +144,61 @@ static void mouse_handler(registers_t* r)
         case 0: // First byte: Left Button | Right Button | Middle Button | 1 | X sign | Y sign | X overflow | Y overflow
             if (bytes[0] & BIT(3)) // Only if this is really the first byte!
             {
-                mouse_bl = (bytes[0] & BIT(0));
-                mouse_br = (bytes[0] & BIT(1)) >> 1;
-                mouse_bm = (bytes[0] & BIT(2)) >> 2;
+                mouse_buttonEvent(bytes[0] & BIT(0), BUTTON_LEFT);
+                mouse_buttonEvent(bytes[0] & BIT(1), BUTTON_RIGHT);
+                mouse_buttonEvent(bytes[0] & BIT(2), BUTTON_MIDDLE);
             }
             else
             {
                 bytecounter = 0;
-                if (erroroccurred == false) // Ignore it on the first time due to some emulators
-                    erroroccurred = true;  // do this.
-                else // TODO: Why?
+                if (erroroccurred == false) // Ignore error on the first time due to some emulators, TODO: Why?
+                    erroroccurred = true;
+                else
                 {
                     textColor(ERROR);
-                    printf(" => ERROR (mouse.c, 111): Mouse sent unknown package (%yh)!\n", bytes[0]);
+                    printf(" => ERROR (mouse.c, 159): Mouse sent unknown package (%yh)!\n", bytes[0]);
                     textColor(TEXT);
                 }
                 return;
             }
             break;
-        case 1: // Second byte: X Movement (8 bits)
-            mouse_x += bytes[1];
+        case 1: // Second byte: X Movement. Evaluation delayed until third byte
             break;
-        case 2: // Third byte: Y Movement (8 bits)
-            mouse_y -= bytes[2]; // Attention: Y-movement is counted from bottom!
+        case 2: // Third byte: Y Movement
+            mouse_moveEvent(bytes[1], -bytes[2]);
             break;
         case 3: // Fourth byte: Z movement (4 bits) | 4th Button | 5th Button | 0 | 0
             switch (mousetype)
             {
                 case WHEEL:
-                    mouse_zv += bytes[3];
+                    mouse_wheelEvent(bytes[3], 0);
                     break;
                 case WHEELS5BUTTON:
                     switch (bytes[3] & 0xF)
                     {
                         case 0xE:
-                            mouse_zh -= 1;
+                            mouse_wheelEvent(0, -1);
                             break;
                         case 0xF:
-                            mouse_zv -= 1;
+                            mouse_wheelEvent(-1, 0);
                             break;
                         case 0x1:
-                            mouse_zv += 1;
+                            mouse_wheelEvent(1, 0);
                             break;
                         case 0x2:
-                            mouse_zh += 1;
+                            mouse_wheelEvent(0, 1);
                             break;
                     }
-                    mouse_b4 = (bytes[3] & BIT(4)) >> 4;
-                    mouse_b5 = (bytes[3] & BIT(5)) >> 5;
+
+                    mouse_buttonEvent(bytes[3] & BIT(4), BUTTON_4);
+                    mouse_buttonEvent(bytes[3] & BIT(5), BUTTON_5);
                     break;
                 default: // We do not expect a fourth byte in this case
                     bytecounter--;
-                    if (erroroccurred == false) // Ignore it on the first time due to some emulators
-                        erroroccurred = true;  // do this..
-                    else // TODO: Why?
-                    {
-                        textColor(ERROR);
-                        printf(" ERROR (mouse.c, 154): Mouse sent unknown package (%u)!\n", bytes[0]);
-                        textColor(TEXT);
-                    }
+
+                    textColor(ERROR);
+                    printf(" ERROR (mouse.c, 201): Mouse sent unknown package (%u)!\n", bytes[0]);
+                    textColor(TEXT);
                     break;
             }
             break;
@@ -174,27 +220,22 @@ static void mouse_handler(registers_t* r)
 
 
     // Print mouse on screen
-    if (videomode == VM_VBE)
-    {
-        mouse_x = max(0, min(mouse_x, video_currentMode->xRes-1)); // clamp mouse position to width of screen
-        mouse_y = max(0, min(mouse_y, video_currentMode->yRes-1)); // same with height
-        // In VBE mode the application draws the mouse to work in double buffer modes as well.
-    }
-    else
+    if (videomode != VM_VBE) // In VBE mode the application draws the mouse to work in double buffer modes as well.
     {
         switch (mousetype)
         {
             case NORMAL:
                 writeInfo(1, "Mouse: X: %d  Y: %d  Z: -   buttons: L: %d  M: %d  R: %d",
-                    mouse_x, mouse_y, mouse_bl, mouse_bm, mouse_br);
+                    mouse_x, mouse_y, (mouse_buttons&BUTTON_LEFT) != 0, (mouse_buttons&BUTTON_MIDDLE) != 0, (mouse_buttons&BUTTON_RIGHT) != 0);
                 break;
             case WHEEL:
                 writeInfo(1, "Mouse: X: %d  Y: %d  Z: %d   buttons: L: %d  M: %d  R: %d",
-                    mouse_x, mouse_y, mouse_zv, mouse_bl, mouse_bm, mouse_br);
+                    mouse_x, mouse_y, mouse_zv, (mouse_buttons&BUTTON_LEFT) != 0, (mouse_buttons&BUTTON_MIDDLE) != 0, (mouse_buttons&BUTTON_RIGHT) != 0);
                 break;
             case WHEELS5BUTTON:
                 writeInfo(1, "Mouse: X: %d  Y: %d  Zv: %d  Zh: %d   buttons: L: %d  M: %d  R: %d  4th: %d  5th: %d",
-                    mouse_x, mouse_y, mouse_zv, mouse_zh, mouse_bl, mouse_bm, mouse_br, mouse_b4, mouse_b5);
+                    mouse_x, mouse_y, mouse_zv, mouse_zh,
+                    (mouse_buttons&BUTTON_LEFT) != 0, (mouse_buttons&BUTTON_MIDDLE) != 0, (mouse_buttons&BUTTON_RIGHT) != 0, (mouse_buttons&BUTTON_4) != 0, (mouse_buttons&BUTTON_5) != 0);
                 break;
         }
     }
@@ -245,26 +286,8 @@ void mouse_setsamples(uint8_t samples_per_second)
     mouse_write(0xF3);
     switch (samples_per_second)
     {
-        case 10:
-            mouse_write(0x0A);
-            break;
-        case 20:
-            mouse_write(0x14);
-            break;
-        case 40:
-            mouse_write(0x28);
-            break;
-        case 60:
-            mouse_write(0x3C);
-            break;
-        case 80:
-            mouse_write(0x50);
-            break;
-        case 100:
-            mouse_write(0x64);
-            break;
-        case 200:
-            mouse_write(0xC8);
+        case 10: case 20: case 40: case 60: case 80: case 100: case 200:
+            mouse_write(samples_per_second);
             break;
         default: // Sorry, mouse just has 10/20/40/60/80/100/200 Samples/sec, so we go back to 80..
             mouse_setsamples(80);

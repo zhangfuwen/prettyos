@@ -24,7 +24,7 @@ void cpu_analyze()
     ipc_createNode("PrettyOS/CPU/Frequency (kHz)", &node, IPC_INTEGER);
     cpu_frequency = &node->data.integer;
 
-	uint32_t result = 0;
+    uint32_t result = 0;
     // Test if the CPU supports the CPUID-Command
     __asm__ volatile ("pushfl\n"
                       "pop %%ecx\n"
@@ -35,7 +35,7 @@ void cpu_analyze()
                       "pushfl\n"
                       "pop %%eax\n"
                       "sub %%ecx, %%eax\n"
-                      "mov %%eax, %0\n" : "=r"(result) : : "%eax", "%ecx");
+                      "mov %%eax, %0\n" : "=r"(result) :);
     cpuid_available = (result == 0);
 
     if (!cpuid_available)
@@ -93,34 +93,34 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
     {
         case CR_EAX:
         {
-			register uint32_t temp;
-			__asm__ ("movl %1, %%eax\n"
-					 "cpuid\n"
-					 "mov %%eax, %0" : "=r"(temp) : "r"(function) : "%eax");
+            register uint32_t temp;
+            __asm__ ("movl %1, %%eax\n"
+                     "cpuid\n"
+                     "mov %%eax, %0" : "=r"(temp) : "r"(function));
             return (temp);
         }
         case CR_EBX:
         {
-			register uint32_t temp;
-			__asm__ ("movl %1, %%eax\n"
-					 "cpuid\n"
-					 "mov %%ebx, %0" : "=r"(temp) : "r"(function) : "%eax", "%ebx");
+            register uint32_t temp;
+            __asm__ ("movl %1, %%eax\n"
+                     "cpuid\n"
+                     "mov %%ebx, %0" : "=r"(temp) : "r"(function));
             return (temp);
         }
         case CR_ECX:
         {
-			register uint32_t temp;
-			__asm__ ("movl %1, %%eax\n"
-					 "cpuid\n"
-					 "mov %%ecx, %0" : "=r"(temp) : "r"(function) : "%eax", "%ecx");
+            register uint32_t temp;
+            __asm__ ("movl %1, %%eax\n"
+                     "cpuid\n"
+                     "mov %%ecx, %0" : "=r"(temp) : "r"(function));
             return (temp);
         }
         case CR_EDX:
         {
-			register uint32_t temp;
-			__asm__ ("movl %1, %%eax\n"
-					 "cpuid\n"
-					 "mov %%edx, %0" : "=r"(temp) : "r"(function) : "%eax", "%edx");
+            register uint32_t temp;
+            __asm__ ("movl %1, %%eax\n"
+                     "cpuid\n"
+                     "mov %%edx, %0" : "=r"(temp) : "r"(function));
             return (temp);
         }
         default:

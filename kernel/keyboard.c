@@ -118,7 +118,6 @@ static KEY_t scancodeToKey(uint8_t scancode, bool* make)
         else if (prevScancode == 0xE1) // Second or third byte of E1 code. HACK: We assume, that all E1 codes mean the pause key
         {
             byteCounter++;
-            
             if (byteCounter == 3)
             {
                 return (KEY_PAUSE);
@@ -145,7 +144,6 @@ static char keyToASCII(KEY_t key)
         {
             retchar = keyToASCII_shiftAltGr[key];
         }
-        
         if (!(pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT]) || retchar == 0) // if shift is not pressed or if there is no key specified for ShiftAltGr (so retchar is still 0)
         {
             retchar = keyToASCII_altGr[key];
@@ -157,7 +155,6 @@ static char keyToASCII(KEY_t key)
         {
             retchar = keyToASCII_shift[key];
         }
-        
         if (!(pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT]) || retchar == 0) // if shift is not pressed or if retchar is still 0
         {
             retchar = keyToASCII_default[key];
@@ -172,7 +169,6 @@ static char keyToASCII(KEY_t key)
             console_display(KERNELCONSOLE_ID);
             return (0);
         }
-        
         if (ctoi(retchar) != -1)
         {
             console_display(1+ctoi(retchar));
@@ -184,11 +180,10 @@ static char keyToASCII(KEY_t key)
         if(key == KEY_ESC || retchar == 'e')
         {
             list_t* list = console_displayed->tasks;
-            
             for(dlelement_t* e = list->head; e != 0;)
             {
                 task_t* task = e->data;
-                
+
                 if(task->pid != 0)
                 {
                     kill(task);
@@ -239,13 +234,11 @@ static void keyboard_handler(registers_t* r)
         {
             event_issue(((task_t*)(e->data))->eventQueue, EVENT_KEY_UP, &key, sizeof(KEY_t));
         }
-        
         return;
     }
 
     // Find out ASCII representation of key. Issue events.
     char ascii = keyToASCII(key);
-    
     if (ascii)
     {
         for (dlelement_t* e = console_displayed->tasks->head; e != 0; e = e->next)
@@ -266,7 +259,7 @@ char getch()
         {
             waitForEvent(0);
         }
-        
+
         ev = event_poll(&ret, 1, EVENT_NONE);
     }
     return (ret);

@@ -12,10 +12,6 @@
 #include "gui_button.h"
 
 
-extern char mouse_bl;
-extern int32_t mouse_x;
-extern int32_t mouse_y;
-
 // cursor
 extern BMPInfo_t cursor_start;
 
@@ -35,7 +31,7 @@ void StartGUI()
 
     while (!keyPressed(KEY_ESC))
     {
-        if (mouse_bl == 1)
+        if (mouse_buttons & BUTTON_LEFT)
         {
             video_drawString(video_currentMode->device, "left Mouse Button Pressed", 10, 2);
 

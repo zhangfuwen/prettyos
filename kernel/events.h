@@ -12,6 +12,8 @@ typedef enum
 {
     EVENT_NONE, EVENT_BUFFER_TO_SMALL, EVENT_OVERFLOW,
     EVENT_KEY_DOWN, EVENT_KEY_UP, EVENT_TEXT_ENTERED,          // -> c.f. keyboard.h/c
+    EVENT_MOUSE_BUTTON_DOWN, EVENT_MOUSE_BUTTON_UP,
+    EVENT_MOUSE_MOVE, EVENT_MOUSE_WHEEL_MOVED,                 // -> c.f. mouse.h/c
     EVENT_TCP_CONNECTED, EVENT_TCP_RECEIVED, EVENT_TCP_CLOSED, // -> c.f. tcp.h/c
     EVENT_UDP_RECEIVED                                         // -> c.f. udp.h/c
 } EVENT_t;
