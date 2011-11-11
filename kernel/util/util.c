@@ -387,7 +387,7 @@ inline char toUpper(char c)
 
 char* toupper(char* s)
 {
-    for (int i =0; s[i] != 0; i++)
+    for (size_t i = 0; s[i] != 0; i++)
     {
         s[i] = toUpper(s[i]);
     }
@@ -396,7 +396,7 @@ char* toupper(char* s)
 
 char* tolower(char* s)
 {
-    for (int i=0; s[i] != 0; i++)
+    for (size_t i = 0; s[i] != 0; i++)
     {
         s[i] = toLower(s[i]);
     }
@@ -561,21 +561,6 @@ void ftoa(float f, char* buffer)
 }
 
 
-uint32_t alignUp(uint32_t val, uint32_t alignment)
-{
-    if (!alignment)
-        return val;
-    --alignment;
-    return (val+alignment) & ~alignment;
-}
-
-uint32_t alignDown(uint32_t val, uint32_t alignment)
-{
-    if (!alignment)
-        return val;
-    return val & ~(alignment-1);
-}
-
 uint8_t BCDtoDecimal(uint8_t packedBCDVal)
 {
     return ((packedBCDVal >> 4) * 10 + (packedBCDVal & 0xF));
@@ -640,11 +625,11 @@ void bootscreen()
     textColor(GRAY);
     puts("##                  ");
     textColor(TEXT);
-    puts("#");
+    putch('#');
     textColor(GRAY);
     puts("#   ");
     textColor(TEXT);
-    puts("#");
+    putch('#');
     textColor(GRAY);
     puts("#             #");
     textColor(TEXT);

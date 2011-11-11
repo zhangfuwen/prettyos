@@ -233,7 +233,7 @@ void* malloc(uint32_t size, uint32_t alignment, char* comment)
             regions[i].reserved = true;
             strncpy(regions[i].comment, comment, 20);
             regions[i].comment[20] = 0;
-            regions[i].number   = ++consecutiveNumber;
+            regions[i].number = ++consecutiveNumber;
 
             kdebug(3, "%Xh ", regionAddress);
 

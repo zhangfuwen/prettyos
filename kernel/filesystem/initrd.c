@@ -50,11 +50,12 @@ disk_t* ramdisk_install()
     return (&RAMdisk);
 }
 
-void* initrd_install(disk_t* disk, size_t partitionID, size_t size)
+void* initrd_install(disk_t* disk, size_t partitionID)
 {
-    void* ramdisk_start = malloc(size, 0, "initrd-RAMD-start");
+    disk->size = (uintptr_t)&file_data_end - (uintptr_t)&file_data_start;
+    void* ramdisk_start = malloc(disk->size, 0, "initrd-RAMD-start");
     // shell via incbin in data.asm
-    memcpy(ramdisk_start, &file_data_start, (uintptr_t)&file_data_end - (uintptr_t)&file_data_start);
+    memcpy(ramdisk_start, &file_data_start, disk->size);
 
     /// TODO: ==> device/filesystem manager
     fs_root = install_initrd(ramdisk_start);

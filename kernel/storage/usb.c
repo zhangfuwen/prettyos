@@ -673,7 +673,7 @@ static void showStringDescriptor(struct usb_stringDescriptor* d)
                 }
             }
         }
-        printf("\n");
+        putch('\n');
         textColor(TEXT);
     }
 }
@@ -703,7 +703,7 @@ static void showUnicodeStringDescriptor(struct usb_stringDescriptorUnicode* d, u
             }
         }
       #ifdef _USB_TRANSFER_DIAGNOSIS_
-        printf("\t");
+        putch('\t');
         textColor(TEXT);
       #endif
 

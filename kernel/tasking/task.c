@@ -268,12 +268,11 @@ uint32_t task_switch(task_t* newTask)
 {
     task_switching = false;
 
-    if (newTask->pageDirectory != currentTask->pageDirectory) // Switch page directory only if the new task has a different one than the current task
-        paging_switch (newTask->pageDirectory);
-
     currentTask = newTask;
 
     tss_switch((uintptr_t)currentTask->kernelStack, currentTask->esp, currentTask->ss); // esp0, esp, ss
+
+    paging_switch(currentTask->pageDirectory);
 
     #ifdef _TASKING_DIAGNOSIS_
     textColor(TEXT);
@@ -466,7 +465,7 @@ void task_log(task_t* t)
         textColor(TEXT);
     }
 
-    printf("\n");
+    putch('\n');
 }
 
 

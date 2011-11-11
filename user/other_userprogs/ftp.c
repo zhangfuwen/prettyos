@@ -300,7 +300,7 @@ int main()
                     strcat(command,"RETR ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
-                    printf("\n");
+                    putchar('\n');
                     tcp_send(control, "TYPE A\r\n", 8);
                 }
                 else if (*key == KEY_F2)
@@ -322,7 +322,7 @@ int main()
                     strcat(command,filename);
                     strcat(command,"\r\n");
                     memset(fileData, 0, 20000);
-                    printf("\n");
+                    putchar('\n');
                     if (mode[0] == 'I')
                     {
                         binaryFileTransfer = 1;
@@ -344,7 +344,7 @@ int main()
                     strcat(command,"STOR ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
-                    printf("\n");
+                    putchar('\n');
                     tcp_send(control, "TYPE A\r\n", 8);
                 }
                 else if (*key == KEY_F4)
@@ -357,7 +357,7 @@ int main()
                     strcat(command,"DELE ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
-                    printf("\n");
+                    putchar('\n');
                     tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F5)
@@ -370,7 +370,7 @@ int main()
                     strcat(command,"MKD ");
                     strcat(command,dirname);
                     strcat(command,"\r\n");
-                    printf("\n");
+                    putchar('\n');
                     tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F6)
@@ -383,7 +383,7 @@ int main()
                     strcat(command,"RMD ");
                     strcat(command,filename);
                     strcat(command,"\r\n");
-                    printf("\n");
+                    putchar('\n');
                     tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F7)
@@ -396,7 +396,7 @@ int main()
                     strcat(command,"CWD ");
                     strcat(command,dirname);
                     strcat(command,"\r\n");
-                    printf("\n");
+                    putchar('\n');
                     tcp_send(control, command, strlen(command));
                 }
                 else if (*key == KEY_F8)
@@ -431,7 +431,7 @@ int main()
                     strcat(command,"\r\n");
                     char tempCommand[200];
                     snprintf(tempCommand, 200, "RNFR %s\r\n", oldFilename);
-                    printf("\n");
+                    putchar('\n');
                     tcp_send(control, tempCommand, strlen(tempCommand));
                 }
                 else if (*key == KEY_F11)
@@ -442,7 +442,7 @@ int main()
                     printf("\nEnter new file/directory permissions (e.g. 644):\n");
                     char permissions[3];
                     gets(permissions);
-                    printf("\n");
+                    putchar('\n');
                     memset(command,0,200);
                     snprintf(command, 200, "SITE CHMOD %s %s\r\n", permissions, filename);
                     tcp_send(control, command, strlen(command));

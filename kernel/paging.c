@@ -54,7 +54,7 @@ uint32_t paging_install()
         // Page table entries, identity mapping
         for (uint32_t j=0; j<1024; ++j)
         {
-            kernelPageDirectory->tables[i]->pages[j] = addr | MEM_PRESENT | MEM_WRITE;
+            kernelPageDirectory->tables[i]->pages[j] = addr | MEM_PRESENT | MEM_WRITE | MEM_NOTLBUPDATE;
             addr += PAGESIZE;
         }
     }
@@ -66,7 +66,7 @@ uint32_t paging_install()
     for (uint32_t i = 0; i < kernelpts; i++)
     {
         kernelPageDirectory->tables[0x300 + i] = heap_pts + i;
-        kernelPageDirectory->codes [0x300 + i] = (uint32_t)kernelPageDirectory->tables[0x300 + i] | MEM_PRESENT | MEM_WRITE;
+        kernelPageDirectory->codes [0x300 + i] = (uint32_t)(heap_pts + i) | MEM_PRESENT | MEM_WRITE;
     }
 
     // Tell CPU to enable paging
@@ -114,13 +114,9 @@ static void physSetBits(uint32_t addrBegin, uint32_t addrEnd, bool reserved)
     for (uint32_t j=start; j<end; ++j)
     {
         if (reserved)
-        {
-            bittable[j/32] |= BIT(j%32);
-        }
+            SET_BIT(bittable[j/32], j%32);
         else
-        {
-            bittable[j/32] &= ~BIT(j%32);
-        }
+            CLEAR_BIT(bittable[j/32], j%32);
     }
 }
 
@@ -192,7 +188,8 @@ static uint32_t physMemInit()
     physSetBits(0x00000000, 20*1024*1024, true);
 
     // Reserve the region of the kernel code
-    physSetBits((uint32_t)&_kernel_beg, (uint32_t)&_kernel_end, true); // from linker script
+    if((uintptr_t)&_kernel_end >= 20*1024*1024)
+        physSetBits((uint32_t)&_kernel_beg, (uint32_t)&_kernel_end, true);
 
     kdebug(3, "Highest available RAM: %Xh\n", dwordCount*32*4096);
 
@@ -203,16 +200,19 @@ static uint32_t physMemInit()
 
 void paging_switch(pageDirectory_t* pd)
 {
-  #ifdef _PAGING_DIAGNOSIS_
-    textColor(MAGENTA);
-    printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X", pd, pd->physAddr);
-    textColor(TEXT);
-  #endif
-    currentPageDirectory = pd;
-    __asm__ volatile("mov %0, %%cr3" : : "r" (pd->physAddr));
+    if(pd != currentPageDirectory) // Switch page directory only if the new one is different from the old one
+    {
+      #ifdef _PAGING_DIAGNOSIS_
+        textColor(MAGENTA);
+        printf("\nDEBUG: paging_switch: pd=%X, pd->physAddr=%X", pd, pd->physAddr);
+        textColor(TEXT);
+      #endif
+        currentPageDirectory = pd;
+        __asm__ volatile("mov %0, %%cr3" : : "r" (pd->physAddr));
+    }
 }
 
-static void invalidateTLBEntry(uint8_t* p)
+static inline void invalidateTLBEntry(uint8_t* p)
 {
     __asm__ volatile("invlpg %0" : : "m"(*p));
 }
@@ -231,7 +231,7 @@ static uint32_t physMemAlloc()
             __asm__ volatile("bsfl %1, %0" : "=r"(bitnr) : "r"(~bittable[firstFreeDWORD]));
 
             // Set the page to "reserved" and return the frame's address
-            bittable[firstFreeDWORD] |= BIT(bitnr % 32);
+            SET_BIT(bittable[firstFreeDWORD], bitnr % 32);
             return ((firstFreeDWORD * 32 + bitnr) * PAGESIZE);
         }
     }
@@ -252,7 +252,7 @@ static void physMemFree(uint32_t addr)
     }
 
     // Set the page to "free"
-    bittable[bitnr/32] &= ~BIT(bitnr%32);
+    CLEAR_BIT(bittable[bitnr/32], bitnr%32);
 }
 
 bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAGS_t flags)
@@ -302,13 +302,13 @@ bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAG
             pd->tables[pagenr/1024] = pt;
 
             // Set physical address and flags
-            pd->codes[pagenr/1024] = paging_getPhysAddr(pt) | MEM_PRESENT | MEM_WRITE | flags;
+            pd->codes[pagenr/1024] = paging_getPhysAddr(pt) | MEM_PRESENT | MEM_WRITE | (flags&(~MEM_NOTLBUPDATE));
         }
 
         // Setup the page
         pt->pages[pagenr%1024] = physAddress | flags | MEM_PRESENT;
 
-        if(pd == currentTask->pageDirectory)
+        if(pd == currentPageDirectory)
             invalidateTLBEntry(virtAddress + done*PAGESIZE);
 
         if (flags & MEM_USER)
@@ -332,7 +332,7 @@ void paging_free(pageDirectory_t* pd, void* virtAddress, uint32_t size)
         uint32_t* page = &pd->tables[pagenr/1024]->pages[pagenr%1024];
         uint32_t physAddress = *page & 0xFFFFF000;
         *page = 0;
-        if(pd == currentTask->pageDirectory)
+        if(pd == currentPageDirectory)
             invalidateTLBEntry((uint8_t*)(pagenr*PAGESIZE));
 
         // Free memory and adjust variables for next loop run
@@ -361,10 +361,9 @@ pageDirectory_t* paging_createUserPageDirectory()
 
 void paging_destroyUserPageDirectory(pageDirectory_t* pd)
 {
-    // The kernel's page directory must not be destroyed
-    ASSERT(pd != kernelPageDirectory);
+    ASSERT(pd != kernelPageDirectory); // The kernel's page directory must not be destroyed
     if(pd == currentPageDirectory)
-        paging_switch(kernelPageDirectory);
+        paging_switch(kernelPageDirectory); // Leave current PD, if we attempt to delete it
 
     // Free all memory that is not from the kernel
     for (uint32_t i=0; i<1024; i++)

@@ -58,15 +58,15 @@ KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/
 NASMFLAGS= -Ox -f elf
 ifeq ($(COMPILER),CLANG)
 	ifeq ($(CONFIG),RELEASE)
-		CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
 	else
-		CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
 	endif
 else
 	ifeq ($(CONFIG),RELEASE)
-		CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
 	else
-		CCFLAGS= -c -std=c99 -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude
+		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude
 	endif
 endif
 LDFLAGS= -nostdlib --warn-common
@@ -86,18 +86,19 @@ vpath %.o $(OBJDIR)
 all: FloppyImage.img
 
 $(STAGE1DIR)/boot.bin: $(STAGE1DIR)/boot.asm $(STAGE1DIR)/*.inc
-	$(NASM) -f bin $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
+	$(NASM) -f bin -Ox $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
 $(STAGE2DIR)/BOOT2.BIN: $(STAGE2DIR)/boot2.asm $(STAGE2DIR)/*.inc
-	$(NASM) -f bin $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
+	$(NASM) -f bin -Ox $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
-$(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
-	$(NASM) $(USERDIR)/vm86/vidswtch.asm -o $(USERDIR)/vm86/VIDSWTCH.COM
-$(USERDIR)/vm86/APM.COM: $(USERDIR)/vm86/apm.asm
-	$(NASM) $(USERDIR)/vm86/apm.asm -o $(USERDIR)/vm86/APM.COM
+$(USERDIR)/vm86/vidswtch.COM: $(USERDIR)/vm86/vidswtch.asm
+	$(NASM) $(USERDIR)/vm86/vidswtch.asm -Ox -o $(USERDIR)/vm86/vidswtch.COM
+$(USERDIR)/vm86/apm.COM: $(USERDIR)/vm86/apm.asm
+	$(NASM) $(USERDIR)/vm86/apm.asm -Ox -o $(USERDIR)/vm86/apm.COM
 
-$(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(USERDIR)/vm86/APM.COM $(KERNEL_OBJECTS)
-#	because changes in the Shell should change data.o we build data.o everytimes
+$(OBJDIR)/$(KERNELDIR)/data.o: $(KERNELDIR)/data.asm $(USERDIR)/vm86/vidswtch.COM $(USERDIR)/vm86/apm.COM
 	$(NASM) $(KERNELDIR)/data.asm $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$(KERNELDIR)/data.o
+
+$(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(OBJDIR)/$(KERNELDIR)/data.o $(KERNEL_OBJECTS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map documentation/kernel.map -o $(KERNELDIR)/KERNEL.BIN
 #	$(STRIP) $(KERNELDIR)/KERNEL.BIN
 
@@ -111,7 +112,7 @@ userlibs:
 	$(MAKE) --no-print-directory -C $(STDLIBC)
 	$(MAKE) --no-print-directory -C $(USERTOOLS)
 
-$(KERNELDIR)/initrd.dat: shell
+$(KERNELDIR)/initrd.dat: $(USERRDDIR)/info.txt shell
 	$(MKINITRD) $(USERRDDIR)/info.txt info $(SHELLDIR)/SHELL.ELF shell
 	$(MV) initrd.dat $(KERNELDIR)/initrd.dat
 
@@ -126,8 +127,7 @@ ifeq ($(OS),WINDOWS)
 	$(RM) $(KERNELDIR)\KERNEL.BIN
 	$(RM) $(KERNELDIR)\initrd.dat
 	$(RM) $(OBJDIR)\$(KERNELDIR)\*.o
-	$(RM) $(USERDIR)\vm86\VIDSWTCH.COM
-	$(RM) $(USERDIR)\vm86\APM.COM
+	$(RM) $(USERDIR)\vm86\*.COM
 	$(RM) documentation\*.map
 else
 	$(RM) $(STAGE1DIR)/boot.bin
@@ -135,8 +135,7 @@ else
 	$(RM) $(KERNELDIR)/KERNEL.BIN
 	$(RM) $(KERNELDIR)/initrd.dat
 	find $(OBJDIR)/$(KERNELDIR) -name '*.o' -delete
-	$(RM) $(USERDIR)/vm86/VIDSWTCH.COM
-	$(RM) $(USERDIR)/vm86/APM.COM
+	$(RM) $(USERDIR)/vm86/*.COM
 	$(RM) documentation/*.map
 endif
 	$(MAKE) --no-print-directory -C $(SHELLDIR) clean

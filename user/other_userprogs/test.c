@@ -113,7 +113,7 @@ void taskingTestFunc1()
     {
         ///mutex_lock(taskingTestMutex); // Let only one of the threads inside the critical section
         for (int i = 0; i < 20; i++)
-            printf("A");
+            putchar('A');
         ///mutex_unlock(taskingTestMutex);
     }
 }
@@ -123,7 +123,7 @@ void taskingTestFunc2()
     {
         ///mutex_lock(taskingTestMutex); // Let only one of the threads inside the critical section
         for (int i = 0; i < 20; i++)
-            printf("B");
+            putchar('B');
         ///mutex_unlock(taskingTestMutex);
     }
 }

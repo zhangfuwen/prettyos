@@ -115,7 +115,7 @@ uint8_t ehci_showStatusbyteQTD(ehci_qtd_t* qTD)
 {
     if (qTD->token.status != 0x00)
     {
-        printf("\n");
+        putch('\n');
         textColor(ERROR);
         if (qTD->token.status & BIT(6)) { printf("\nHalted - serious error at the device/endpoint"); }
         if (qTD->token.status & BIT(5)) { printf("\nData Buffer Error (overrun or underrun)"); }
@@ -151,7 +151,7 @@ static void enableAsyncScheduler(ehci_t* e)
             sleepMilliSeconds(10);
           #ifdef _EHCI_DIAGNOSIS_
             textColor(LIGHT_MAGENTA);
-            printf(">");
+            putch('>');
             textColor(TEXT);
           #endif
         }
@@ -268,7 +268,7 @@ void ehci_addToAsyncScheduler(ehci_t* e, usb_transfer_t* transfer, uint8_t veloc
 
           #ifdef _EHCI_DIAGNOSIS_
             textColor(LIGHT_MAGENTA);
-            printf("#");
+            putch('#');
             textColor(TEXT);
           #endif
         }

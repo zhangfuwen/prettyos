@@ -70,7 +70,7 @@ int main()
         if ((numbers = (int*)malloc(amount * sizeof(*numbers))))
         {
             printf("Random or Custom? (r/c): ");
-            printf("\n");
+            putchar('\n');
             size_t i;
             if (getAnswer('c', 'r'))
             {
@@ -92,7 +92,7 @@ int main()
             is_sorted(numbers, amount);
             printf("Elapsed time: %i\n", getCurrentMilliseconds() - t);
             printf("Do you want to show the numbers? (y/n): ");
-            printf("\n");
+            putchar('\n');
             if (getAnswer('y', 'n'))
             {
                 for (i = 0; i < amount; i++)

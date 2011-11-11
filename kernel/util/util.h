@@ -29,6 +29,9 @@
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b))
 void panic_assert(const char* file, uint32_t line, const char* desc);
 
+#define CLEAR_BIT(val, bit) __asm__ volatile("btr %1, %0" : "+r"(val) : "r"(bit))
+#define SET_BIT(val, bit) __asm__ volatile("bts %1, %0" : "+r"(val) : "r"(bit))
+
 
 static inline void nop() { __asm__ volatile ("nop"); } // Do nothing
 static inline void hlt() { __asm__ volatile ("hlt"); } // Wait until next interrupt
@@ -77,6 +80,21 @@ static inline void outportl(uint16_t port, uint32_t val)
     __asm__ volatile ("outl %%eax,%%dx" : : "a"(val), "d"(port));
 }
 
+static inline uint32_t alignUp(uint32_t val, uint32_t alignment)
+{
+    if (!alignment)
+        return val;
+    --alignment;
+    return (val+alignment) & ~alignment;
+}
+
+static inline uint32_t alignDown(uint32_t val, uint32_t alignment)
+{
+    if (!alignment)
+        return val;
+    return val & ~(alignment-1);
+}
+
 void      memshow(const void* start, size_t count, bool alpha);
 void*     memset(void* dest, int8_t val, size_t bytes);
 uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words);
@@ -120,9 +138,6 @@ void   ftoa(float f, char* buffer);
 void   i2hex(uint32_t val, char* dest, int32_t len);
 
 uint8_t BCDtoDecimal(uint8_t packedBCDVal);
-
-uint32_t alignUp(uint32_t val, uint32_t alignment);
-uint32_t alignDown(uint32_t val, uint32_t alignment);
 
 uint32_t abs(int32_t arg);
 double   fabs(double x);

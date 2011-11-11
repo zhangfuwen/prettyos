@@ -29,12 +29,12 @@ void serial_init()
     {
         outportb(IOports[i] + 1, 0x00); // Disable all interrupts
         outportb(IOports[i] + 3, 0x80); // Enable DLAB (set baud rate divisor)
-        //outportb(IOports[i] + 0, 0x03); // Set divisor to 3 (lo byte) 38400 baud (DO NOT TRY 0!!!)
-        outportb(IOports[i] + 0, 0x01); // Set divisor to 1 (lo byte)
+        outportb(IOports[i] + 0, 0x03); // Set divisor to 3 (lo byte) 38400 baud (DO NOT TRY 0!!!)
+        //outportb(IOports[i] + 0, 0x01); // Set divisor to 1 (lo byte)
         outportb(IOports[i] + 1, 0x00); //                  (hi byte)
         outportb(IOports[i] + 3, 0x03); // 8 bits, no parity, one stop bit
         outportb(IOports[i] + 2, 0xC7); // Enable FIFO, clear them, with 14-byte threshold
-        outportb(IOports[i] + 4, 0x0B); // IRQs enabled, RTS/DSR set
+        outportb(IOports[i] + 4, 0x0B); // OUT2, RTS and DSR set
         textColor(LIGHT_GRAY);
         printf("\n     => COM %d:", i+1);
         printf("\n       => IO-port: ");

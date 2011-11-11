@@ -32,6 +32,6 @@ typedef struct
 
 // Installs the initial ramdisk. It gets passed the address, and returns a completed filesystem node.
 disk_t* ramdisk_install();
-void*   initrd_install(disk_t* disk, size_t partitionID, size_t size);
+void*   initrd_install(disk_t* disk, size_t partitionID);
 
 #endif

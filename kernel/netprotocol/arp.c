@@ -80,7 +80,7 @@ void arp_showTable(arpTable_t* cache)
     {
         arpTableEntry_t* entry = e->data;
         size_t length = printf("%I\t", entry->IP);
-        if (length < 9) printf("\t");
+        if (length < 9) putch('\t');
         printf("  %M\t%s\t  %u\n", entry->MAC, entry->dynamic?"dynamic":"static", entry->seconds);
     }
     textColor(TABLE_HEADING);

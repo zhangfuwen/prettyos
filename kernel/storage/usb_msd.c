@@ -627,26 +627,16 @@ void testMSD(usb_device_t* device)
     textColor(TEXT);
   #endif
 
-    char capacityBuffer[8];
+    uint32_t capacityBuffer[2];
     usb_sendSCSICommand(device, device->numInterfaceMSD, device->numEndpointOutMSD, device->numEndpointInMSD,
                         0x25 /*SCSI opcode*/, 0 /*LBA*/, 8 /*Bytes In*/, capacityBuffer, 0);
 
-    uint32_t lastLBA     = (*((uint8_t*)capacityBuffer+0)) * 0x1000000 +
-                           (*((uint8_t*)capacityBuffer+1)) *   0x10000 +
-                           (*((uint8_t*)capacityBuffer+2)) *     0x100 +
-                           (*((uint8_t*)capacityBuffer+3));
+    device->disk->size = (capacityBuffer[0]+1)*capacityBuffer[1];
 
-    uint32_t blocksize   = (*((uint8_t*)capacityBuffer+4)) * 0x1000000 +
-                           (*((uint8_t*)capacityBuffer+5)) *   0x10000 +
-                           (*((uint8_t*)capacityBuffer+6)) *     0x100 +
-                           (*((uint8_t*)capacityBuffer+7));
-
-    uint32_t capacityMiB = ((lastLBA+1)/0x100000) * blocksize;
-
-    usbMSDVolumeMaxLBA   = lastLBA;
+    usbMSDVolumeMaxLBA = capacityBuffer[0];
 
     textColor(IMPORTANT);
-    printf("\n\nCapacity: %u MiB, Last LBA: %u, block size: %u\n", capacityMiB, lastLBA, blocksize);
+    printf("\n\nCapacity: %Sa, Last LBA: %u, block size: %u\n", device->disk->size, capacityBuffer[0], capacityBuffer[1]);
     textColor(TEXT);
 
     analyzeDisk(device->disk);

@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.171 - Rev: 1371";
+const char* const version = "0.0.3.172 - Rev: 1372";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -47,9 +47,6 @@ bool fpu_install(); // fpu.c
 void fpu_test();    // fpu.c
 
 extern diskType_t* ScreenDest; // HACK for screenshots
-
-// RAM Disk
-static const uint32_t RAMDISKSIZE = 0x100000;
 
 // APIC
 bool apic_install()
@@ -200,14 +197,7 @@ static void showMemorySize()
     int64_t ramsize;
     ipc_getInt("PrettyOS/RAM (Bytes)", &ramsize);
 
-    if (ramsize >= 0x40000000) // More than 1 GiB
-    {
-        printf("%u GiB  (%u MiB, %u Bytes)\n", (uint32_t)(ramsize>>30), (uint32_t)(ramsize>>20), (uint32_t)ramsize);
-    }
-    else
-    {
-        printf("%u MiB  (%u Bytes)\n", (uint32_t)(ramsize>>20), (uint32_t)ramsize);
-    }
+    printf("%Sa (%u Bytes)\n", (size_t)ramsize, (uint32_t)ramsize);
     textColor(LIGHT_GRAY);
 }
 
@@ -236,9 +226,9 @@ void main(multiboot_t* mb_struct)
 
 
   #ifdef _RAMDISK_DIAGNOSIS_
-    void* ramdisk_start = initrd_install(ramdisk_install(), 0, RAMDISKSIZE);
+    void* ramdisk_start = initrd_install(ramdisk_install(), 0);
   #else
-    initrd_install(ramdisk_install(), 0, RAMDISKSIZE);
+    initrd_install(ramdisk_install(), 0);
   #endif
 
   #ifdef _DEVMGR_DIAGNOSIS_

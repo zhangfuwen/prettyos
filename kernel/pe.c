@@ -170,9 +170,9 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
         // Copy the code, using the user's page directory
         cli();
-        paging_switch (pd);
+        paging_switch(pd);
         memcpy((void*)(sectionTable[i].virtAddress + optHeader->imageBase), file+sectionTable[i].rawDataPointer, sectionTable[i].rawDataSize);
-        paging_switch (currentTask->pageDirectory);
+        paging_switch(currentTask->pageDirectory);
         sti();
     }
 

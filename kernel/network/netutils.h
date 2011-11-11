@@ -5,7 +5,11 @@
 
 // hton = Host To Network
 #define htons(v) ((((v) >> 8) & 0xFF) | (((v) & 0xFF) << 8))
-#define htonl(v) ((((v) >> 24) & 0xFF) | (((v) >> 8) & 0xFF00) | (((v) & 0xFF00) << 8) | (((v) & 0xFF) << 24))
+static inline uint32_t htonl(uint32_t v)
+{
+    __asm__ volatile("bswap %0" : "+r"(v));
+    return(v);
+}
 // ntoh = Network To Host
 #define ntohs(v) htons(v)
 #define ntohl(v) htonl(v)

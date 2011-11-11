@@ -293,7 +293,7 @@ EVALUATION: // evaluation of entry
             puts("Please enter the volume label: ");
             char label[20];
             gets(label);
-            puts("\n");
+            putchar('\n');
             partition_format(part, atoi(type), label);
         }
         else if (strcmp(entry, "reboot") == 0)

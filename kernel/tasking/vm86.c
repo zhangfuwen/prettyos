@@ -267,9 +267,9 @@ void vm86_initPageDirectory(pageDirectory_t* pd, void* address, void* data, size
     paging_alloc(pd, paddress, psize, MEM_USER | MEM_WRITE);
     // Copy vm86 data
     cli();
-    paging_switch (pd);
+    paging_switch(pd);
     memcpy(address, data, size);
-    paging_switch (currentTask->pageDirectory);
+    paging_switch(currentTask->pageDirectory);
     sti();
 }
 

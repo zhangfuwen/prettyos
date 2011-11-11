@@ -25,12 +25,12 @@ int main()
     iSetCursor(0, 7);
     textColor(0x0F);
 
-    printf("\n");
+    putchar('\n');
     printf(" => Initializing...                                 ");
 
 
     textColor(0x07);
-    printf("[");
+    putchar('[');
     textColor(0x0A);
     printf("OK");
     textColor(0x07);
@@ -43,7 +43,7 @@ int main()
     uint32_t connection = tcp_connect(IP, 80);
 
     textColor(0x07);
-    printf("[");
+    putchar('[');
     textColor(0x0A);
     printf("OK");
     textColor(0x07);
@@ -53,7 +53,7 @@ int main()
     printf(" => Listening...                                    ");
 
     textColor(0x07);
-    printf("[");
+    putchar('[');
     textColor(0x0A);
     printf("OK");
     textColor(0x07);
@@ -87,7 +87,7 @@ int main()
             case EVENT_TCP_RECEIVED:
             {
                 textColor(0x07);
-                printf("[");
+                putchar('[');
                 textColor(0x0A);
                 printf("OK");
                 textColor(0x07);
@@ -167,7 +167,7 @@ int main()
                 strcat(bstr,"<br>\n");
 
                 textColor(0x07);
-                printf("[");
+                putchar('[');
                 textColor(0x0A);
                 printf("OK");
                 textColor(0x07);
@@ -323,7 +323,7 @@ int main()
                     snprintf(rstr, 10000, "%s\r\n%s", astr, bstr);
 
                     textColor(0x07);
-                    printf("[");
+                    putchar('[');
                     textColor(0x0A);
                     printf("OK");
                     textColor(0x07);
@@ -351,14 +351,14 @@ int main()
                     millis = (getCurrentMilliseconds() - millis);
 
                     textColor(0x07);
-                    printf("[");
+                    putchar('[');
                     textColor(0x0A);
                     printf("OK");
                     textColor(0x07);
                     printf("]\n");
                     textColor(0x0F);
 
-                    printf("\n");
+                    putchar('\n');
                     printf(" => Statistics:\n");
                     printf("  -> Document-length was %u bytes.\n",strlen(rstr));
                     printf("  -> It took %u millisecond(s) to send\n",millis);
@@ -370,11 +370,11 @@ int main()
 
 
                 //**********************************************************#);
-                printf("\n");
+                putchar('\n');
                 printf(" => Closing connection...                           ");
                 tcp_close(connection);
                 textColor(0x07);
-                printf("[");
+                putchar('[');
                 textColor(0x0A);
                 printf("OK");
                 textColor(0x07);
@@ -440,13 +440,13 @@ int main()
                 printf(" => Opening new connection...                       ");
                 connection = tcp_connect(IP, 80);
                 textColor(0x07);
-                printf("[");
+                putchar('[');
                 textColor(0x0A);
                 printf("OK");
                 textColor(0x07);
                 printf("]\n");
 
-                printf("\n");
+                putchar('\n');
                 textColor(0x09);
                 //***************************************************************#);
                 printf(" --------------------------------------------------------");

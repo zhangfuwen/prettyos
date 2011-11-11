@@ -41,9 +41,9 @@ endif
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
 ifeq ($(COMPILER),CLANG)
-	CPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -Xclang -triple=i386-pc-unknown
+	CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -Xclang -triple=i386-pc-unknown
 else
-	CPPFLAGS= -c -std=c++0x -march=i386 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
+	CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
 endif
 LDFLAGS= -u _start -nostdlib --warn-common -nmagic
 

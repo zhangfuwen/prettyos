@@ -175,7 +175,7 @@ void network_displayArpTables()
         printf("\n\nAdapter %u: %I", i, ((network_adapter_t*)e->data)->IP);
         arp_showTable(&((network_adapter_t*)e->data)->arpTable);
     }
-    printf("\n");
+    putch('\n');
 }
 
 network_adapter_t* network_getAdapter(IP_t IP)

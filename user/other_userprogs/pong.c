@@ -1004,7 +1004,7 @@ void DrawOptionsMenu()
     {
         textColor(0x08);
     }
-    printf("[");
+    putchar('[');
     if(option_sound)
     {
         if(options_menu_selected == 0)
@@ -1037,7 +1037,7 @@ void DrawOptionsMenu()
     {
         textColor(0x08);
     }
-    printf("]");
+    putchar(']');
 
     // option_menuanimation
 
@@ -1053,7 +1053,7 @@ void DrawOptionsMenu()
     {
         textColor(0x08);
     }
-    printf("[");
+    putchar('[');
     if(option_menuanimation)
     {
         if(options_menu_selected == 1)
@@ -1086,7 +1086,7 @@ void DrawOptionsMenu()
     {
         textColor(0x08);
     }
-    printf("]");
+    putchar(']');
 
     iSetCursor(26,38);
     DrawMenuPoint("Done",options_menu_selected,2);
@@ -1191,11 +1191,11 @@ void DrawMenuPoint(char* name, uint8_t currentlySelected, uint8_t id)
 
     if( ((getCurrentMilliseconds()/ (1000/BLINKFREQ)) % 2) == 1 && currentlySelected == id)
     {
-        printf("X");
+        putchar('X');
     }
     else
     {
-        printf(" ");
+        putchar(' ');
     }
     printf(" ]");
 
@@ -1269,7 +1269,7 @@ void DrawMenuContentBox(uint16_t addlines)
     iSetCursor(0,22);
     for(uint16_t i = 0; i<addlines; i++)
     {
-        printf("\n");
+        putchar('\n');
     }
 
     textColor(0x0F);
@@ -1294,19 +1294,19 @@ void DrawMenuContentBox(uint16_t addlines)
                     break;
                 case 1:
                     printf("                   ");
-                    printf("#");
+                    putchar('#');
                     printf("\t\t\t\t        ");
                     printf("#\n");
                     break;
                 case 2:
                     printf("                   ");
-                    printf("#");
+                    putchar('#');
                     printf("\t\t\t   \t         ");
                     printf("#\n");
                     break;
                 case 4:
                     printf("                   ");
-                    printf("#");
+                    putchar('#');
                     textColor(0x07);
                     printf("======================================");
                     textColor(0x0F);
@@ -1314,13 +1314,13 @@ void DrawMenuContentBox(uint16_t addlines)
                     break;
                 case 17:
                     printf("                    ");
-                    printf("#");
+                    putchar('#');
                     printf("\t\t\t\t          ");
                     printf("#\n");
                     break;
                 case 18:
                     printf("                     ");
-                    printf("#");
+                    putchar('#');
                     printf("\t\t\t\t          ");
                     printf("#\n");
                     break;
@@ -1331,7 +1331,7 @@ void DrawMenuContentBox(uint16_t addlines)
                 case 20:
                 case 21:
                 case 23:
-                    printf("\n");
+                    putchar('\n');
                     break;
                 case 22:
                     textColor(0x0E);
@@ -1344,7 +1344,7 @@ void DrawMenuContentBox(uint16_t addlines)
                     break;
                 default:
                     printf("                   ");
-                    printf("#");
+                    putchar('#');
                     printf("\t\t\t\t          ");
                     printf("#\n");
                     break;
@@ -1557,14 +1557,14 @@ void Error(char* message, bool critical)
     textColor(0x04);
     printf("#####         #####\n");
     printf("                              ");
-    printf("#");
+    putchar('#');
     textColor(0x0C);
     printf("#####       #####");
     textColor(0x04);
     printf("#\n");
     printf("                               ");
     textColor(0x04);
-    printf("#");
+    putchar('#');
     textColor(0x0C);
     printf("####");
     textColor(0x04);
@@ -1578,7 +1578,7 @@ void Error(char* message, bool critical)
     printf("#####     #####\n");
     printf("                                ");
     textColor(0x04);
-    printf("#");
+    putchar('#');
     textColor(0x0C);
     printf("####");
     textColor(0x04);
@@ -1601,7 +1601,7 @@ void Error(char* message, bool critical)
     printf("##### #####\n");
     printf("                                  ");
     textColor(0x04);
-    printf("#");
+    putchar('#');
     textColor(0x0C);
     printf("#########");
     textColor(0x04);
@@ -1616,7 +1616,7 @@ void Error(char* message, bool critical)
     printf("#######\n");
     printf("                                    ");
     textColor(0x04);
-    printf("#");
+    putchar('#');
     textColor(0x0C);
     printf("#####");
     textColor(0x04);
@@ -1632,7 +1632,7 @@ void Error(char* message, bool critical)
     printf("                                   #########\n");
     printf("                                  ");
     textColor(0x04);
-    printf("#");
+    putchar('#');
     textColor(0x0C);
     printf("#########");
     textColor(0x04);
@@ -1647,7 +1647,7 @@ void Error(char* message, bool critical)
     printf("#####\n");
     printf("                                ");
     textColor(0x04);
-    printf("#");
+    putchar('#');
     textColor(0x0C);
     printf("####");
     textColor(0x04);
@@ -1666,7 +1666,7 @@ void Error(char* message, bool critical)
     printf("#####\n");
     printf("                              ");
     textColor(0x04);
-    printf("#");
+    putchar('#');
     textColor(0x0C);
     printf("####");
     textColor(0x04);
@@ -1678,7 +1678,7 @@ void Error(char* message, bool critical)
     printf("                              ");
     textColor(0x0C);
     printf("#####         #####\n");
-    printf("\n");
+    putchar('\n');
 
     FlipIfNeeded();
     Sound_Error();
@@ -1699,7 +1699,7 @@ void DrawMenuHeader()
     iSetCursor(0,2);
 
     textColor(0x0E);
-    printf("\n");
+    putchar('\n');
     printf("    Created: %s, %s from %s",__DATE__,__TIME__,__FILE__);
     printf("\n\n");
     printf("    ");textColor(0x99);
@@ -1734,7 +1734,7 @@ void DrawMenuHeader()
     printf("##");textColor(0x09);
     printf("    ");textColor(0x99);
     printf("##");textColor(0x09);
-    printf(" ");textColor(0x99);
+    putchar(' ');textColor(0x99);
     printf("####");textColor(0x09);
     printf("  ");textColor(0x99);
     printf("####");textColor(0x09);
@@ -1742,7 +1742,7 @@ void DrawMenuHeader()
     printf("##########");textColor(0x09);
     printf("    ");textColor(0x99);
     printf("##");textColor(0x09);
-    printf(" ");textColor(0x99);
+    putchar(' ');textColor(0x99);
     printf("##");textColor(0x09);
     printf("    ");textColor(0x99);
     printf("##");textColor(0x09);
@@ -1756,7 +1756,7 @@ void DrawMenuHeader()
     printf("##");textColor(0x09);
     printf("    ");textColor(0x99);
     printf("##");textColor(0x09);
-    printf(" ");textColor(0x99);
+    putchar(' ');textColor(0x99);
     printf("###");textColor(0x09);
     printf("  ");textColor(0x99);
     printf("##");textColor(0x09);
@@ -1766,15 +1766,15 @@ void DrawMenuHeader()
     printf("##");textColor(0x09);
     printf("  ");textColor(0x99);
     printf("##");textColor(0x09);
-    printf(" ");textColor(0x99);
+    putchar(' ');textColor(0x99);
     printf("##");textColor(0x09);
     printf("    ");textColor(0x99);
     printf("##");textColor(0x09);
-    printf(" ");textColor(0x99);
+    putchar(' ');textColor(0x99);
     printf("##");textColor(0x09);
     printf("    ");textColor(0x99);
     printf("##");textColor(0x09);
-    printf(" ");textColor(0x99);
+    putchar(' ');textColor(0x99);
     printf("##");textColor(0x09);
     printf("  ");textColor(0x99);
     printf("##");textColor(0x09);

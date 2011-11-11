@@ -162,7 +162,7 @@ void showDiskList()
     textColor(HEADLINE);
     printf("\n\nAttached disks:");
     textColor(TABLE_HEADING);
-    printf("\nType\tNumber\tName\t\tPart.\tSerial");
+    printf("\nType\tNumber\tSize\t\tName\t\tPart.\tSerial");
     printf("\n----------------------------------------------------------------------");
     textColor(TEXT);
 
@@ -186,7 +186,10 @@ void showDiskList()
             printf("\t%u", i+1); // Number
             textColor(TEXT);
 
-            printf("\t%s", disks[i]->name);   // Name of disk
+            if(printf("\t%Sa", disks[i]->size) < 8)
+                putch('\t');
+
+            printf("\t%s", disks[i]->name); // Name of disk
 
             if (strlen(disks[i]->name) < 8)
             {
@@ -203,7 +206,7 @@ void showDiskList()
                     printf("\n\t\t\t"); // Not first, indent
                 }
 
-                printf("\t%u", j); // Partition number
+                printf("\t%u\t", j); // Partition number
 
                 if (disks[i]->type == &FLOPPYDISK) // Serial
                 {
@@ -215,15 +218,15 @@ void showDiskList()
 
                     disks[i]->partition[j]->serial[12] = 0;
                     strncpy(disks[i]->partition[j]->serial, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
-                    printf("\t%s", disks[i]->partition[j]->serial);
+                    puts(disks[i]->partition[j]->serial);
                 }
                 else if (disks[i]->type == &RAMDISK)
                 {
-                    printf("\t%s", disks[i]->partition[j]->serial);
+                    puts(disks[i]->partition[j]->serial);
                 }
                 else if (disks[i]->type == &USB_MSD)
                 {
-                    printf("\t%s", ((usb_device_t*)disks[i]->data)->serialNumber);
+                    puts(((usb_device_t*)disks[i]->data)->serialNumber);
                 }
                 /// TODO: ifs should be changed to:
                 /// printf("\t%s", disks[i]->partition[j]->serial); // serial of partition
@@ -360,6 +363,7 @@ FS_ERROR analyzeDisk(disk_t* disk)
 
         disk->partition[0]         = malloc(sizeof(partition_t), 0, "partition_t");
         disk->partition[0]->start  = 0;
+        disk->partition[0]->size   = disk->size; // Whole size of disk
         disk->partition[0]->disk   = disk;
         disk->partition[0]->serial = 0;
         disk->partition[1]         = 0;
