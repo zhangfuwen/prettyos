@@ -8,6 +8,8 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include "dns.h"
+#include "dns_help.h"
 
 
 int main()
@@ -18,7 +20,8 @@ int main()
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     iSetCursor(0, 7);
-    IP_t IP = {.IP = {151,189,0,165}}; // euirc
+    IP_t IP = getAddrByName("irc.euirc.net");
+    //IP_t IP = {.IP = {94,103,170,247}}; // euirc
     uint32_t connection = tcp_connect(IP, 6667); // irc protocol
     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 

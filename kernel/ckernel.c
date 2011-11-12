@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.172 - Rev: 1372";
+const char* const version = "0.0.3.172 - Rev: 1373";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -237,7 +237,7 @@ void main(multiboot_t* mb_struct)
   #endif
 
 
-    /*TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !", "This is an educational OS!");
+    TextGUI_ShowMSG("W e l c o m e   t o   P r e t t y O S !", "This is an educational OS!");
 
     uint16_t result = TextGUI_AskYN("Question", "Are you a software developer?",TEXTGUI_YES);
 
@@ -255,7 +255,7 @@ void main(multiboot_t* mb_struct)
         default:
             TextGUI_ShowMSG("Result", "This should not happen.");
             break;
-    }*/
+    }
 
 
     // search and load shell
