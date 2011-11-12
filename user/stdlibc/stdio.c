@@ -22,12 +22,24 @@ int fclose(FILE* file); // -> Syscall
 int remove(const char* path); /// TODO
 int rename(const char* oldpath, const char* newpath); /// TODO
 int fputc(char c, FILE* file); // -> Syscall
-int putc(char c, FILE* file); /// TODO
+int putc(char c, FILE* file)
+{
+    return(fputc(c, file));
+}
 char fgetc(FILE* file); // -> Syscall
-char getc(FILE* file); /// TODO
+char getc(FILE* file)
+{
+    return(fgetc(file));
+}
 int ungetc(char c, FILE* file); /// TODO
 char* fgets(char* dest, size_t num, FILE* file); /// TODO
-int fputs(const char* src, FILE* file); /// TODO
+int fputs(const char* src, FILE* file)
+{
+    for(; *src; src++)
+        fputc(*src, file);
+    fputc('\n', file);
+    return(0);
+}
 size_t fread(void* dest, size_t size, size_t count, FILE* file)
 {
     for (size_t i = 0; i < count*size; i++)

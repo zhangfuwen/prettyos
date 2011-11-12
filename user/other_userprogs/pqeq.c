@@ -3,33 +3,32 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-
 #include "userlib.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "math.h"
 
+
 int main()
 {
-    setScrollField(0, 43); // We do not want to see scrolling output...
     puts("Berechnung quadratischer Gleichungen vom Typ x*x + p*x + q = 0");
 
-    float p, q, x1, x2;
+    float p, q;
     printf("\nBitte p eingeben: ");
 
     char str[80];
     gets(str);
     p = atof(str);
-    printf("\np= %f\n",p);
+    printf("\np= %f\n", p);
     printf("Bitte q eingeben: ");
     gets(str);
     q = atof(str);
-    printf("\nq= %f\n",q);
+    printf("\nq= %f\n", q);
 
-    x1 = -p/2 + sqrt(p*p/4.0 - q);
-    x2 = -p/2 - sqrt(p*p/4.0 - q);
+    float x1 = -p/2 + sqrt(p*p/4.0 - q);
+    float x2 = -p/2 - sqrt(p*p/4.0 - q);
 
-    printf("x1 = %f  x2 = %f\n\n", x1, x2);
+    printf("x1 = %f  and  x2 = %f\n\n", x1, x2);
 
     printf("Press key.");
     getchar();

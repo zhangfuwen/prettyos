@@ -3,12 +3,10 @@
 *  Lizenz und Haftungsausschluss für die Verwendung dieses Sourcecodes siehe unten
 */
 
-
 #include "userlib.h"
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
-#include "dns.h"
 #include "dns_help.h"
 
 
@@ -20,13 +18,21 @@ int main()
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
 
     iSetCursor(0, 7);
-    IP_t IP = getAddrByName("irc.euirc.net");
-    //IP_t IP = {.IP = {94,103,170,247}}; // euirc
+
+    char buffer[2048];
+    printf("Enter server name (default: irc.euirc.net): ");
+    gets(buffer);
+
+    IP_t IP;
+    if(buffer[0] == 0)
+        IP = getAddrByName("irc.euirc.net");
+    else
+        IP = getAddrByName(buffer);
+
     uint32_t connection = tcp_connect(IP, 6667); // irc protocol
     printf("\nConnected (ID = %u). Wait until connection is established... ", connection);
 
     event_enable(true);
-    char buffer[2048];
     EVENT_t ev = event_poll(buffer, 2048, EVENT_NONE);
 
     bool ctrl = false;
@@ -42,8 +48,8 @@ int main()
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
                 char pStr[100];
-                uint32_t number = rand();
-                snprintf(pStr, 100, "NICK Pretty%u\r\nUSER Pretty%u irc.bre.de.euirc.net servername : Pretty%u\r\n", number, number, number);
+                int number = rand();
+                snprintf(pStr, 100, "NICK Pretty%u\r\nUSER Pretty%u void servername : Pretty%u\r\n", number, number, number);
                 tcp_send(connection, pStr, strlen(pStr));
                 break;
             case EVENT_TCP_RECEIVED:
@@ -75,8 +81,8 @@ int main()
                         break;
                     case KEY_ESC:
                     {
-                        char* msgQuit = "QUIT\r\n";
-                        tcp_send(connection, msgQuit, strlen(msgQuit));
+                        const char* const msgQuit = "QUIT\r\n";
+                        tcp_send(connection, (void*)msgQuit, strlen(msgQuit));
                         tcp_close(connection);
                         return (0);
                     }

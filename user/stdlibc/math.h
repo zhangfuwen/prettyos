@@ -1,8 +1,9 @@
 #ifndef MATH_H
 #define MATH_H
 
+#define _pi 3.1415926535897932384626433832795028841971693993
+#define _e 2.718281828459045235
 #define NAN (__builtin_nanf (""))
-#define pi 3.1415926535897932384626433832795028841971693993
 #define HUGE_VAL __builtin_huge_val()
 
 #ifdef _cplusplus

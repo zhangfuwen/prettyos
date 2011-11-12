@@ -20,7 +20,7 @@ static double pow2x(double x)
 
     if (rndResult > x)
     {
-        fl = x - (rndResult-1);
+        fl = x - (rndResult-1.0);
         rndResult -=1.0;
     }
     else if (rndResult < x)
@@ -31,7 +31,7 @@ static double pow2x(double x)
 
     for (i=1; i <= rndResult; i++)
     {
-        powResult *= 2;
+        powResult *= 2.0;
     }
     __asm__ volatile("f2xm1" : "=t" (result) : "0" (fl));
 
@@ -39,7 +39,7 @@ static double pow2x(double x)
     {
         return (result + 1.0) * powResult;
     }
-    return 1 / ((result + 1.0) * powResult);
+    return 1.0 / ((result + 1.0) * powResult);
 }
 
 
@@ -100,16 +100,27 @@ double tan(double x)
     return result;
 }
 
-double cosh(double x); /// TODO
-double sinh(double x); /// TODO
-double tanh(double x); /// TODO
+double cosh(double x)
+{
+    return((pow(_e, x)+pow(_e, -x))/2.0);
+}
+
+double sinh(double x)
+{
+    return((pow(_e, x)-pow(_e, -x))/2.0);
+}
+
+double tanh(double x)
+{
+    return(1.0 - 2.0/(pow(_e, 2.0*x) + 1.0));
+}
 
 double acos(double x)
 {
     if (x < -1 || x > 1)
         return NAN;
 
-    return (pi / 2 - asin(x));
+    return (_pi / 2 - asin(x));
 }
 double asin(double x)
 {
@@ -197,11 +208,14 @@ double modf(double x, double* intpart)
 
 double pow(double base, double exponent)
 {
-    int isOdd = 1;
+    double isOdd = 1.0;
     if (base < 0)
     {
-        isOdd = ((int)floor(exponent) % 2) ? -1: 1;
-        base *=-1;
+        isOdd = ((int)floor(exponent) % 2) ? -1.0 : 1.0;
+        base *= -1.0;
     }
-    return isOdd * pow2x(yMulLog(base,exponent));
+    if(exponent < 0.0)
+        return 1.0 / (isOdd * pow2x(yMulLog(base,-exponent)));
+    else
+        return isOdd * pow2x(yMulLog(base,exponent));
 }

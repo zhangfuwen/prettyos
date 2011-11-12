@@ -530,24 +530,12 @@ float atof(const char* s)
 
 void ftoa(float f, char* buffer)
 {
-    if (f < 0.0)
-    {
-        *buffer = '-';
-        ++buffer;
-        f = -f;
-    }
+    itoa((int32_t)f, buffer);
 
-    char tmp[32];
-    int32_t i = f;
-    int32_t index = sizeof(tmp) - 1;
-    while (i > 0)
-    {
-        tmp[index] = ('0' + (i % 10));
-        i /= 10;
-        --index;
-    }
-    memcpy((void*)buffer, (void*)&tmp[index + 1], sizeof(tmp) - 1 - index);
-    buffer += sizeof(tmp) - 1 - index;
+    if (f < 0.0)
+        f = -f;
+
+    buffer += strlen(buffer);
     *buffer = '.';
     ++buffer;
 

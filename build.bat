@@ -1,4 +1,3 @@
-del FloppyImage.img
 SET flags=OS=WINDOWS
 IF [%1]==[-release] (
 	SET flags=OS=WINDOWS CONFIG=RELEASE

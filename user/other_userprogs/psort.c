@@ -21,12 +21,10 @@ int getAnswer(char a, char b)
     {
         if (toupper(c) == toupper(a))
         {
-            //while ((c = getchar()) != EOF && c != '\n');
             return 1;
         }
         if (toupper(c) == toupper(b))
         {
-            //while ((c = getchar()) != EOF && c != '\n');
             return (0);
         }
     }
@@ -60,7 +58,7 @@ int main()
     int* numbers = 0;
     while (1)
     {
-        char buf[0x100];
+        char buf[64];
         printf("How many numbers do you want to sort? (0 to exit): ");
         size_t amount = strtoul(gets(buf), 0, 10);
         if (!amount)
@@ -69,12 +67,10 @@ int main()
         }
         if ((numbers = (int*)malloc(amount * sizeof(*numbers))))
         {
-            printf("Random or Custom? (r/c): ");
-            putchar('\n');
-            size_t i;
+            printf("Random or Custom? (r/c):\n");
             if (getAnswer('c', 'r'))
             {
-                for (i = 0; i < amount; i++)
+                for (size_t i = 0; i < amount; i++)
                 {
                     printf("Number %i: ", i + 1);
                     numbers[i] = atoi(gets(buf));
@@ -83,19 +79,18 @@ int main()
             else
             {
                 srand(getCurrentMilliseconds());
-                for (i = 0; i < amount; i++)
+                for (size_t i = 0; i < amount; i++)
                     numbers[i] = rand();
             }
             printf("Sorting %i numbers..\n", amount);
-            size_t t = getCurrentMilliseconds();
+            uint32_t t = getCurrentMilliseconds();
             qsort(numbers, amount, sizeof(*numbers), compare);
-            is_sorted(numbers, amount);
             printf("Elapsed time: %i\n", getCurrentMilliseconds() - t);
-            printf("Do you want to show the numbers? (y/n): ");
-            putchar('\n');
+            is_sorted(numbers, amount);
+            printf("Do you want to show the numbers? (y/n):\n");
             if (getAnswer('y', 'n'))
             {
-                for (i = 0; i < amount; i++)
+                for (size_t i = 0; i < amount; i++)
                     printf("%i, ", numbers[i]);
             }
             free(numbers);
