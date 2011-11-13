@@ -5,7 +5,6 @@ ifeq ($(OS),WINDOWS)
 	MV= cmd /c move /Y
 	CC= i586-elf-gcc
 	LD= i586-elf-ld
-	STRIP= i586-elf-strip
 	FLOPPYIMAGE= tools/CreateFloppyImage2
 	MKINITRD= tools/make_initrd
 else
@@ -14,13 +13,11 @@ else
 	ifeq ($(OS),MACOSX)
 		CC= i586-elf-gcc
 		LD= i586-elf-ld
-		STRIP= i586-elf-strip
 		FLOPPYIMAGE= tools/osx_CreateFloppyImage2
 		MKINITRD= tools/osx_make_initrd
 	else
 		CC= gcc
 		LD= ld
-		STRIP= strip
 		FLOPPYIMAGE= tools/linux_CreateFloppyImage2
 		MKINITRD= tools/linux_make_initrd
 	endif
@@ -58,18 +55,18 @@ KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/
 NASMFLAGS= -Ox -f elf
 ifeq ($(COMPILER),CLANG)
 	ifeq ($(CONFIG),RELEASE)
-		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer    -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
 	else
 		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
 	endif
 else
 	ifeq ($(CONFIG),RELEASE)
-		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer    -fno-common -Iinclude
 	else
-		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude
+		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude
 	endif
 endif
-LDFLAGS= -nostdlib --warn-common
+LDFLAGS= -nostdlib --warn-common -nmagic -gc-sections -s
 
 # targets to build one asm or c-file to an object file
 vpath %.o $(OBJDIR)
@@ -100,7 +97,6 @@ $(OBJDIR)/$(KERNELDIR)/data.o: $(KERNELDIR)/data.asm $(USERDIR)/vm86/vidswtch.CO
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(OBJDIR)/$(KERNELDIR)/data.o $(KERNEL_OBJECTS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -Map documentation/kernel.map -o $(KERNELDIR)/KERNEL.BIN
-#	$(STRIP) $(KERNELDIR)/KERNEL.BIN
 
 shell: userlibs
 	$(MAKE) --no-print-directory -C $(SHELLDIR)

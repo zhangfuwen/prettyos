@@ -1,14 +1,7 @@
 #include "math.h"
 
 
-static double yMulLog(double x, double y)
-{
-    double result;
-    __asm__ volatile("fyl2x" : "=t" (result) : "0" (x), "u" (y));
-    return result;
-}
-
-static double pow2x(double x)
+static double pow2x(double x) // 2^x
 {
     double rndResult;
     double powResult = 1;
@@ -104,12 +97,10 @@ double cosh(double x)
 {
     return((pow(_e, x)+pow(_e, -x))/2.0);
 }
-
 double sinh(double x)
 {
     return((pow(_e, x)-pow(_e, -x))/2.0);
 }
-
 double tanh(double x)
 {
     return(1.0 - 2.0/(pow(_e, 2.0*x) + 1.0));
@@ -185,19 +176,29 @@ double ldexp(double x, int exponent)
 
 double log(double x)
 {
-    if (x <= 0)
-    {
+    if (x <= 0.0)
         return NAN;
-    }
-    return yMulLog(x,1.0);
+
+    double retVal;
+    __asm__ volatile(
+        "fyl2x;"
+        "fldln2;"
+        "fmulp" : "=t"(retVal) : "0"(x), "u"(1.0));
+
+    return retVal;
 }
 double log10(double x)
 {
-    if (x <= 0)
-    {
+    if (x <= 0.0)
         return NAN;
-    }
-    return (yMulLog(x,1.0) / yMulLog(10.0,1.0));
+
+    double retVal;
+    __asm__ volatile(
+        "fyl2x;"
+        "fldlg2;"
+        "fmulp" : "=t"(retVal) : "0"(x), "u"(1.0));
+
+    return retVal;
 }
 
 double modf(double x, double* intpart)
@@ -208,14 +209,20 @@ double modf(double x, double* intpart)
 
 double pow(double base, double exponent)
 {
-    double isOdd = 1.0;
-    if (base < 0)
+    if(base == 0.0)
     {
-        isOdd = ((int)floor(exponent) % 2) ? -1.0 : 1.0;
-        base *= -1.0;
+        if(exponent < 0.0)
+            return HUGE_VAL;
+        else if(exponent == 0.0)
+            return 1.0;
+        else
+            return 0.0;
     }
-    if(exponent < 0.0)
-        return 1.0 / (isOdd * pow2x(yMulLog(base,-exponent)));
-    else
-        return isOdd * pow2x(yMulLog(base,exponent));
+
+    double result;
+    __asm__ volatile("fyl2x" : "=t" (result) : "0" (base), "u" (exponent));
+
+    double retVal;
+    __asm__ volatile("f2xm1" : "=t" (retVal) : "0" (result));
+    return(retVal+1.0);
 }

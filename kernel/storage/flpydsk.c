@@ -142,7 +142,7 @@ static floppy_t* createFloppy(uint8_t ID)
     fdd->drive.insertedDisk->type            = &FLOPPYDISK;
     fdd->drive.insertedDisk->data            = (void*)fdd;
     fdd->drive.insertedDisk->port            = &fdd->drive;
-    fdd->drive.insertedDisk->size            = 1440*1000;
+    fdd->drive.insertedDisk->size            = 1440*1024;
     fdd->drive.insertedDisk->headCount       = 2;
     fdd->drive.insertedDisk->secPerTrack     = FLPY_SECTORS_PER_TRACK;
     fdd->drive.insertedDisk->sectorSize      = 512;

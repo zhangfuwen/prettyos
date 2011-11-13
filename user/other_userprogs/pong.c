@@ -83,7 +83,6 @@ int main()
     }
 
     setScrollField(0,50);
-    clearScreen(0x00);
 
     // Enable Events
     event_enable(true);
@@ -1325,8 +1324,7 @@ void DrawMenuContentBox(uint16_t addlines)
                     printf("#\n");
                     break;
                 case 19:
-                    printf("                   ");
-                    printf("   #####################################\n");
+                    printf("                      #####################################\n");
                     break;
                 case 20:
                 case 21:

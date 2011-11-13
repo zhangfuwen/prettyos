@@ -4,18 +4,15 @@ ifeq ($(OS),WINDOWS)
     NASM= nasm
     CC= i586-elf-gcc
     LD= i586-elf-ld
-    STRIP= i586-elf-strip
 else
     RM= rm -f
     NASM= nasm
     ifeq ($(OS),MACOSX)
         CC= i586-elf-gcc
         LD= i586-elf-ld
-        STRIP= i586-elf-strip
     else
         CC= gcc
         LD= ld
-        STRIP= strip
     endif
 endif
 
@@ -42,9 +39,9 @@ endif
 ifeq ($(COMPILER),CLANG)
 	CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
 else
-	CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+	CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
 endif
-LDFLAGS= -u _start -nostdlib --warn-common -nmagic
+LDFLAGS= -u _start -nostdlib --warn-common -nmagic -gc-sections -s
 
 TARGET= CDUMMY.ELF
 
@@ -62,8 +59,7 @@ TARGETOBJ := $(patsubst %.c, %.o, $(wildcard *.c))
 all: $(TARGET)
 
 $(TARGET): $(TARGETOBJ) $(PRETTYLIB) $(STDLIBCA)
-	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(USERTOOLS)/prettylib.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $(TARGET)
-	$(STRIP) $(TARGET)
+	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(STDLIBCA) $(PRETTYLIB) -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $(TARGET)
 
 clean:
 ifeq ($(OS),WINDOWS)

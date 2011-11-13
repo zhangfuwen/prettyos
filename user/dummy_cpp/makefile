@@ -4,18 +4,15 @@ ifeq ($(OS),WINDOWS)
     NASM= nasm
     CC= i586-elf-gcc
     LD= i586-elf-ld
-    STRIP= i586-elf-strip
 else
     RM= rm -f
     NASM= nasm
     ifeq ($(OS),MACOSX)
         CC= i586-elf-gcc
         LD= i586-elf-ld
-        STRIP= i586-elf-strip
     else
         CC= gcc
         LD= ld
-        STRIP= strip
     endif
 endif
 
@@ -28,12 +25,14 @@ ifeq ($(OS),WINDOWS)
     USERTOOLS= ..\user_tools
     STDLIBC= ..\stdlibc
     PRETTYLIB= $(USERTOOLS)\prettylib.a
+    PRETTYLIBPP= $(USERTOOLS)\prettylib++.a
     STDLIBCA= $(STDLIBC)\stdlibc.a
     OBJDIR= ..\..\object_files\user\dummy_cpp
 else
     USERTOOLS= ../user_tools
     STDLIBC= ../stdlibc
     PRETTYLIB= $(USERTOOLS)/prettylib.a
+    PRETTYLIBPP= $(USERTOOLS)/prettylib++.a
     STDLIBCA= $(STDLIBC)/stdlibc.a
     OBJDIR= ../../object_files/user/dummy_cpp
 endif
@@ -43,9 +42,9 @@ NASMFLAGS= -Ox -f elf
 ifeq ($(COMPILER),CLANG)
 	CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -Xclang -triple=i386-pc-unknown
 else
-	CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -s -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
+	CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
 endif
-LDFLAGS= -u _start -nostdlib --warn-common -nmagic
+LDFLAGS= -u _start -nostdlib --warn-common -nmagic -gc-sections -s
 
 TARGET= CPPDUMMY.ELF
 
@@ -62,9 +61,8 @@ TARGETOBJ := $(patsubst %.cpp, %.o, $(wildcard *.cpp))
 
 all: $(TARGET)
 
-$(TARGET): $(TARGETOBJ) $(PRETTYLIB) $(STDLIBCA)
-	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(USERTOOLS)/prettylib.a $(USERTOOLS)/prettylib++.a $(STDLIBC)/stdlibc.a -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $(TARGET)
-	$(STRIP) $(TARGET)
+$(TARGET): $(TARGETOBJ) $(PRETTYLIB) $(STDLIBCA) $(PRETTYLIBPP)
+	$(LD) $(addprefix $(OBJDIR)/,$(TARGETOBJ)) $(PRETTYLIBPP) $(STDLIBCA) $(PRETTYLIB) -T $(USERTOOLS)/user.ld $(LDFLAGS) -o $(TARGET)
 
 clean:
 ifeq ($(OS),WINDOWS)
