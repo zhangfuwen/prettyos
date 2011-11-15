@@ -14,12 +14,8 @@ static bool cpuid_available = false;
 
 int64_t* cpu_frequency;
 
-void cpu_analyze()
+void cpu_install()
 {
-    textColor(LIGHT_GRAY);
-    printf("   => CPU:\n");
-    textColor(TEXT);
-
     ipc_node_t* node;
     ipc_createNode("PrettyOS/CPU/Frequency (kHz)", &node, IPC_INTEGER);
     cpu_frequency = &node->data.integer;
@@ -38,13 +34,41 @@ void cpu_analyze()
                       "mov %%eax, %0\n" : "=r"(result) :);
     cpuid_available = (result == 0);
 
+    if(cpu_supports(CF_PGE)) // We take this to indicate availability of CR4 register
+        __asm__ volatile("mov %cr4, %eax;"
+                         "or $0x00000080, %eax;" // Activate PGE
+                         "mov %eax, %cr4");
+    if(cpu_supports(CF_FXSR)) // We take this to indicate availability of CR4 register
+        __asm__ volatile("mov %cr4, %eax;"
+                         "or $0x00000200, %eax;" // Activate OSFXSR
+                         "mov %eax, %cr4");
+}
+
+static void printSupport(bool b)
+{
+    textColor(TEXT);
+    printf(" %supported", cpu_supports(CF_SYSENTEREXIT) ? "S":"Un");
+    textColor(LIGHT_GRAY);
+}
+
+void cpu_analyze()
+{
+    textColor(LIGHT_GRAY);
     if (!cpuid_available)
     {
-        textColor(ERROR);
-        printf("     => CPU does not support cpuid instruction.\n");
+        printf("   => CPU: ");
         textColor(TEXT);
+        printf("Does not support cpuid instruction.\n");
         return;
     }
+
+    printf("   => CPU:\n");
+    printf("     => Sysenter:");
+    printSupport(cpu_supports(CF_SYSENTEREXIT));
+    printf("; Global Pages:");
+    printSupport(cpu_supports(CF_PGE));
+    printf("; FXSR:");
+    printSupport(cpu_supports(CF_FXSR));
 
     // Read out VendorID
     char cpu_vendor[13];
@@ -55,8 +79,7 @@ void cpu_analyze()
 
     ipc_setString("PrettyOS/CPU/VendorID", cpu_vendor);
 
-    textColor(LIGHT_GRAY);
-    printf("     => VendorID: ");
+    printf("\n     => VendorID: ");
     textColor(TEXT);
     printf("%s\n", cpu_vendor);
 }

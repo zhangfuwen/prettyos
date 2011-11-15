@@ -6,6 +6,7 @@
 #include "task.h"
 #include "util/util.h"
 #include "memory.h"
+#include "cpu.h"
 #include "descriptor_tables.h"
 #include "kheap.h"
 #include "scheduler.h"
@@ -37,7 +38,7 @@ task_t kernelTask =
     .threads       = 0       // No threads associated with the task at the moment. List is created later if necessary
 };
 
-volatile task_t* currentTask = &kernelTask;
+task_t* currentTask = &kernelTask;
 list_t* tasks; // List of all tasks. Not sorted by pid
 
 static uint32_t next_pid = 1; // The next available process ID (kernel has 0, so we start with 1 here).
@@ -111,12 +112,11 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
 
     if (newTask->type != VM86)
     {
-        if (newTask->type == THREAD)
+        if (newTask->privilege == 0)
         {
-            *(--kernelStack) = (uintptr_t)&exit; // When a thread is finished, exit is automatically called
+            *(--kernelStack) = (uintptr_t)&exit; // When a ring0-task is finished, exit is automatically called
         }
-
-        if (newTask->privilege == 3)
+        else if (newTask->privilege == 3)
         {
             // General information: Intel 3A Chapter 5.12
             *(--kernelStack) = 0x23;       // ss
@@ -130,7 +130,7 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     {
         code_segment = 0;
         *(--kernelStack) = 0x0000;  // ss
-        *(--kernelStack) = 4090;    // USER_STACK;
+        *(--kernelStack) = 4090;    // esp
         *(--kernelStack) = 0x20202; // eflags = vm86 (bit17), interrupts (bit9), iopl=0
     }
 
@@ -143,13 +143,13 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     // General purpose registers w/o esp
     *(--kernelStack) = argc;            // eax. Used to give argc to user programs.
     *(--kernelStack) = (uintptr_t)argv; // ecx. Used to give argv to user programs.
-    *(--kernelStack) = 0;
+    *(--kernelStack) = 0;//cpu_supports(CF_SYSENTEREXIT); // edx. Used to inform the user programm about the support for the SYSENTER/SYSEXIT instruction. TODO: Enable it. At the moment, there are problems with multiple tasks
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
     *(--kernelStack) = 0;
 
-    uint32_t data_segment = newTask->privilege == 3 ? 0x23 : 0x10;
+    const uint32_t data_segment = newTask->privilege == 3 ? 0x23 : 0x10;
 
     *(--kernelStack) = data_segment;
     *(--kernelStack) = data_segment;
@@ -211,7 +211,7 @@ task_t* create_cthread(void(*entry)(), const char* consoleName)
     task_t* newTask = create_task(THREAD, currentTask->pageDirectory, entry, currentTask->privilege, console, 0, 0);
 
     // Attach the thread to its parent
-    newTask->parent = (task_t*)currentTask;
+    newTask->parent = currentTask;
 
     if (currentTask->threads == 0)
     {
@@ -234,7 +234,7 @@ task_t* create_thread(void(*entry)())
     task_t* newTask = create_task(THREAD, currentTask->pageDirectory, entry, currentTask->privilege, currentTask->console, 0, 0); // task shares the console of the current task
 
     // Attach the thread to its parent
-    newTask->parent = (task_t*)currentTask;
+    newTask->parent = currentTask;
 
     if (currentTask->threads == 0)
     {
@@ -283,7 +283,7 @@ uint32_t task_switch(task_t* newTask)
     // Set TS
     if (currentTask == FPUTask)
     {
-        __asm__ volatile("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
+        __asm__ volatile("clts"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
     }
     else
     {
@@ -396,7 +396,7 @@ void task_kill(uint32_t pid)
 
 void exit()
 {
-    kill((task_t*)currentTask);
+    kill(currentTask);
 }
 
 void* task_grow_userheap(uint32_t increase)

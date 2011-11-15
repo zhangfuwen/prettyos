@@ -11,9 +11,8 @@
 // GDT
 #define NUMBER_GDT_GATES 6 // 0-5: Null, Kernel Code, Kernel Data, User Code, User Data, TSS
 
-// Our GDT, and finally our special GDT pointer
+// Our GDT
 static GDTentry_t gdt[NUMBER_GDT_GATES];
-static GDTptr_t   gdt_register;
 
 // Setup a descriptor in the Global Descriptor Table
 void gdt_setGate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
@@ -34,21 +33,23 @@ void gdt_setGate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uin
 
 void gdt_install()
 {
+    GDTptr_t gdt_register;
+
     // Setup the GDT pointer and limit
     gdt_register.limit = (sizeof(GDTentry_t) * NUMBER_GDT_GATES)-1;
-    gdt_register.base  = (uint32_t) &gdt;
+    gdt_register.base  = (uint32_t)&gdt;
 
     // GDT GATES -  desriptors with pointers to the linear memory address
     gdt_setGate(0,0,0,0,0); // NULL descriptor
 
     //          num base limit    access                                              gran
-    gdt_setGate(1, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32);
-    gdt_setGate(2, 0, 0xFFFFFFFF, VALID | RING_0 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32);
-    gdt_setGate(3, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32);
-    gdt_setGate(4, 0, 0xFFFFFFFF, VALID | RING_3 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32);
+    gdt_setGate(1,  0,   0xFFFFF, VALID | RING_0 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32);
+    gdt_setGate(2,  0,   0xFFFFF, VALID | RING_0 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32);
+    gdt_setGate(3,  0,   0xFFFFF, VALID | RING_3 | CODE_DATA_STACK | CODE_EXEC_READ,  _4KB_ | USE32);
+    gdt_setGate(4,  0,   0xFFFFF, VALID | RING_3 | CODE_DATA_STACK | DATA_READ_WRITE, _4KB_ | USE32);
 
     tss_write(5, 0x10, 0x0); // num, ss0, esp0
-    gdt_flush((uintptr_t)&gdt_register);
+    gdt_flush(&gdt_register);
     tss_flush();
 }
 
@@ -87,7 +88,7 @@ static void tss_log(TSSentry_t* tssEntry)
 void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)
 {
     // Firstly, let's compute the base and limit of our entry into the GDT.
-    uint32_t base = (uint32_t) &tss;
+    uint32_t base = (uint32_t)&tss;
     uint32_t limit = sizeof(tss); //http://forum.osdev.org/viewtopic.php?f=1&t=19819&p=155587&hilit=tss_entry#p155587
 
     // Now, add our TSS descriptor's address to the GDT.

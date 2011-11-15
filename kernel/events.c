@@ -84,7 +84,7 @@ uint8_t event_issue(event_queue_t* destination, EVENT_t type, void* data, size_t
 
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 {
-    task_t* task = (task_t*)currentTask;
+    task_t* task = currentTask;
 
     while (task->parent && task->type == THREAD && task->eventQueue == 0)
     {

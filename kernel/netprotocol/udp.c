@@ -52,7 +52,7 @@ bool udp_bind(uint16_t port)
         udpPorts = list_create();
 
     udpPort = malloc(sizeof(udp_port_t), 0, "udp_port_t");
-    udpPort->owner = (task_t*)currentTask;
+    udpPort->owner = currentTask;
     udpPort->port = port;
     list_append(udpPorts, udpPort);
     return (true);

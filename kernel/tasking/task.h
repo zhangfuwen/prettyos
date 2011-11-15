@@ -41,10 +41,10 @@ struct task
 };
 
 
-extern volatile task_t* FPUTask; // fpu.c
+extern task_t* volatile FPUTask; // fpu.c
 extern task_t           kernelTask;
 extern bool             task_switching;
-extern volatile task_t* currentTask;
+extern task_t*          currentTask;
 
 
 void     tasking_install();

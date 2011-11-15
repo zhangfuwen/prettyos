@@ -13,7 +13,7 @@ static const BGRA_t WINDOW_COLOUR_BORDER = {2, 125, 57, 0};
 static const BGRA_t WINDOW_COLOUR_TOPBAR = {253, 100, 100, 0};
 static const BGRA_t WINDOW_COLOUR_FOCUS_TOPBAR = {127, 255, 0, 0};
 
-static volatile window_t* current_window = 0;
+static window_t* volatile current_window = 0;
 window_t* window_list[MAX_WINDOWS];
 
 
@@ -47,7 +47,7 @@ void DestroyWindow(uint16_t id)
 {
     if (id != HWND_DESKTOP)
         video_freeDevice(window_list[id]->renderDevice);
-    free((void*)window_list[id]);
+    free(window_list[id]);
     window_list[id] = 0;
 }
 

@@ -7,6 +7,7 @@
 #include "util/util.h"
 #include "tasking/task.h"
 #include "tasking/vm86.h"
+#include "cpu.h"
 #include "kheap.h"
 #include "timer.h"
 #include "keyboard.h"
@@ -205,10 +206,10 @@ static void defaultError(registers_t* r)
     textColor(ERROR);
     printf("\n\n%s!", exceptionMessages[r->int_no]);
     textColor(TEXT);
-    printf("\nerr_code: %u address(eip): %Xh\n", r->err_code, r->eip);
+    printf("\nerr_code: %u  eip: %Xh\n", r->err_code, r->eip);
     printf("edi: %Xh esi: %Xh ebp: %Xh eax: %Xh ebx: %Xh ecx: %Xh edx: %Xh\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-    printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-    printf("eflags: %Xh useresp: %Xh\n", r->eflags, r->useresp);
+    printf("cs: %xh  ds: %xh  es: %xh  fs: %xh  gs: %xh  ss: %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+    printf("eflags: %Xh  useresp: %Xh\n", r->eflags, r->useresp);
 
     stackTrace((void*)r->eip, (void*)r->ebp);
 
@@ -220,44 +221,52 @@ static void invalidOpcode(registers_t* r)
     textColor(ERROR);
     printf("\n\n%s!", exceptionMessages[r->int_no]);
     textColor(TEXT);
-    printf("\nerr_code: %u address(eip): %Xh instruction: %yh\n", r->err_code, r->eip, *(uint8_t*)FP_TO_LINEAR(r->cs, r->eip));
+    printf("\nerr_code: %u  eip: %Xh  instruction: %yh\n", r->err_code, r->eip, *(uint8_t*)FP_TO_LINEAR(r->cs, r->eip));
     printf("edi: %Xh esi: %Xh ebp: %Xh eax: %Xh ebx: %Xh ecx: %Xh edx: %Xh\n", r->edi, r->esi, r->ebp, r->eax, r->ebx, r->ecx, r->edx);
-    printf("cs: %xh ds: %xh es: %xh fs: %xh gs %xh ss %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
-    printf("eflags: %Xh useresp: %Xh\n", r->eflags, r->useresp);
+    printf("cs: %xh  ds: %xh  es: %xh  fs: %xh  gs: %xh  ss: %xh\n", r->cs, r->ds, r->es, r->fs, r->gs, r->ss);
+    printf("eflags: %Xh  useresp: %Xh\n", r->eflags, r->useresp);
 
     stackTrace((void*)r->eip, (void*)r->ebp);
 
     quitTask();
 }
 
-static void NM(registers_t* r) // -> FPU
+static void NM_fxsr(registers_t* r) // -> FPU (with support for SSE)
 {
-    // set TS in cr0 to zero
-    __asm__ volatile ("CLTS"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
+    kdebug(3, "#NM (fxsr): FPU is used. currentTask: %Xh\n", currentTask);
 
-    kdebug(3, "#NM: FPU is used. pCurrentTask: %Xh\n", currentTask);
+    __asm__ volatile ("clts"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
 
     // save FPU data ...
-    if (FPUTask)
-    {
-        // fsave or fnsave to FPUTask->FPUptr
-        __asm__ volatile("fsave (%0)" :: "r" (FPUTask->FPUptr));
-    }
+    if (FPUTask) // fxsave to FPUTask->FPUptr
+        __asm__ volatile("fxsave (%0)" : : "r" (FPUTask->FPUptr));
 
-    // store the last task using FPU
-    FPUTask = currentTask;
+    FPUTask = currentTask; // store the last task using FPU
 
     // restore FPU data ...
-    if (currentTask->FPUptr)
-    {
-        // frstor from pCurrentTask->FPUptr
-        __asm__ volatile("frstor (%0)" :: "r" (currentTask->FPUptr));
-    }
-    else
-    {
-        // allocate memory to save the content of the FPU registers
-        currentTask->FPUptr = malloc(108,4,"FPUptr"); // http://siyobik.info/index.php?module=x86&id=112
-    }
+    if (currentTask->FPUptr) // fxrstor from currentTask->FPUptr
+        __asm__ volatile("fxrstor (%0)" : : "r" (currentTask->FPUptr));
+    else // allocate memory to save the content of the FPU registers
+        currentTask->FPUptr = malloc(512, 4, "FPUptr"); // C.f. Intel Manual vol. 2A
+}
+
+static void NM(registers_t* r) // -> FPU
+{
+    kdebug(3, "#NM: FPU is used. currentTask: %Xh\n", currentTask);
+
+    __asm__ volatile ("clts"); // CLearTS: reset the TS bit (no. 3) in CR0 to disable #NM
+
+    // save FPU data ...
+    if (FPUTask) // fsave or fnsave to FPUTask->FPUptr
+        __asm__ volatile("fsave (%0)" : : "r" (FPUTask->FPUptr));
+
+    FPUTask = currentTask; // store the last task using FPU
+
+    // restore FPU data ...
+    if (currentTask->FPUptr) // frstor from currentTask->FPUptr
+        __asm__ volatile("frstor (%0)" : : "r" (currentTask->FPUptr));
+    else // allocate memory to save the content of the FPU registers
+        currentTask->FPUptr = malloc(108, 4, "FPUptr"); // 80 Bytes (r0..r7) + 28 Bytes (environment image). C.f. Intel Manual vol. 2A
 }
 
 static void GPF(registers_t* r) // VM86
@@ -268,7 +277,7 @@ static void GPF(registers_t* r) // VM86
         if (!vm86_sensitiveOpcodehandler(r))
         {
             textColor(ERROR);
-            uint8_t*  ip = FP_TO_LINEAR(r->cs, r->eip-1);
+            uint8_t* ip = FP_TO_LINEAR(r->cs, r->eip-1);
             printf("\nvm86: sensitive opcode error: %y. (prefix: %y)\n", ip[0], ip[-1]);
             quitTask();
         }
@@ -322,14 +331,17 @@ void isr_install()
 
     // Installing ISR-Routines
     interrupts[ISR_invalidOpcode].handler.handler.func.def = &invalidOpcode;
-    interrupts[ISR_NM].handler.handler.func.def = &NM;
+    if(cpu_supports(CF_FXSR))
+        interrupts[ISR_NM].handler.handler.func.def = &NM_fxsr;
+    else
+        interrupts[ISR_NM].handler.handler.func.def = &NM;
     interrupts[ISR_GPF].handler.handler.func.def = &GPF;
     interrupts[ISR_PF].handler.handler.func.def = &PF;
 }
 
 uint32_t irq_handler(uintptr_t esp)
 {
-    task_t* oldTask = (task_t*)currentTask; // Save old task to be able to restore attr in case of task_switch
+    task_t* oldTask = currentTask; // Save old task to be able to restore attr in case of task_switch
     uint8_t attr    = currentTask->attrib;  // Save the attrib so that we do not get color changes after the interrupt, if it has changed the attrib
     console_current = kernelTask.console;   // The output is expected to appear in the kernel's console. Exception: Syscalls (cf. syscall.c)
 

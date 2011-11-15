@@ -125,7 +125,7 @@ uint32_t scheduler_taskSwitch(uint32_t esp)
 
     task_saveState(esp);
 
-    task_t* oldTask = (task_t*)currentTask;
+    task_t* oldTask = currentTask;
     task_t* newTask = scheduler_getNextTask();
 
     if (oldTask == newTask) // No task switch needed
@@ -163,7 +163,7 @@ bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout
     }
 
     cli();
-    ring_move(blockedTasks, runningTasks, (task_t*)currentTask);
+    ring_move(blockedTasks, runningTasks, currentTask);
     sti();
 
     switch_context(); // Leave task. This task will not be called again until block ended.

@@ -46,9 +46,6 @@
 #define USE16               0x00
 #define USE32               0x40
 
-// "reserved "              bit 5:4
-// "segment length 16-19"   bit 3:0
-
 
 // Defines a GDT entry
 typedef struct
@@ -104,7 +101,7 @@ typedef struct
 void idt_install(); // c.f. interrupts.asm
 void gdt_install();
 void gdt_setGate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
-void gdt_flush(uintptr_t); // c.f. flush.asm
+void gdt_flush(GDTptr_t*); // c.f. flush.asm
 void tss_write(int32_t num, uint16_t ss0, uint32_t esp0);
 void tss_flush(); // c.f. flush.asm
 void tss_switch(uint32_t esp0, uint32_t esp, uint32_t ss); // Used by task_switch

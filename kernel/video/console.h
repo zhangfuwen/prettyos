@@ -32,8 +32,8 @@ typedef struct // Defines the User-Space of the display
 
 
 extern console_t* reachableConsoles[11]; // All accessible consoles: up to 10 subconsoles + main console
-extern volatile console_t* console_displayed;
-extern volatile console_t* console_current;
+extern console_t* volatile console_displayed;
+extern console_t*          console_current;
 extern console_t kernelConsole;
 
 

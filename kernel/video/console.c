@@ -18,8 +18,8 @@ console_t kernelConsole = // The console of the kernel task. It is a global vari
     .scrollBegin = 0, .scrollEnd = 39, .cursor = {0, 0}, .mutex = 0, .tasks = 0
 };
 
-volatile console_t* console_current   = &kernelConsole; // The console of the active task
-volatile console_t* console_displayed = &kernelConsole; // Currently visible console
+console_t*          console_current   = &kernelConsole; // The console of the active task
+console_t* volatile console_displayed = &kernelConsole; // Currently visible console
 
 static bool scroll_flag = true;
 
@@ -145,7 +145,7 @@ void console_clear(uint8_t backcolor)
 {
     mutex_lock(console_current->mutex);
     // Erasing the content of the active console
-    memsetw((uint16_t*)console_current->vidmem, 0x20 | (backcolor << 8), COLUMNS * LINES);
+    memsetw(console_current->vidmem, 0x20 | (backcolor << 8), COLUMNS * LINES);
     console_current->cursor.x = 0;
     console_current->cursor.y = 0;
 

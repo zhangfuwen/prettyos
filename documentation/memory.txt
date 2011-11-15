@@ -5,6 +5,7 @@ Start address | End address | Contains    | Annotations
 0x400         | 0x500       | BDA         | Bios Data Area: http://www.lowlevel.eu/wiki/BIOS_Data_Area
 0x1000        | 0x3400      | DMA         | Buffer for ISA-DMA
 0x100000      | ~~~~        | Kernel      | Position of kernel executable
+~~~~          | 0xF00000    | Kernelstack | Kernel Stack during syscall (only with sysenter)
 ~~~~          | 0x1000000   | Kernelstack | Kernel Stack
 0x1000000     | 0x1400000   | Placement   | Contains with placement allocated memory
 

@@ -69,7 +69,7 @@ void mutex_lock(mutex_t* obj)
         scheduler_blockCurrentTask(BL_SYNC, obj, 0); // Wait until the mutex is unlocked
 
     obj->blocks = 1;
-    obj->blocker = (task_t*)currentTask;
+    obj->blocker = currentTask;
 }
 
 void mutex_unlock(mutex_t* obj)

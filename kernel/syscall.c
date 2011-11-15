@@ -4,6 +4,7 @@
 */
 
 #include "syscall.h"
+#include "cpu.h"
 #include "util/util.h"
 #include "tasking/task.h"
 #include "filesystem/fat12.h"
@@ -20,6 +21,7 @@
 #include "video/video.h"
 #include "network/network.h"
 #include "ipc.h"
+
 
 // Overwiew to all syscalls in documentation/Syscalls.odt
 
@@ -52,6 +54,7 @@ static void* syscalls[] =
 /*  22 */    &formatPartition,
 /*  23 */    &nop,
 /*  24 */    &nop,
+
 /*  25 */    &ipc_fopen,
 /*  26 */    &ipc_getFolder,
 /*  27 */    &ipc_getString,
@@ -142,10 +145,19 @@ static void* syscalls[] =
 };
 
 static void syscall_handler(registers_t* r);
+void syscall_sysenterHandler();
 
 void syscall_install()
 {
-    irq_installHandler(IRQ_SYSCALL, syscall_handler);
+    if(cpu_supports(CF_SYSENTEREXIT))
+    {
+        irq_installHandler(IRQ_SYSCALL, syscall_handler);
+        cpu_MSRwrite(0x174, 8); // CS
+        cpu_MSRwrite(0x175, 0xF00000); // ESP
+        cpu_MSRwrite(0x176, (uintptr_t)&syscall_sysenterHandler); // EIP
+    }
+    else
+        irq_installHandler(IRQ_SYSCALL, syscall_handler);
 }
 
 static void syscall_handler(registers_t* r)
@@ -171,6 +183,19 @@ static void syscall_handler(registers_t* r)
 
     console_current = kernelTask.console;
 }
+
+__asm__ ("syscall_sysenterHandler:"
+            "imul $4, %eax;"       // Calculate address of function
+            "add $syscalls, %eax;"
+            "push %edi;"           // Push parameters on stack
+            "push %esi;"
+            "push %edx;"
+            "push %ecx;"
+            "push %ebx;"
+            "call *(%eax);"        // Call syscall
+            "add $20, %esp;"       // Restore stack
+            "mov %ebp, %edx;"      // Move return address to edx
+            "sysexit;");           // Leave kernel
 
 /*
 * Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.

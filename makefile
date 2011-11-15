@@ -92,7 +92,7 @@ $(USERDIR)/vm86/vidswtch.COM: $(USERDIR)/vm86/vidswtch.asm
 $(USERDIR)/vm86/apm.COM: $(USERDIR)/vm86/apm.asm
 	$(NASM) $(USERDIR)/vm86/apm.asm -Ox -o $(USERDIR)/vm86/apm.COM
 
-$(OBJDIR)/$(KERNELDIR)/data.o: $(KERNELDIR)/data.asm $(USERDIR)/vm86/vidswtch.COM $(USERDIR)/vm86/apm.COM
+$(OBJDIR)/$(KERNELDIR)/data.o: $(KERNELDIR)/data.asm $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/vidswtch.COM $(USERDIR)/vm86/apm.COM
 	$(NASM) $(KERNELDIR)/data.asm $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$(KERNELDIR)/data.o
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(OBJDIR)/$(KERNELDIR)/data.o $(KERNEL_OBJECTS)

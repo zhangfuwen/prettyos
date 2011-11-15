@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.174 - Rev: 1375";
+const char* const version = "0.0.3.175 - Rev: 1376";
 
 // .bss
 extern uintptr_t _bss_start; // linker script
@@ -127,6 +127,8 @@ static void init(multiboot_t* mb_struct)
 
     // Interrupts
     isr_install();
+
+    cpu_install();
 
     if (apic_install())
     {

@@ -53,6 +53,7 @@ typedef enum
 extern int64_t* cpu_frequency;
 
 
+void     cpu_install();
 void     cpu_analyze();
 void     cpu_calculateFrequency();
 bool     cpu_supports(CPU_FEATURE feature);

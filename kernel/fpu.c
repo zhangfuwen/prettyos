@@ -10,16 +10,12 @@
 #include "tasking/task.h"
 
 
-volatile task_t* FPUTask = 0;
+task_t* volatile FPUTask = 0;
 
 bool fpu_install()
 {
     if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
-    {
-        textColor(ERROR);
-        printf(" => ERROR (fpu.c, 20): Math Coprozessor not available\n");
         return (false);
-    }
 
     __asm__ volatile ("finit");
 
@@ -37,13 +33,16 @@ bool fpu_install()
 
 void fpu_test()
 {
-    if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
-    {
-        return;
-    }
-
     textColor(LIGHT_GRAY);
     printf("   => FPU test: ");
+
+    if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
+    {
+        textColor(ERROR);
+        printf("FPU not available\n");
+        textColor(TEXT);
+        return;
+    }
 
     double squareroot = sqrt(2.0);
     squareroot = fabs(squareroot);
