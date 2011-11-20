@@ -13,8 +13,8 @@
 
 fileSystem_t FAT    = {.fopen        = &FAT_fopen,
                        .fclose       = &FAT_fclose,
-                       .fgetc        = &FAT_fgetc,
-                       .fputc        = &FAT_fputc,
+                       .fread        = &FAT_fread,
+                       .fwrite       = &FAT_fwrite,
                        .fseek        = &FAT_fseek,
                        .remove       = &FAT_remove,
                        .rename       = &FAT_rename,
@@ -166,6 +166,7 @@ file_t* fopen(const char* path, const char* mode)
 void fclose(file_t* file)
 {
     file->volume->type->fclose(file);
+    devicemanager_flushCaches(0);
     free(file->name);
     free(file);
     list_delete(currentTask->files, list_find(currentTask->files, file));
@@ -201,12 +202,14 @@ FS_ERROR rename(const char* oldpath, const char* newpath)
 
 inline char fgetc(file_t* file)
 {
-    return (file->volume->type->fgetc(file));
+    char retVal;
+    fread(&retVal, 1, 1, file);
+    return (retVal);
 }
 
 inline FS_ERROR fputc(char c, file_t* file)
 {
-    return (file->volume->type->fputc(file, c));
+    return(fwrite(&c, 1, 1, file));
 }
 
 char* fgets(char* dest, size_t num, file_t* file)
@@ -232,28 +235,14 @@ FS_ERROR fputs(const char* src, file_t* file)
 
 size_t fread(void* dest, size_t size, size_t count, file_t* file)
 {
-    size_t i = 0;
-    for (; i < count; i++)
-    {
-        for (int j = 0; j < size; j++)
-        {
-            ((uint8_t*)dest)[i*size+j] = fgetc(file);
-        }
-    }
-    return (++i);
+    file->volume->type->fread(file, dest, size*count);
+    return (size*count);
 }
 
 size_t fwrite(const void* src, size_t size, size_t count, file_t* file)
 {
-    size_t i = 0;
-    for (; i < count; i++)
-    {
-        for (size_t j = 0; j < size; j++)
-        {
-            fputc(((uint8_t*)src)[i*size+j], file);
-        }
-    }
-    return (++i);
+    file->volume->type->fwrite(file, src, size*count);
+    return (size*count);
 }
 
 

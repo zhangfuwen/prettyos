@@ -81,5 +81,7 @@ FS_ERROR singleSectorRead (uint32_t sector, uint8_t* buffer, disk_t* disk);
 FS_ERROR sectorWrite      (uint32_t sector, uint8_t* buffer, disk_t* disk);
 FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk);
 
+void devicemanager_flushCaches(void* owner);
+
 
 #endif

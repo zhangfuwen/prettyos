@@ -10,12 +10,12 @@
 #include "filesystem/fsmanager.h"
 #include "tasking/synchronisation.h"
 
-#define SCREENSHOT_BYTES 4102
+#define SCREENSHOT_BYTES 4100
 
-static uint16_t* vidmem = (uint16_t*)VIDEORAM;
 
 VIDEOMODES videomode = VM_TEXT;
 
+static uint16_t* vidmem = (uint16_t*)VIDEORAM;
 static char infoBar[3][81]; // Infobar with 3 lines and 80 columns
 
 static position_t cursor = {0, 0};
@@ -305,10 +305,6 @@ void takeScreenshot()
     }
 
     mutex_unlock(videoLock);
-
-    // additional newline at the end of the screenshot
-    screenCache[SCREENSHOT_BYTES-2]= 0xD; // CR
-    screenCache[SCREENSHOT_BYTES-1]= 0xA; // LF
 }
 
 extern disk_t* disks[DISKARRAYSIZE]; // HACK

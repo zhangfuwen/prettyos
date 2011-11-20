@@ -19,27 +19,12 @@
 
 // RAM read/write
 
-#define MemoryReadByte(a,f)      *(a+f) // reads a byte at an address plus an offset in RAM
-#define MemoryReadWord(a,f)      *(uint16_t*)(a+f)
-#define MemoryReadLong(a,f)      *(uint32_t*)(a+f)
-#define MemoryWriteByte(a,f,d)   *(a+f)=d
-
-// Media
-
-#define SECTOR_SIZE    512 // TODO: use sectorSize of disk_t
+#define MemoryReadByte(a,f)    (*((uint8_t*)(a)+(f))) // reads a byte at an address plus an offset in RAM
+#define MemoryReadWord(a,f)    (*(uint16_t*)((uint8_t*)(a)+(f)))
+#define MemoryReadLong(a,f)    (*(uint32_t*)((uint8_t*)(a)+(f)))
+#define MemoryWriteByte(a,f,d) (*((uint8_t*)(a)+(f))=d)
 
 // File
-
-#define END_CLUSTER_FAT12    0xFF7
-#define LAST_CLUSTER_FAT12   0xFF8
-
-#define END_CLUSTER_FAT16    0xFFFE
-#define LAST_CLUSTER_FAT16   0xFFF8
-#define CLUSTER_FAIL_FAT16   0xFFFF
-
-#define END_CLUSTER_FAT32    0x0FFFFFF7
-#define LAST_CLUSTER_FAT32   0x0FFFFFF8
-#define CLUSTER_FAIL_FAT32   0x0FFFFFFF
 
 #define MASK_MAX_FILE_ENTRY_LIMIT_BITS 0x0F // This is used to indicate to the Cache_File_Entry function that a new sector needs to be loaded.
 
@@ -85,6 +70,7 @@ typedef struct
     uint8_t  SecPerClus;        // sectors per cluster
     uint32_t FatRootDirCluster;
     uint32_t reservedSectors;
+    uint8_t  type;              // FAT12, 16 or 32 (for array access)
 } FAT_partition_t;
 
 // File
@@ -180,11 +166,11 @@ typedef struct
 
 // file handling
 FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseClusters);
-FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, FAT_file_t* fileptrTest, uint8_t cmd, uint8_t mode);
+FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, char name[11], uint16_t attributes, uint8_t cmd, uint8_t mode);
 FS_ERROR FAT_fopen(file_t* file, bool create, bool open);
 FS_ERROR FAT_fclose(file_t* file);
-char     FAT_fgetc(file_t* file);
-FS_ERROR FAT_fputc(file_t* file, char c);
+FS_ERROR FAT_fread(file_t* file, void* dest, size_t count);
+FS_ERROR FAT_fwrite(file_t* file, const void* src, size_t count);
 FS_ERROR FAT_fseek(file_t* file, long offset, SEEK_ORIGIN whence);
 FS_ERROR FAT_remove(const char* fileName, partition_t* part);
 FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_t* part);

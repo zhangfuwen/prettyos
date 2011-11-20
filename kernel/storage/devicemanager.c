@@ -11,7 +11,7 @@
 #include "flpydsk.h"
 #include "filesystem/fat.h"
 #include "uhci.h"
-#ifdef _READCACHE_DIAGNOSIS_
+#ifdef _CACHE_DIAGNOSIS_
   #include "timer.h"
 #endif
 
@@ -30,19 +30,20 @@ diskType_t FLOPPYDISK = {.readSector = &flpydsk_readSector, .writeSector = &flpy
            USB_MSD    = {.readSector = &usb_read,           .writeSector = &usb_write},
            RAMDISK    = {.readSector = 0,                   .writeSector = 0};
 
-// ReadCache
-#define NUMREADCACHE 20
+// Cache
+#define NUMCACHE 20
 
 typedef struct
 {
     uint8_t buffer[512];
     bool valid;
+    bool write; // Contains unwritten data
+    void* owner;
     disk_t* disk;
     uint32_t sector;
-} readcache_t;
+} cache_t;
 
-static readcache_t readcaches[NUMREADCACHE];
-static uint8_t     currReadCache = 0;
+static cache_t caches[NUMCACHE];
 
 
 void deviceManager_install(partition_t* systemPart)
@@ -50,9 +51,9 @@ void deviceManager_install(partition_t* systemPart)
     memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
     memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
 
-    for (uint16_t i = 0; i < NUMREADCACHE; i++) // Invalidate all read caches
+    for (uint16_t i = 0; i < NUMCACHE; i++) // Invalidate all read caches
     {
-        readcaches[i].valid = false;
+        caches[i].valid = false;
     }
 
     systemPartition = systemPart;
@@ -381,48 +382,89 @@ FS_ERROR analyzeDisk(disk_t* disk)
 }
 
 
-#ifdef _READCACHE_DIAGNOSIS_
-static void logReadCache()
+#ifdef _CACHE_DIAGNOSIS_
+static void logCache()
 {
-    for (uint16_t i = 0; i < NUMREADCACHE; i++)
+    printf("\n\nCaches:\nID\tdisk\t\tsector\towner\t\tvalid\tsynced");
+    textColor(LIGHT_GRAY);
+    printf("\n--------------------------------------------------------------------------------");
+    for (uint16_t i = 0; i < NUMCACHE; i++)
     {
-        if (readcaches[i].valid)
-        {
+        if (caches[i].valid)
             textColor(GREEN);
-        }
         else
-        {
             textColor(LIGHT_GRAY);
-        }
-        printf("\nReadcache: %u \tpart: %Xh sector: %u \tvalid: %s", i, readcaches[i].disk, readcaches[i].sector, readcaches[i].valid?"yes":"no");
+        printf("\n%u:\t%Xh\t%u\t%Xh\t%s\t%s", i, caches[i].disk, caches[i].sector, caches[i].owner, caches[i].valid?"yes":"no", caches[i].write?"no":"yes");
     }
     textColor(LIGHT_GRAY);
-    printf("\n-------------------------------------------------------------------------------");
-    sleepMilliSeconds(500);
+    printf("\n--------------------------------------------------------------------------------");
     textColor(TEXT);
+    waitForKeyStroke();
 }
 #endif
 
-static void fillReadCache(uint32_t sector, disk_t* disk, uint8_t* buffer)
+static void flushCache(cache_t* c)
 {
-    readcaches[currReadCache].sector = sector;
-    readcaches[currReadCache].disk   = disk;
-    readcaches[currReadCache].valid  = true;
-    memcpy(readcaches[currReadCache].buffer, buffer, 512); // fill cache
-
-    for (uint16_t i = 0; i < NUMREADCACHE; i++)
+    if(c->write && c->valid)
     {
-        if (readcaches[i].sector == sector && readcaches[i].disk == disk && readcaches[i].valid && i!=currReadCache)
+        c->disk->type->writeSector(c->sector, c->buffer, c->disk);
+        c->write = false;
+    }
+}
+
+void devicemanager_flushCaches(void* owner)
+{
+    for (uint16_t i = 0; i < NUMCACHE; i++)
+        if(caches[i].owner == owner)
+            flushCache(caches+i);
+}
+
+static void fillCache(uint32_t sector, disk_t* disk, uint8_t* buffer, bool write, void* owner)
+{
+    static uint8_t currCache = 0;
+
+    bool done = false;
+    for (uint16_t i = 0; i < NUMCACHE; i++) // Look for cache that can be updated
+    {
+        if (caches[i].valid && caches[i].sector == sector && caches[i].disk == disk)
         {
-            readcaches[i].valid = false;
+            if(done)
+                caches[i].valid = false;
+            else
+            {
+                if(caches[i].owner != owner)
+                {
+                    flushCache(caches+i);
+                    caches[i].owner = owner;
+                }
+                if(write)
+                {
+                    caches[i].write = true;
+                }
+                memcpy(caches[i].buffer, buffer, 512);
+                done = true;
+            }
         }
     }
 
-    currReadCache++;
-    currReadCache %= NUMREADCACHE;
+    if(!done)
+    {
+        if(caches[currCache].valid)
+            flushCache(caches+currCache); // Write cache before its overwritten
+        // fill new cache
+        caches[currCache].sector = sector;
+        caches[currCache].disk   = disk;
+        caches[currCache].valid  = true;
+        caches[currCache].write  = write;
+        caches[currCache].owner  = owner;
+        memcpy(caches[currCache].buffer, buffer, 512);
 
-  #ifdef _READCACHE_DIAGNOSIS_
-    logReadCache();
+        currCache++;
+        currCache %= NUMCACHE;
+    }
+
+  #ifdef _CACHE_DIAGNOSIS_
+    logCache();
   #endif
 }
 
@@ -432,15 +474,9 @@ FS_ERROR sectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
     textColor(YELLOW); printf("\n>>>>> sectorWrite: %u <<<<<", sector); textColor(TEXT);
   #endif
 
-    for (uint16_t i = 0; i < NUMREADCACHE; i++)
-    {
-        if (readcaches[i].valid && readcaches[i].disk == disk && readcaches[i].sector == sector)
-        {
-            memcpy(readcaches[i].buffer, buffer, 512); // Update cache
-        }
-    }
+    fillCache(sector, disk, buffer, true, 0);
 
-    return disk->type->writeSector(sector, buffer, disk);
+    return CE_GOOD;
 }
 
 FS_ERROR singleSectorWrite(uint32_t sector, uint8_t* buffer, disk_t* disk)
@@ -456,15 +492,15 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
     textColor(0x03); printf("\n>>>>> sectorRead: %u <<<<<", sector); textColor(TEXT);
   #endif
 
-    for (uint16_t i = 0; i < NUMREADCACHE; i++)
+    for (uint16_t i = 0; i < NUMCACHE; i++)
     {
-        if (readcaches[i].valid && readcaches[i].sector == sector && readcaches[i].disk == disk)
+        if (caches[i].valid && caches[i].sector == sector && caches[i].disk == disk)
         {
           #ifdef _DEVMGR_DIAGNOSIS_
-            printf("\nsector: %u <--- read from RAM Cache", readcaches[i].sector);
+            printf("\nsector: %u <--- read from RAM Cache", caches[i].sector);
           #endif
 
-            memcpy(buffer, readcaches[i].buffer, 512); // use read cache
+            memcpy(buffer, caches[i].buffer, 512); // Take data from read cache
 
             disk->accessRemaining--;
             return (CE_GOOD);
@@ -474,7 +510,7 @@ FS_ERROR sectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
     FS_ERROR error = disk->type->readSector(sector, buffer, disk);
     if (error == CE_GOOD)
     {
-        fillReadCache(sector, disk, buffer);
+        fillCache(sector, disk, buffer, false, 0);
     }
 
     return error;

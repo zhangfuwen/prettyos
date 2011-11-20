@@ -86,8 +86,8 @@ typedef struct
     FS_ERROR (*fopen) (struct file*, bool, bool);                    // File, create if not existant, overwrite file before opening
     FS_ERROR (*fclose)(struct file*);                                // File
     FS_ERROR (*fseek) (struct file*, int32_t, SEEK_ORIGIN);          // File, offset, origin
-    char     (*fgetc) (struct file*);                                // File
-    FS_ERROR (*fputc) (struct file*, char);                          // File, source
+    FS_ERROR (*fread) (struct file*, void*, size_t);                 // File, destination, size
+    FS_ERROR (*fwrite)(struct file*, const void*, size_t);           // File, source, size
     FS_ERROR (*fflush)(struct file*);                                // File
     FS_ERROR (*remove)(const char*, struct partition*);              // Path, partition
     FS_ERROR (*rename)(const char*, const char*, struct partition*); // Old path, new path, partition
