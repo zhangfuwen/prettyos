@@ -166,7 +166,7 @@ typedef struct
 
 // file handling
 FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseClusters);
-FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, char name[11], uint16_t attributes, uint8_t cmd, uint8_t mode);
+FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, char name[11], uint8_t cmd);
 FS_ERROR FAT_fopen(file_t* file, bool create, bool open);
 FS_ERROR FAT_fclose(file_t* file);
 FS_ERROR FAT_fread(file_t* file, void* dest, size_t count);

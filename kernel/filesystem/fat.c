@@ -41,7 +41,6 @@ static const struct // Stores subtype-dependant constants
 };
 
 
-static uint32_t fatWrite(FAT_partition_t* volume, uint32_t currCluster, uint32_t value);
 static bool writeFileEntry(FAT_file_t* fileptr, uint32_t* curEntry);
 
 
@@ -87,7 +86,7 @@ static bool ValidateChars(char* FileName, bool mode)
              FileName[i] == 0x3C ||  FileName[i] == 0x3D  ||
              FileName[i] == 0x3E ||  FileName[i] == 0x5B  ||
              FileName[i] == 0x5C ||  FileName[i] == 0x5D  ||
-             FileName[i] == 0x7C || (FileName[i] == 0x2E  && radix == true))
+             FileName[i] == 0x7C || (FileName[i] == 0x2E  && radix))
         {
             return false;
         }
@@ -235,32 +234,23 @@ static FS_ERROR fileGetNextCluster(FAT_file_t* fileptr, uint32_t n)
     serial_log(SER_LOG_FAT, "\r\r\n>>>>> fileGetNextCluster <<<<<");
   #endif
 
-    FS_ERROR error  = CE_GOOD;
     FAT_partition_t* volume = fileptr->volume;
 
     do
     {
-        uint32_t c2 = fileptr->currCluster;
-        uint32_t c = fatRead(volume, c2);
-        if (c == clusterVal[volume->type].fail)
-        {
-            error = CE_BAD_SECTOR_READ;
-        }
-        else
-        {
-            if (c >= volume->maxcls)
-            {
-                error = CE_INVALID_CLUSTER;
-            }
+        fileptr->currCluster = fatRead(volume, fileptr->currCluster);
 
-            if (c >= clusterVal[volume->type].last)
-            {
-                error = CE_FAT_EOF;
-            }
-        }
-        fileptr->currCluster = c;
-    } while (--n>0 && error == CE_GOOD);
-    return error;
+        if (fileptr->currCluster == clusterVal[volume->type].fail)
+            return CE_BAD_SECTOR_READ;
+
+        if (fileptr->currCluster >= clusterVal[volume->type].last)
+            return CE_FAT_EOF;
+
+        if (fileptr->currCluster >= volume->maxcls)
+            return CE_INVALID_CLUSTER;
+
+    } while (--n>0);
+    return CE_GOOD;
 }
 
 
@@ -349,10 +339,10 @@ static FAT_dirEntry_t* cacheFileEntry(FAT_file_t* fileptr, uint32_t* curEntry, b
     return (FAT_dirEntry_t*)volume->part->buffer + ((*curEntry)%DirectoriesPerSector);
 }
 
-static FAT_dirEntry_t* getFileAttribute(FAT_file_t* fileptr, uint32_t* fHandle)
+static FAT_dirEntry_t* getFatDirEntry(FAT_file_t* fileptr, uint32_t* fHandle)
 {
   #ifdef _FAT_DIAGNOSIS_
-    serial_log(SER_LOG_FAT, "\r\r\n>>>>> getFileAttribute <<<<<");
+    serial_log(SER_LOG_FAT, "\r\n>>>>> getFatDirEntry <<<<<");
   #endif
 
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
@@ -368,7 +358,8 @@ static FAT_dirEntry_t* getFileAttribute(FAT_file_t* fileptr, uint32_t* fHandle)
         (*fHandle)++;
         dir = cacheFileEntry(fileptr, fHandle, false);
     }
-    return dir;
+
+    return (dir);
 }
 
 static void updateTimeStamp(FAT_dirEntry_t* dir)
@@ -420,7 +411,7 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
     return FOUND;
 }
 
-FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, char nameTest[11], uint16_t attributes, uint8_t cmd, uint8_t mode)
+FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, char nameTest[11], uint8_t cmd)
 {
   #ifdef _FAT_DIAGNOSIS_
     serial_log(SER_LOG_FAT, "\r\n>>>>> FAT_searchFile <<<<<");
@@ -428,9 +419,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, char nameTest[11], uint16_t att
 
     FS_ERROR error              = CE_FILE_NOT_FOUND;
     fileptrDest->dircurrCluster = fileptrDest->dirfirstCluster;
-    uint16_t compareAttrib      = 0xFFFF ^ attributes;
     uint32_t fHandle            = fileptrDest->entry;
-    bool read                   = true;
 
     memset(fileptrDest->name, 0x20, FILE_NAME_SIZE);
   #ifdef _FAT_DIAGNOSIS_
@@ -438,7 +427,7 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, char nameTest[11], uint16_t att
   #endif
     if (fHandle == 0 || (fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) != 0) // Maximum 16 entries possible
     {
-        if (cacheFileEntry(fileptrDest, &fHandle, read) == 0)
+        if (cacheFileEntry(fileptrDest, &fHandle, true) == 0)
         {
             return CE_BADCACHEREAD;
         }
@@ -459,87 +448,37 @@ FS_ERROR FAT_searchFile(FAT_file_t* fileptrDest, char nameTest[11], uint16_t att
           #ifdef _FAT_DIAGNOSIS_
             serial_log(SER_LOG_FAT, "\r\n\r\nstate == FOUND");
           #endif
-            uint32_t attrib =  fileptrDest->attributes;
-            attrib &= ATTR_MASK;
+            uint16_t attrib =  fileptrDest->attributes & ATTR_MASK;
 
-            /*
-            mode 0 : attributes are irrelevant.
-            mode 1 : attributes of the fileptrDest entry must match the attributes of fileptrTest
-            Partial string search characters may bypass portions of the comparison.
-            */
-            switch (mode)
+            if ((attrib != ATTR_VOLUME) && ((attrib & ATTR_HIDDEN) != ATTR_HIDDEN))
             {
-                case 0:
-                    if ((attrib != ATTR_VOLUME) && ((attrib & ATTR_HIDDEN) != ATTR_HIDDEN))
+              #ifdef _FAT_DIAGNOSIS_
+                serial_log(SER_LOG_FAT, "\r\n\r\nAn entry is found. Attributes OK for search");
+              #endif
+                error = CE_GOOD; // Indicate the already filled file data is correct and go back
+                for (uint8_t i = (nameTest[0] != '*')?0:8; i < FILE_NAME_SIZE; i++)
+                {
+                    char character = fileptrDest->name[i];
+                  #ifdef _FAT_DIAGNOSIS_
+                    serial_log(SER_LOG_FAT, "\r\ni: %u character: %c test: %c", i, character, nameTest[i]);
+                  #endif
+                    if (nameTest[i] == '*') // TODO: Do we really need support for * and ? in the FAT _driver_?
                     {
-                      #ifdef _FAT_DIAGNOSIS_
-                        serial_log(SER_LOG_FAT, "\r\n\r\nAn entry is found. Attributes OK for search"); /// TEST
-                      #endif
-                        error = CE_GOOD;
-                        for (uint8_t i=0; i < FILE_NAME_SIZE; i++)
-                        {
-                            char character = fileptrDest->name[i];
-                          #ifdef _FAT_DIAGNOSIS_
-                            serial_log(SER_LOG_FAT, "\r\ni: %u character: %c test: %c", i, character, name[i]); /// TEST
-                          #endif
-                            if (toLower(character) != toLower(nameTest[i]))
-                            {
-                                error = CE_FILE_NOT_FOUND;
-                              #ifdef _FAT_DIAGNOSIS_
-                                serial_log(SER_LOG_FAT, "\r\n\r\n %c <--- not equal", character);
-                              #endif
-                                break; // finish for loop
-                            }
-                        } // for loop
+                        if(i < 8)
+                            i = 8;
+                        else
+                            break;
                     }
-                    break; // end of case
-                case 1:
-                    // Check for attribute match
-                    if (((attrib & compareAttrib) == 0) && (attrib != ATTR_LONG_NAME))
+                    if (nameTest[i] != '?' && toLower(character) != toLower(nameTest[i]))
                     {
-                        error = CE_GOOD;                 // Indicate the already filled file data is correct and go back
-                        char character = (char)'m';           // random value
-                        if (nameTest[0] != '*') // If "*" is passed for comparion as 1st char then don't proceed. Go back, file alreay found.
-                        {
-                            for (uint16_t i=0; i<DIR_NAMESIZE; i++)
-                            {
-                                character = fileptrDest->name[i];
-                                if (nameTest[i] == '*')
-                                    break;
-                                if (nameTest[i] != '?')
-                                {
-                                    if (toLower(character) != toLower(nameTest[i]))
-                                    {
-                                        error = CE_FILE_NOT_FOUND; // it's not a match
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-
-                        // Before calling this "searchFile" fn, "formatfilename" must be called. Hence, extn always starts from position "8".
-                        if ((nameTest[8] != '*') && (error == CE_GOOD))
-                        {
-                            for (uint8_t i=8; i<FILE_NAME_SIZE; i++)
-                            {
-                                character = fileptrDest->name[i]; // Get the source character
-                                if (nameTest[i] == '*')
-                                {
-                                    break;
-                                }
-                                if (nameTest[i] != '?')
-                                {
-                                    if (toLower(character) != toLower(nameTest[i]))
-                                    {
-                                        error = CE_FILE_NOT_FOUND; // it's not a match
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    } // Attribute match
-                    break; // end of case
-            } // while
+                        error = CE_FILE_NOT_FOUND; // it's not a match
+                      #ifdef _FAT_DIAGNOSIS_
+                        serial_log(SER_LOG_FAT, "\r\n\r\n %c <--- not equal", character);
+                      #endif
+                        break;
+                    }
+                }
+            }
         }
         else
         {
@@ -567,7 +506,7 @@ FS_ERROR FAT_fclose(file_t* file)
 
     if (file->write)
     {
-        FAT_dirEntry_t* dir = getFileAttribute(FATfile, &fHandle);
+        FAT_dirEntry_t* dir = getFatDirEntry(FATfile, &fHandle);
 
         if (dir == 0)
         {
@@ -587,8 +526,6 @@ FS_ERROR FAT_fclose(file_t* file)
         {
             error = CE_WRITE_ERROR;
         }
-
-        file->write = false;
     }
 
     free(FATfile);
@@ -839,29 +776,28 @@ FS_ERROR FAT_fwrite(file_t* file, const void* ptr, size_t size)
     serial_log(SER_LOG_FAT, "\r\n>>>>> fwrite <<<<<");
   #endif
 
-
     if (!file->write)
         return (CE_READONLY);
     if (!size)
         return (CE_GOOD);
 
     FAT_file_t* fatfile = file->data;
-    FS_ERROR error      = CE_GOOD;
     partition_t* volume = file->volume;
     uint16_t pos        = fatfile->pos;
     uint32_t seek       = file->seek;
     uint32_t sector     = cluster2sector(volume->data, fatfile->currCluster) + fatfile->sec;
     uint32_t sectors    = (size%512 == 0) ? size/512 : size/512+1; // Number of sectors to be written
-    volume->disk->accessRemaining += sectors;
 
     if (singleSectorRead(sector, volume->buffer, volume->disk) != CE_GOOD)
     {
-        error = CE_BAD_SECTOR_READ;
+        return(CE_BAD_SECTOR_READ);
     }
 
+    volume->disk->accessRemaining += sectors;
     uint32_t filesize   = file->size;
     uint8_t* src        = (uint8_t*)ptr;
     uint16_t writeCount = 0;
+    FS_ERROR error      = CE_GOOD;
 
     while (error==CE_GOOD && size>0)
     {
@@ -980,44 +916,27 @@ static bool fatEraseClusterChain(uint32_t cluster, FAT_partition_t* volume)
     serial_log(SER_LOG_FAT, "\r\n>>>>> fatEraseClusterChain <<<<<");
   #endif
 
-    enum {Good, Fail, Exit} status = Good;
-
     if (cluster <= 1)  // Cluster assigned can't be "0" and "1"
-    {
-        status = Exit;
-    }
-    else
-    {
-        while (status == Good)
-        {
-            uint32_t c = fatRead(volume, cluster);
-            if (c == clusterVal[volume->type].fail)
-            {
-                status = Fail;
-            }
-            else
-            {
-                if (c <= 1)  // Cluster assigned can't be "0" and "1"
-                {
-                    status = Exit;
-                }
-                else
-                {
-                    if (c >= clusterVal[volume->type].last)
-                    {
-                        status = Exit;
-                    }
-                    if (fatWrite(volume, cluster, CLUSTER_EMPTY) == clusterVal[volume->type].fail)
-                    {
-                        status = Fail;
-                    }
-                    cluster = c;
-                }
-            }
-        }
-    }
+        return(true);
 
-    return (status == Exit);
+    for(;;)
+    {
+        uint32_t c = fatRead(volume, cluster);
+
+        if (c == clusterVal[volume->type].fail)
+            return(false);
+
+        if (c <= 1)  // Cluster assigned can't be "0" and "1"
+            return(true);
+
+        if (c >= clusterVal[volume->type].last)
+            return(true);
+
+        if (fatWrite(volume, cluster, CLUSTER_EMPTY) == clusterVal[volume->type].fail)
+            return(false);
+
+        cluster = c;
+    }
 }
 
 
@@ -1047,12 +966,9 @@ FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseCluster
         return CE_ERASE_FAIL;
     }
 
-    if (clus != fileptr->volume->FatRootDirCluster)
+    if (EraseClusters && clus != fileptr->volume->FatRootDirCluster)
     {
-        if (EraseClusters)
-        {
-            fatEraseClusterChain(clus, fileptr->volume);
-        }
+        fatEraseClusterChain(clus, fileptr->volume);
     }
     return (CE_GOOD);
 }
@@ -1110,106 +1026,63 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
     serial_log(SER_LOG_FAT, "\r\n>>>>> FindEmptyEntries <<<<<");
   #endif
 
-    uint8_t  status = NOT_FOUND;
-    FAT_dirEntry_t* dir;
-    char a = ' ';
-
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
-    if ((dir = cacheFileEntry(fileptr, fHandle, true)) == 0)
-    {
-        status = CE_BADCACHEREAD;
-    }
-    else
-    {
-        uint32_t bHandle;
-        while (status == NOT_FOUND)
-        {
-            uint8_t amountfound = 0;
-            bHandle = *fHandle;
-
-            do
-            {
-                dir = cacheFileEntry(fileptr, fHandle, false);
-                if (dir != 0)
-                {
-                    a = dir->Name[0];
-                }
-                (*fHandle)++;
-            }
-            while ((a == DIR_DEL || a == DIR_EMPTY) && dir != 0 &&  ++amountfound < 1);
-
-            if (dir == 0)
-            {
-                uint32_t b = fileptr->dircurrCluster;
-                if (b == fileptr->volume->FatRootDirCluster)
-                {
-                    if (fileptr->volume->part->subtype != FS_FAT32)
-                        status = NO_MORE;
-                    else
-                    {
-                        fileptr->currCluster = b;
-
-                        if (fileAllocateNewCluster(fileptr, 1) == CE_DISK_FULL)
-                            status = NO_MORE;
-                        else
-                        {
-                            *fHandle = bHandle;
-                            status = FOUND;
-                        }
-                    }
-                }
-                else
-                {
-                    fileptr->currCluster = b;
-                    if (fileAllocateNewCluster(fileptr, 1) == CE_DISK_FULL)
-                    {
-                        status = NO_MORE;
-                    }
-                    else
-                    {
-                        *fHandle = bHandle;
-                        status = FOUND;
-                    }
-                }
-            }
-            else
-            {
-                if (amountfound == 1)
-                {
-                    status = FOUND;
-                    *fHandle = bHandle;
-                }
-            }
-        }
-        *fHandle = bHandle;
-    }
-    return (status == FOUND);
-}
-
-static FAT_dirEntry_t* loadDirAttrib(FAT_file_t* fileptr, uint32_t* fHandle)
-{
-  #ifdef _FAT_DIAGNOSIS_
-    serial_log(SER_LOG_FAT, "\r\n>>>>> loadDirAttrib <<<<<");
-  #endif
-
-    fileptr->dircurrCluster = fileptr->dirfirstCluster;
-    // Get the entry
     FAT_dirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
 
-    if (dir == 0 || dir->Name[0] == DIR_EMPTY || dir->Name[0] == DIR_DEL)
+    if (dir == 0)
     {
-        return (0);
+        return(false); // Failure
     }
 
-    while (dir != 0 && dir->Attr == ATTR_LONG_NAME)
+    uint32_t bHandle;
+    char a = ' ';
+    for(;;)
     {
-        (*fHandle)++;
-        dir = cacheFileEntry(fileptr, fHandle, false);
-    }
+        uint8_t amountfound = 0;
+        bHandle = *fHandle;
 
-    return (dir);
+        do
+        {
+            dir = cacheFileEntry(fileptr, fHandle, false);
+            if (dir != 0)
+            {
+                a = dir->Name[0];
+            }
+            (*fHandle)++;
+        } while ((a == DIR_DEL || a == DIR_EMPTY) && dir != 0 &&  ++amountfound < 1);
+
+        if (dir == 0)
+        {
+            uint32_t b = fileptr->dircurrCluster;
+            if (b == fileptr->volume->FatRootDirCluster)
+            {
+                if (fileptr->volume->part->subtype != FS_FAT32)
+                    return(false);
+
+                fileptr->currCluster = b;
+
+                if (fileAllocateNewCluster(fileptr, 1) == CE_DISK_FULL)
+                    return(false);
+
+                *fHandle = bHandle;
+                return(true);
+            }
+
+            fileptr->currCluster = b;
+            if (fileAllocateNewCluster(fileptr, 1) == CE_DISK_FULL)
+                return(false);
+
+            *fHandle = bHandle;
+            return(true);
+        }
+
+        if (amountfound == 1)
+        {
+            *fHandle = bHandle;
+            return(true);
+        }
+    }
 }
-
 static FS_ERROR fileCreateHeadCluster(FAT_file_t* fileptr, uint32_t* cluster)
 {
   #ifdef _FAT_DIAGNOSIS_
@@ -1242,7 +1115,7 @@ static FS_ERROR createFirstCluster(FAT_file_t* fileptr)
     FS_ERROR error = fileCreateHeadCluster(fileptr, &cluster);
     if (error == CE_GOOD)
     {
-        FAT_dirEntry_t* dir = loadDirAttrib(fileptr, &fHandle);
+        FAT_dirEntry_t* dir = getFatDirEntry(fileptr, &fHandle);
         dir->FstClusHI = (cluster & 0x0FFF0000) >> 16; // only 28 bits in FAT32
         dir->FstClusLO = (cluster & 0x0000FFFF);
 
@@ -1260,7 +1133,6 @@ FS_ERROR FAT_createFileEntry(FAT_file_t* fileptr, uint32_t *fHandle, uint8_t mod
     serial_log(SER_LOG_FAT, "\r\n>>>>> createFileEntry <<<<<");
   #endif
 
-    FS_ERROR error = CE_GOOD;
     char name[FILE_NAME_SIZE];
     *fHandle = 0;
 
@@ -1268,16 +1140,12 @@ FS_ERROR FAT_createFileEntry(FAT_file_t* fileptr, uint32_t *fHandle, uint8_t mod
 
     if (FAT_FindEmptyEntries(fileptr, fHandle))
     {
-        if ((error = PopulateEntries(fileptr, name, fHandle, mode)) == CE_GOOD)
-        {
+        FS_ERROR error = PopulateEntries(fileptr, name, fHandle, mode);
+        if (error == CE_GOOD)
             return createFirstCluster(fileptr);
-        }
+        return error;
     }
-    else
-    {
-        return CE_DIR_FULL;
-    }
-    return error;
+    return CE_DIR_FULL;
 }
 
 
@@ -1442,7 +1310,7 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     FATfile->file = file;
 
     //HACK
-    if (!FormatFileName(file->name, FATfile->name, false))
+    if (!FormatFileName(file->name, FATfile->name, !overwrite&&!create))
     {
         free(FATfile);
         return (CE_INVALID_FILENAME);
@@ -1464,11 +1332,10 @@ FS_ERROR FAT_fopen(file_t* file, bool create, bool overwrite)
     uint32_t fHandle;
     FS_ERROR error;
 
-    uint16_t attributes = FATfile->attributes;
     char name[11];
     memcpy(name, FATfile->name, 11);
 
-    if (FAT_searchFile(FATfile, name, attributes, LOOK_FOR_MATCHING_ENTRY, 0) == CE_GOOD)
+    if (FAT_searchFile(FATfile, name, LOOK_FOR_MATCHING_ENTRY) == CE_GOOD)
     {
         fHandle = FATfile->entry;
 
@@ -1609,7 +1476,7 @@ FS_ERROR FAT_remove(const char* fileName, partition_t* part)
 
     char name[11];
     memcpy(name, tempFile.name, 11);
-    FS_ERROR result = FAT_searchFile(fileptr, name, ATTR_ARCHIVE, LOOK_FOR_MATCHING_ENTRY, 0);
+    FS_ERROR result = FAT_searchFile(fileptr, name, LOOK_FOR_MATCHING_ENTRY);
 
     if (result != CE_GOOD)
     {
@@ -1672,7 +1539,7 @@ static FS_ERROR FAT_fileRename(FAT_file_t* fileptr, const char* fileName)
 
     fHandle = goodHandle;
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
-    dir = loadDirAttrib(fileptr, &fHandle);
+    dir = getFatDirEntry(fileptr, &fHandle);
 
     if (dir == 0)
     {
@@ -1694,27 +1561,26 @@ FS_ERROR FAT_rename(const char* fileNameOld, const char* fileNameNew, partition_
     serial_log(SER_LOG_FAT, "\r\n rename: fileNameOld: %s, fileNameNew: %s", fileNameOld, fileNameNew);
 
     FAT_file_t tempFile;
-    FAT_file_t* fileptr = &tempFile;
-    FormatFileName(fileNameOld, fileptr->name, false); // must be 8+3 formatted first
-    fileptr->volume = part->data;
-    fileptr->firstCluster = 0;
-    fileptr->currCluster  = 0;
-    fileptr->entry = 0;
-    fileptr->attributes = ATTR_ARCHIVE;
+    FormatFileName(fileNameOld, tempFile.name, false); // must be 8+3 formatted first
+    tempFile.volume = part->data;
+    tempFile.firstCluster = 0;
+    tempFile.currCluster  = 0;
+    tempFile.entry = 0;
+    tempFile.attributes = ATTR_ARCHIVE;
 
     // start at the root directory
-    fileptr->dirfirstCluster = fileptr->dircurrCluster = fileptr->volume->FatRootDirCluster;
+    tempFile.dirfirstCluster = tempFile.dircurrCluster = tempFile.volume->FatRootDirCluster;
 
     char name[11];
     memcpy(name, tempFile.name, 11);
-    FS_ERROR result = FAT_searchFile(fileptr, name, ATTR_ARCHIVE, LOOK_FOR_MATCHING_ENTRY, 0);
+    FS_ERROR result = FAT_searchFile(&tempFile, name, LOOK_FOR_MATCHING_ENTRY);
 
     if (result != CE_GOOD)
     {
         return CE_FILE_NOT_FOUND;
     }
 
-    return FAT_fileRename(fileptr, fileNameNew);
+    return FAT_fileRename(&tempFile, fileNameNew);
 }
 
 

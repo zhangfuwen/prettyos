@@ -198,7 +198,6 @@ static void stackTrace(void* eip, void* ebp)
             break;
         }
     }
-    cli(); hlt();
 }
 
 static void defaultError(registers_t* r)
