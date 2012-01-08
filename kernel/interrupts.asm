@@ -41,14 +41,16 @@ extern irq_handler
 section .text
 
 
-; Template for a single interrupt-routine:
+; Template for a single interrupt routine:
 %macro IR_ROUTINE 1
     ir%1:
     %if (%1!=8) && (%1<10 || %1>14)
     push dword 0    ; Dummy error code needs to be pushed on some interrupts
     %endif
     push dword %1
+    %if (%1 != SYSCALL_NUMBER) ; Performance hack. Fall through into ir_common_stub
     jmp ir_common_stub
+    %endif
 %endmacro
 
 ; Create the 48 interrupt-routines

@@ -5,6 +5,7 @@
 
 #include "cpu.h"
 #include "video/console.h"
+#include "cmos.h"
 #include "ipc.h"
 
 
@@ -169,8 +170,67 @@ void cpu_MSRwrite(uint32_t msr, uint64_t value)
 }
 
 
+// FPU
+
+task_t* volatile FPUTask = 0;
+
+bool fpu_install()
+{
+    if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
+        return (false);
+
+    __asm__ volatile ("finit");
+
+    uint16_t ctrlword = 0x37F;
+    __asm__ volatile("fldcw %0"::"m"(ctrlword)); // Set the FPU Control Word. FLDCW = Load FPU Control Word
+
+    // set TS in cr0
+    uint32_t cr0;
+    __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // Read cr0
+    cr0 |= BIT(3); // Set the TS bit (no. 3) in CR0 to enable #NM (exception no. 7)
+    __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // Write cr0
+
+    return (true);
+}
+
+void fpu_test()
+{
+    textColor(LIGHT_GRAY);
+    printf("   => FPU test: ");
+
+    if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
+    {
+        textColor(ERROR);
+        printf("FPU not available\n");
+        textColor(TEXT);
+        return;
+    }
+
+    double squareroot = sqrt(2.0);
+    squareroot = fabs(squareroot);
+    squareroot /= sqrt(2.0);
+
+    putch('[');
+
+    if (squareroot == 1.00)
+    {
+        textColor(SUCCESS);
+        printf("PASSED");
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("FAILED");
+    }
+
+    textColor(LIGHT_GRAY);
+    printf("]\n");
+    textColor(TEXT);
+}
+
+
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

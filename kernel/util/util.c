@@ -561,15 +561,15 @@ void systemControl(SYSTEM_CONTROL todo) // TODO: Improve it.
     switch (todo)
     {
         case STANDBY:
-            if (!pm_action(PM_STANDBY))
+            if (!powmgmt_action(PM_STANDBY))
                 puts("Standby failed");
             break;
         case REBOOT:
-            if (!pm_action(PM_REBOOT))
+            if (!powmgmt_action(PM_REBOOT))
                 puts("Rebooting failed");
             break;
         case SHUTDOWN:
-            if (!pm_action(PM_SOFTOFF))
+            if (!powmgmt_action(PM_SOFTOFF))
                 puts("Shutdown failed");
             break;
     }
@@ -1019,7 +1019,7 @@ uint32_t rand()
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

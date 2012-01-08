@@ -14,12 +14,11 @@
 #include "time.h"               // getCurrentDateAndTime
 #include "descriptor_tables.h"  // idt_install, gdt_install
 #include "irq.h"                // isr_install
-#include "power_management.h"   // pm_install, pm_log
+#include "power_management.h"   // powmgmt_install, powmgmt_log
 
 // Base system
 #include "kheap.h"              // heap_install, malloc, free, logHeapRegions
 #include "tasking/task.h"       // tasking_install & others
-#include "elf.h"                // elf_prepare
 #include "syscall.h"            // syscall_install
 #include "ipc.h"                // ipc_print
 
@@ -37,25 +36,61 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.177 - Rev: 1378";
+const char* const version = "0.0.3.178 - Rev: 1379";
 
 // .bss
-extern uintptr_t _bss_start; // linker script
-extern uintptr_t _bss_end;   // linker script
-
-bool fpu_install(); // fpu.c
-void fpu_test();    // fpu.c
+extern uintptr_t _bss_start; // Linker script
+extern uintptr_t _bss_end;   // Linker script
 
 extern diskType_t* ScreenDest; // HACK for screenshots
 
-// APIC
-bool apic_install()
+todoList_t* kernel_idleTasks; // List of functions that are executed in kernel idle loop
+
+
+static void logText(const char* str)
 {
-    // TODO: implement APIC functionality
-    return (false);
+    textColor(LIGHT_GRAY);
+    printf("   => %s: ", str);
+
+    uint16_t len = strlen(str);
+
+    for (uint16_t i = len; i < 20;i++)
+    {
+        putch(' ');
+    }
 }
 
-todoList_t* kernel_idleTasks;
+static void logExec(bool b)
+{
+    putch('[');
+    if(b)
+    {
+        textColor(SUCCESS);
+        printf("OK");
+    }
+    else
+    {
+        textColor(ERROR);
+        printf("ERROR");
+    }
+    textColor(LIGHT_GRAY);
+    printf("]\n");
+    textColor(TEXT);
+}
+
+#define log(Text, Func) {logText(Text); logExec(Func);} // For functions returning bool. Writes [ERROR] if false is returned. [OK] otherwise.
+#define simpleLog(Text, Func) {logText(Text); Func; logExec(true);} // For functions returning void. Writes [OK]
+
+
+// TODO: Implement APIC functionality
+bool apic_available()
+{
+    return(false);
+}
+bool apic_install()
+{
+    return(true);
+}
 
 typedef struct // http://www.lowlevel.eu/wiki/Multiboot
 {
@@ -88,34 +123,14 @@ static void useMultibootInformation(multiboot_t* mb_struct)
     memoryMapEnd = (void*)((uintptr_t)mb_struct->mmap + mb_struct->mmapLength);
 }
 
-static void log(const char* str)
-{
-    textColor(LIGHT_GRAY);
-    printf("   => %s: ", str);
-
-    uint16_t len = strlen(str);
-
-    for (uint16_t i = len; i < 20;i++)
-    {
-        putch(' ');
-    }
-
-    putch('[');
-    textColor(SUCCESS);
-    printf("OK");
-    textColor(LIGHT_GRAY);
-    printf("]\n");
-    textColor(TEXT);
-}
-
 static void init(multiboot_t* mb_struct)
 {
-    // set .bss to zero
+    // Set .bss to zero
     memset(&_bss_start, 0, (uintptr_t)&_bss_end - (uintptr_t)&_bss_start);
 
     useMultibootInformation(mb_struct);
 
-    // video
+    // Video
     kernel_console_init();
     vga_clearScreen();
 
@@ -130,60 +145,43 @@ static void init(multiboot_t* mb_struct)
 
     cpu_install();
 
-    if (apic_install())
-    {
-        log("APIC");
-    }
+    if (apic_available())
+        log("APIC", apic_install())
     else // PIC as fallback
-    {
-        idt_install(); // cf. interrupts.asm
-        log("PIC");
-    }
+        simpleLog("PIC", idt_install()); // Cf. interrupts.asm
 
-    // internal devices
-    timer_install(SYSTEMFREQUENCY); // Sets system frequency to ... Hz
-    log("Timer");
+    // Internal devices
+    simpleLog("Timer", timer_install(SYSTEMFREQUENCY)); // Sets system frequency to ... Hz
+    log("FPU", fpu_install());
 
-    if (fpu_install())
-        log("FPU");
-
-    // memory
+    // Memory
     int64_t memsize = paging_install();
     ipc_setInt("PrettyOS/RAM (Bytes)", &memsize);
-    log("Paging");
-    heap_install();
-    log("Heap");
+    log("Paging", memsize != 0);
+    simpleLog("Heap", heap_install());
 
-    // video
-    vga_install();
-    log("Video");
+    // Video
+    log("Video", vga_install());
 
-    // tasks
-    tasking_install();
-    log("Multitasking");
+    // Tasks
+    simpleLog("Multitasking", tasking_install());
 
   #ifdef _BOOTSCREEN_
     scheduler_insertTask(create_cthread(&bootscreen, "Booting ..."));
   #endif
 
-    // external devices
-    keyboard_install();
-    log("Keyboard");
+    // External devices
+    simpleLog("Keyboard", keyboard_install());
+    simpleLog("Mouse", mouse_install());
 
-    mouse_install();
-    log("Mouse");
+    // Power management
+    simpleLog("Power Management", powmgmt_install());
 
-    // power management
-    pm_install();
-    log("Power Management");
+    // System calls
+    simpleLog("Syscalls", syscall_install());
 
-    // system calls
-    syscall_install();
-    log("Syscalls");
-
-    // mass storage devices
-    deviceManager_install(0);
-    log("Devicemanager");
+    // Mass storage devices
+    simpleLog("Devicemanager", deviceManager_install(0));
 
     kernel_idleTasks = todolist_create();
 
@@ -216,15 +214,15 @@ void main(multiboot_t* mb_struct)
     cpu_analyze();
     fpu_test();
 
-    pm_log();
+    powmgmt_log();
 
     serial_init();
 
     pci_scan(); // Scan of PCI bus to detect PCI devices. (cf. pci.h)
 
-    cdi_init();
+    cdi_init(); // http://www.lowlevel.eu/wiki/CDI
 
-    flpydsk_install(); // detect FDDs
+    flpydsk_install(); // Detect FDDs
 
 
   #ifdef _RAMDISK_DIAGNOSIS_
@@ -259,59 +257,7 @@ void main(multiboot_t* mb_struct)
             break;
     }*/
 
-
-    // search and load shell
-    bool shell_found = false;
-    dirent_t* node = 0;
-
-    for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; i++)
-    {
-        fs_node_t* fsnode = finddir_fs(fs_root, node->name);
-
-        if ((fsnode->flags & 0x7) == FS_DIRECTORY)
-        {
-          #ifdef _RAMDISK_DIAGNOSIS_
-            printf("\n<RAMdisk (%Xh) - Root Directory>\n", ramdisk_start);
-          #endif
-        }
-        else
-        {
-          #ifdef _RAMDISK_DIAGNOSIS_
-            printf("%u \t%s\n", fsnode->length, node->name);
-          #endif
-
-            if (strcmp(node->name, "shell") == 0)
-            {
-                shell_found = true;
-
-                uint8_t* buf = malloc(fsnode->length, 0, "shell buffer");
-                uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
-
-                pageDirectory_t* pd = paging_createUserPageDirectory();
-                void* entry = elf_prepare(buf, sz, pd);
-
-                if (entry == 0)
-                {
-                    textColor(ERROR);
-                    printf("ERROR: shell cannot be started.\n");
-                    textColor(TEXT);
-                    paging_destroyUserPageDirectory(pd);
-                }
-                else
-                {
-                    scheduler_insertTask(create_process(pd, entry, 3, 0, 0));
-                }
-
-                free(buf);
-            }
-        }
-    }
-
-    if (!shell_found)
-    {
-        textColor(ERROR);
-        puts("\nProgram not found.\n");
-    }
+    initrd_loadShell();
 
     textColor(SUCCESS);
     printf("\n\n--------------------------------------------------------------------------------");
@@ -319,9 +265,9 @@ void main(multiboot_t* mb_struct)
     printf("--------------------------------------------------------------------------------");
     textColor(TEXT);
 
-    const char* progress    = "|/-\\";    // rotating asterisk
+
+    const char* progress    = "|/-\\";    // Rotating asterisk
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
-    char     DateAndTime[50];             // String for Date&Time
 
     bool ESC   = false;
     bool CTRL  = false;
@@ -329,14 +275,14 @@ void main(multiboot_t* mb_struct)
 
     while (true) /// Start of kernel idle loop
     {
-        // show rotating asterisk
+        // Show rotating asterisk
         if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
         {
             vga_setPixel(79, 49, (FOOTNOTE<<8) | *progress); // Write the character on the screen. (color|character)
         }
         if (*++progress == 0)
         {
-            progress = "|/-\\";
+            progress-=5; // Reset asterisk
         }
 
         // Handle events. TODO: Many of the shortcuts can be moved to the shell later.
@@ -427,6 +373,9 @@ void main(multiboot_t* mb_struct)
                             case 'i':
                                 ipc_print();
                                 break;
+                            case 's':
+                                initrd_loadShell();
+                                break;
                             case 't':
                                 scheduler_log();
                                 break;
@@ -450,14 +399,14 @@ void main(multiboot_t* mb_struct)
 
             if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
             {
-                // draw status bar with date, time and frequency
+                // Draw status bar with date, time and frequency
+                char DateAndTime[50];
                 getCurrentDateAndTime(DateAndTime, 50);
-                kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, ((uint32_t)*cpu_frequency)/1000); // output in status bar
+                kprintf("%s   %u s runtime. CPU: %u MHz    ", 49, FOOTNOTE, DateAndTime, CurrentSeconds, ((uint32_t)*cpu_frequency)/1000); // Output in status bar
             }
 
-            deviceManager_checkDrives(); // switch off motors if they are not neccessary
+            deviceManager_checkDrives(); // Switch off motors if they are not neccessary
         }
-
 
         if (serial_received(1) != 0)
         {
@@ -473,12 +422,12 @@ void main(multiboot_t* mb_struct)
         }
 
         todoList_execute(kernel_idleTasks);
-        switch_context();
+        switch_context(); // Kernel idle loop has finished so far. Provide time to next waiting task
     }
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

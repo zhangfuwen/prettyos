@@ -61,5 +61,8 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg);
 uint64_t cpu_MSRread(uint32_t msr);
 void     cpu_MSRwrite(uint32_t msr, uint64_t value);
 
+bool fpu_install();
+void fpu_test();
+
 
 #endif

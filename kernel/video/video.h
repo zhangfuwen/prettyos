@@ -52,7 +52,7 @@ enum COLORS
 extern VIDEOMODES videomode;
 extern bool autoRefresh;
 
-void vga_install();
+bool vga_install();
 void vga_setPixel(uint8_t x, uint8_t y, uint16_t value);
 void refreshUserScreen();
 void vga_clearScreen();

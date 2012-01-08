@@ -5,9 +5,12 @@
 
 #include "initrd.h"
 #include "util/util.h"
+#include "video/console.h"
+#include "storage/devicemanager.h"
+#include "tasking/task.h"
 #include "kheap.h"
 #include "paging.h"
-#include "storage/devicemanager.h"
+#include "elf.h"
 
 initrd_header_t*      initrd_header; // The header.
 initrd_file_header_t* file_headers;  // The list of file headers.
@@ -210,8 +213,67 @@ fs_node_t* install_initrd(void* location)
     return (initrd_root);
 }
 
+bool initrd_loadShell()
+{
+    bool shell_found = false;
+    dirent_t* node = 0;
+
+    // search and load shell
+    for (size_t i = 0; (node = readdir_fs(fs_root, i)) != 0; i++)
+    {
+        fs_node_t* fsnode = finddir_fs(fs_root, node->name);
+
+        if ((fsnode->flags & 0x7) == FS_DIRECTORY)
+        {
+          #ifdef _RAMDISK_DIAGNOSIS_
+            printf("\n<RAMdisk (%Xh) - Root Directory>\n", ramdisk_start);
+          #endif
+        }
+        else
+        {
+          #ifdef _RAMDISK_DIAGNOSIS_
+            printf("%u \t%s\n", fsnode->length, node->name);
+          #endif
+
+            if (strcmp(node->name, "shell") == 0)
+            {
+                shell_found = true;
+
+                uint8_t* buf = malloc(fsnode->length, 0, "shell buffer");
+                uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
+
+                pageDirectory_t* pd = paging_createUserPageDirectory();
+                void* entry = elf_prepare(buf, sz, pd);
+
+                if (entry == 0)
+                {
+                    textColor(ERROR);
+                    printf("ERROR: shell cannot be started.\n");
+                    textColor(TEXT);
+                    paging_destroyUserPageDirectory(pd);
+                    return false;
+                }
+                else
+                {
+                    scheduler_insertTask(create_process(pd, entry, 3, 0, 0));
+                }
+
+                free(buf);
+            }
+        }
+    }
+
+    if (!shell_found)
+    {
+        textColor(ERROR);
+        puts("\nProgram not found.\n");
+        return false;
+    }
+    return true;
+}
+
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

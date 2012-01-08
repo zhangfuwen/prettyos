@@ -4,6 +4,7 @@
 #include "fs.h"
 #include "storage/devicemanager.h"
 
+
 typedef struct
 {
     partition_t* part;   // universal partition container (fsmanager)
@@ -30,8 +31,11 @@ typedef struct
     uint32_t length; // Length of the file.
 } initrd_file_header_t;
 
+
 // Installs the initial ramdisk. It gets passed the address, and returns a completed filesystem node.
 disk_t* ramdisk_install();
 void*   initrd_install(disk_t* disk, size_t partitionID);
+bool    initrd_loadShell();
+
 
 #endif

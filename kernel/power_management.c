@@ -119,40 +119,40 @@ static bool apm_action(PM_STATES state)
 
 // Interface
 
-static PM_SYSTEM_t pm_systems[_PM_SYSTEMS_END] = {
+static PM_SYSTEM_t powmgmt_systems[_PM_SYSTEMS_END] = {
     {.action = &nopm_action}, // No PM
     {.action = &apm_action},  // APM
     {.action = 0}             // ACPI
 };
 
-void pm_install()
+void powmgmt_install()
 {
-    pm_systems[PM_NO].supported = true; // Always available
-    pm_systems[PM_APM].supported = false;// = apm_install();
-    pm_systems[PM_ACPI].supported = false; // Unsupported by PrettyOS
+    powmgmt_systems[PM_NO].supported = true; // Always available
+    powmgmt_systems[PM_APM].supported = false;// = apm_install();
+    powmgmt_systems[PM_ACPI].supported = false; // Unsupported by PrettyOS
 }
 
-void pm_log()
+void powmgmt_log()
 {
     textColor(LIGHT_GRAY);
     printf("   => APM: ");
     textColor(TEXT);
-    puts(pm_systems[PM_APM].supported?"Available":"Not supported");
+    puts(powmgmt_systems[PM_APM].supported?"Available":"Not supported");
     textColor(LIGHT_GRAY);
     /*printf("\n   => ACPI: ");
     textColor(TEXT);
     puts("Not supported by PrettyOS");*/
 }
 
-bool pm_action(PM_STATES state)
+bool powmgmt_action(PM_STATES state)
 {
     if (state < _PM_STATES_END)
     {
         bool success = false;
         for (int32_t i = _PM_SYSTEMS_END-1; i >= 0 && !success; i--) // Trying out all supported power management systems.
         {
-            if (pm_systems[i].supported && pm_systems[i].action != 0)
-                success = pm_systems[i].action(state);
+            if (powmgmt_systems[i].supported && powmgmt_systems[i].action != 0)
+                success = powmgmt_systems[i].action(state);
         }
         return (success);
     }

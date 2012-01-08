@@ -23,10 +23,11 @@ static position_t cursor = {0, 0};
 static mutex_t* videoLock = 0;
 
 
-void vga_install()
+bool vga_install()
 {
     videoLock = mutex_create(1);
     vidmem = paging_acquirePciMemory(VIDEORAM, 2);
+    return(vidmem != 0);
 }
 
 void vga_setPixel(uint8_t x, uint8_t y, uint16_t value)
@@ -336,7 +337,7 @@ void saveScreenshot()
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

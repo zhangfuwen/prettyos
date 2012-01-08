@@ -455,9 +455,6 @@
     <ClCompile Include="..\kernel\elf.c">
       <Filter>Kernel\Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\kernel\fpu.c">
-      <Filter>Kernel\Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\kernel\irq.c">
       <Filter>Kernel\Source</Filter>
     </ClCompile>

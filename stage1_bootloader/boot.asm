@@ -109,7 +109,7 @@ Load_FAT:
 Load_Image:
     mov ax, WORD [cluster]             ; cluster to read
     call Convert_Cluster_to_LBA        ; convert cluster to LBA
-    movzx cx, BYTE [SecPerClus]          ; sectors to read
+    movzx cx, BYTE [SecPerClus]        ; sectors to read
     call ReadSectors
 
     ; compute next cluster

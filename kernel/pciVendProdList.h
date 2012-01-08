@@ -1562,7 +1562,7 @@ static const PCI_VENTABLE PciVenTable[] =
 	{ 0xECC0, "Echo", "Echo Digital Audio Corporation" },
 	{ 0xEDD8, "ARK Logic", "ARK Logic, Inc" },
 	{ 0xF5F5, "F5 Networks", "F5 Networks Inc." },
-	{ 0xFA57, "Interagon", "Interagon AS" },
+	{ 0xFA57, "Interagon", "Interagon AS" }
 };
 
 
@@ -7802,7 +7802,7 @@ static const PCI_DEVTABLE PciDevTable[] =
 	{ 0x11D5, 0x0115, "10115", "Versatec Parallel Interface (VPI) + Centronics" },
 	{ 0x11D5, 0x0116, "10118", "DR11-W emulator" },
 	{ 0x11D5, 0x0117, "10117", "Versatec Parallel Interface (VPI) + Centronics" },
-	{ 0x11D5, 0x0118, "10118", "DR11-W emulator" },
+	{ 0x11D5, 0x0118, "10118", "DR11-W emulator" }
 };
 
 
@@ -7902,7 +7902,7 @@ static const PCI_CLASSCODETABLE PciClassCodeTable[] =
 	{ 0x0C, 0x03, 0x00, "Serial Bus Controller", "USB (Universal Serial Bus)", "" },
 	{ 0x0C, 0x04, 0x00, "Serial Bus Controller", "Fibre Channel", "" },
 
-	{ 0xFF, 0x00, 0x00, "Unknown", "Device Does Not Fit In Class Codes", "UDF" },
+	{ 0xFF, 0x00, 0x00, "Unknown", "Device Does Not Fit In Class Codes", "UDF" }
 };
 
 // Use this value for loop control during searching:

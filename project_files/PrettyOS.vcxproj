@@ -62,6 +62,7 @@ clean.bat</NMakeCleanCommandLine>
     <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
     <IncludePath />
     <SourcePath>..\kernel</SourcePath>
+    <NMakePreprocessorDefinitions>__clang__</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC|Win32'">
     <NMakeBuildCommandLine>cd ..
@@ -88,6 +89,7 @@ clean.bat</NMakeCleanCommandLine>
     <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
     <IncludePath />
     <SourcePath>..\kernel</SourcePath>
+    <NMakePreprocessorDefinitions>__clang__</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GCC-Release|Win32'">
     <BuildLog>
@@ -256,7 +258,6 @@ clean.bat</NMakeCleanCommandLine>
     <ClCompile Include="..\kernel\filesystem\fs.c" />
     <ClCompile Include="..\kernel\filesystem\fsmanager.c" />
     <ClCompile Include="..\kernel\filesystem\initrd.c" />
-    <ClCompile Include="..\kernel\fpu.c" />
     <ClCompile Include="..\kernel\ipc.c" />
     <ClCompile Include="..\kernel\irq.c" />
     <ClCompile Include="..\kernel\keyboard.c" />

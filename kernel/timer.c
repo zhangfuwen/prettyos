@@ -16,8 +16,7 @@ static volatile uint64_t timer_ticks = 0;
 
 void timer_install(uint16_t sysfreq)
 {
-    // Installs 'timer_handler' to IRQ_TIMER
-    irq_installHandler(IRQ_TIMER, timer_handler);
+    irq_installHandler(IRQ_TIMER, timer_handler); // Installs 'timer_handler' to IRQ_TIMER
 
     timer_setFrequency(sysfreq); // x Hz, meaning a tick every 1000/x milliseconds
 }
