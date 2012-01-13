@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.178 - Rev: 1379";
+const char* const version = "0.0.3.179 - Rev: 1380";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -117,18 +117,10 @@ typedef struct // http://www.lowlevel.eu/wiki/Multiboot
     uint16_t vbe_interfaceLen;
 } __attribute__((packed)) multiboot_t;
 
-static void useMultibootInformation(multiboot_t* mb_struct)
-{
-    memoryMapAdress = mb_struct->mmap;
-    memoryMapEnd = (void*)((uintptr_t)mb_struct->mmap + mb_struct->mmapLength);
-}
-
 static void init(multiboot_t* mb_struct)
 {
     // Set .bss to zero
     memset(&_bss_start, 0, (uintptr_t)&_bss_end - (uintptr_t)&_bss_start);
-
-    useMultibootInformation(mb_struct);
 
     // Video
     kernel_console_init();
@@ -155,7 +147,7 @@ static void init(multiboot_t* mb_struct)
     log("FPU", fpu_install());
 
     // Memory
-    int64_t memsize = paging_install();
+    int64_t memsize = paging_install(mb_struct->mmap, (void*)mb_struct->mmap + mb_struct->mmapLength);
     ipc_setInt("PrettyOS/RAM (Bytes)", &memsize);
     log("Paging", memsize != 0);
     simpleLog("Heap", heap_install());

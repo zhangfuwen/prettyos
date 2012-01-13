@@ -14,27 +14,25 @@
 #include "ipc.h"
 #include "video/console.h"
 
-#define IDMAP  5  // 0 MiB - 20 MiB, identity mapping
+#define FOUR_GB 0x100000000ull // Highest address + 1
+
 
 pageDirectory_t* kernelPageDirectory;
 pageDirectory_t* currentPageDirectory = 0;
 
-// Memory Map
-memoryMapEntry_t* memoryMapAdress;
-memoryMapEntry_t* memoryMapEnd;
-
 extern char _kernel_beg, _kernel_end; // defined in linker script
 
-// Physical Memory
-static const uint32_t MAX_DWORDS = 0x100000000ull / PAGESIZE / 32;
+static const uint32_t MAX_DWORDS = FOUR_GB / PAGESIZE / 32;
 static uint32_t*      bittable;
-static uint32_t       firstFreeDWORD = 10 * 1024 * 1024 / PAGESIZE / 32; // Exclude the first 10 MiB from being allocated (needed for DMA later on)
-static uint32_t       physMemInit();
+static uint32_t       firstFreeDWORD = PLACEMENT_END / PAGESIZE / 32; // Exclude the first 10 MiB from being allocated (needed for DMA later on)
 
 
-uint32_t paging_install()
+static uint32_t physMemInit(memoryMapEntry_t* memoryMapBegin, memoryMapEntry_t* memoryMapEnd);
+
+
+uint32_t paging_install(memoryMapEntry_t* memoryMapBegin, memoryMapEntry_t* memoryMapEnd)
 {
-    uint32_t ram_available = physMemInit();
+    uint32_t ram_available = physMemInit(memoryMapBegin, memoryMapEnd);
 
     // Setup the kernel page directory
     kernelPageDirectory = malloc(sizeof(pageDirectory_t), PAGESIZE, "pag-kernelPD");
@@ -43,7 +41,7 @@ uint32_t paging_install()
 
     kdebug(3, "\nkernelPageDirectory (virt., phys.): %Xh, %Xh\n", kernelPageDirectory, kernelPageDirectory->physAddr);
 
-    // Setup the page tables for 0 MiB - 20 MiB, identity mapping
+    // Setup the page tables for 0 MiB - 12 MiB, identity mapping
     uint32_t addr = 0;
     for (uint8_t i=0; i<IDMAP; i++)
     {
@@ -52,7 +50,7 @@ uint32_t paging_install()
         kernelPageDirectory->codes[i]  = (uint32_t)kernelPageDirectory->tables[i] | MEM_PRESENT;
 
         // Page table entries, identity mapping
-        for (uint32_t j=0; j<1024; ++j)
+        for (uint32_t j = 0; j < PAGE_COUNT; ++j)
         {
             kernelPageDirectory->tables[i]->pages[j] = addr | MEM_PRESENT | MEM_WRITE | MEM_NOTLBUPDATE;
             addr += PAGESIZE;
@@ -60,30 +58,30 @@ uint32_t paging_install()
     }
 
     // Setup the page tables for PCI memory (3 - 3,5 GiB) and kernel heap (3,5 - 4 GiB), unmapped
-    size_t kernelpts = 128 + min(128, ram_available / 4096 / 1024); // PCI memory size + maximum kernel heap size (limited by available memory)
+    size_t kernelpts = PT_COUNT/8 + min(PT_COUNT/8, ram_available / PAGESIZE / PAGE_COUNT); // Number of PT's to allocate. PCI memory size + maximum kernel heap size (limited by available memory)
     pageTable_t* heap_pts = malloc(kernelpts*sizeof(pageTable_t), PAGESIZE, "pag-PTheap");
     memset(heap_pts, 0, kernelpts * sizeof(pageTable_t));
     for (uint32_t i = 0; i < kernelpts; i++)
     {
-        kernelPageDirectory->tables[0x300 + i] = heap_pts + i;
-        kernelPageDirectory->codes [0x300 + i] = (uint32_t)(heap_pts + i) | MEM_PRESENT | MEM_WRITE;
+        kernelPageDirectory->tables[PCI_MEM_START/PAGESIZE/PAGE_COUNT + i] = heap_pts + i;
+        kernelPageDirectory->codes [PCI_MEM_START/PAGESIZE/PAGE_COUNT + i] = (uint32_t)(heap_pts + i) | MEM_PRESENT | MEM_WRITE;
     }
 
     // Tell CPU to enable paging
     paging_switch(kernelPageDirectory);
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read CR0
-    cr0 |= 0x80000000;                            // set the paging bit in CR0
+    cr0 |= BIT(31);                               // set the paging bit in CR0
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write CR0
 
     return (ram_available);
 }
 
 
-static bool isMemoryMapAvailable(const memoryMapEntry_t* entries, uint64_t beg, uint64_t end)
+static bool isMemoryMapAvailable(const memoryMapEntry_t* memoryMapBegin, const memoryMapEntry_t* memoryMapEnd, uint64_t beg, uint64_t end)
 {
     uint64_t covered = beg;
-    for (const memoryMapEntry_t* outerLoop=entries; outerLoop < memoryMapEnd; outerLoop++)
+    for (const memoryMapEntry_t* outerLoop=memoryMapBegin; outerLoop < memoryMapEnd; outerLoop++)
     {
         // There must not be an "reserved" entry which reaches into the specified area
         if ((outerLoop->type != 1) && (outerLoop->base < end) && ((outerLoop->base + outerLoop->size) > beg))
@@ -91,7 +89,7 @@ static bool isMemoryMapAvailable(const memoryMapEntry_t* entries, uint64_t beg, 
             return (false);
         }
         // Check whether the "free" entries cover the whole specified area.
-        for (const memoryMapEntry_t* entry=entries; entry < memoryMapEnd; entry++)
+        for (const memoryMapEntry_t* entry=memoryMapBegin; entry < memoryMapEnd; entry++)
         {
             if (entry->base <= covered && (entry->base + entry->size) > covered)
             {
@@ -120,10 +118,8 @@ static void physSetBits(uint32_t addrBegin, uint32_t addrEnd, bool reserved)
     }
 }
 
-static uint32_t physMemInit()
+static uint32_t physMemInit(memoryMapEntry_t* memoryMapBegin, memoryMapEntry_t* memoryMapEnd)
 {
-    static const uint64_t FOUR_GB  = 0x100000000ull;
-
   #ifdef _DIAGNOSIS_
     textColor(HEADLINE);
     printf("\nMemory map:");
@@ -131,7 +127,7 @@ static uint32_t physMemInit()
   #endif
 
     // Prepare the memory map entries, since we work with max 4 GB only. The last entry in the entry-array has size 0.
-    for (memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; entry++)
+    for (memoryMapEntry_t* entry = memoryMapBegin; entry < memoryMapEnd; entry++)
     {
       #ifdef _DIAGNOSIS_
         printf("\n  %Xh -> %Xh %u", entry->base, entry->base+entry->size, entry->type); // Print the memory map
@@ -151,11 +147,11 @@ static uint32_t physMemInit()
         }
     }
 
-    // Check that 10 MiB-20 MiB is free for use
-    if (!isMemoryMapAvailable(memoryMapAdress, 10*1024*1024, 20*1024*1024))
+    // Check that 6 MiB-12 MiB is free for use
+    if (!isMemoryMapAvailable(memoryMapBegin, memoryMapEnd, PLACEMENT_BEGIN, IDMAP*PAGE_COUNT*PAGESIZE))
     {
         textColor(ERROR);
-        printf("The memory between 10 MiB and 20 MiB is not free for use. OS halted!\n");
+        printf("The memory between 6 MiB and 12 MiB is not free for use. OS halted!\n");
         cli();
         hlt();
     }
@@ -165,7 +161,7 @@ static uint32_t physMemInit()
     memset(bittable, 0xFF, MAX_DWORDS * 4);
 
     // Set the bitmap bits according to the memory map now. "type==1" means "free".
-    for (const memoryMapEntry_t* entry = memoryMapAdress; entry < memoryMapEnd; entry++)
+    for (const memoryMapEntry_t* entry = memoryMapBegin; entry < memoryMapEnd; entry++)
     {
         if(entry->type == 1) // Set bits to "free"
         {
@@ -184,17 +180,17 @@ static uint32_t physMemInit()
         }
     }
 
-    // Reserve first 20 MiB
-    physSetBits(0x00000000, 20*1024*1024, true);
+    // Reserve first 10 MiB
+    physSetBits(0x00000000, PLACEMENT_END, true);
 
     // Reserve the region of the kernel code
-    if((uintptr_t)&_kernel_end >= 20*1024*1024)
+    if((uintptr_t)&_kernel_end >= PLACEMENT_END)
         physSetBits((uint32_t)&_kernel_beg, (uint32_t)&_kernel_end, true);
 
-    kdebug(3, "Highest available RAM: %Xh\n", dwordCount*32*4096);
+    kdebug(3, "Highest available RAM: %Xh\n", dwordCount * 32 * PAGESIZE);
 
     // Return the amount of memory available (or rather the highest address)
-    return (dwordCount * 32 * 4096);
+    return (dwordCount * 32 * PAGESIZE);
 }
 
 
@@ -267,7 +263,7 @@ bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAG
         uint32_t pagenr = (uint32_t)virtAddress/PAGESIZE + done;
 
         // Maybe there is already memory allocated?
-        if (pd->tables[pagenr/1024] && pd->tables[pagenr/1024]->pages[pagenr%1024])
+        if (pd->tables[pagenr/PAGE_COUNT] && pd->tables[pagenr/PAGE_COUNT]->pages[pagenr%PAGE_COUNT])
         {
             kdebug(3, "pagenumber already allocated: %u\n", pagenr);
             continue;
@@ -284,7 +280,7 @@ bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAG
         }
 
         // Get the page table
-        pageTable_t* pt = pd->tables[pagenr/1024];
+        pageTable_t* pt = pd->tables[pagenr/PAGE_COUNT];
 
         if (!pt)
         {
@@ -299,14 +295,14 @@ bool paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAG
                 return (false);
             }
             memset(pt, 0, sizeof(pageTable_t));
-            pd->tables[pagenr/1024] = pt;
+            pd->tables[pagenr/PAGE_COUNT] = pt;
 
             // Set physical address and flags
-            pd->codes[pagenr/1024] = paging_getPhysAddr(pt) | MEM_PRESENT | MEM_WRITE | (flags&(~MEM_NOTLBUPDATE));
+            pd->codes[pagenr/PAGE_COUNT] = paging_getPhysAddr(pt) | MEM_PRESENT | MEM_WRITE | (flags&(~MEM_NOTLBUPDATE));
         }
 
         // Setup the page
-        pt->pages[pagenr%1024] = physAddress | flags | MEM_PRESENT;
+        pt->pages[pagenr%PAGE_COUNT] = physAddress | flags | MEM_PRESENT;
 
         if(pd == currentPageDirectory)
             invalidateTLBEntry(virtAddress + done*PAGESIZE);
@@ -329,7 +325,7 @@ void paging_free(pageDirectory_t* pd, void* virtAddress, uint32_t size)
     while (size)
     {
         // Get the physical address and invalidate the page
-        uint32_t* page = &pd->tables[pagenr/1024]->pages[pagenr%1024];
+        uint32_t* page = &pd->tables[pagenr/PAGE_COUNT]->pages[pagenr%PAGE_COUNT];
         uint32_t physAddress = *page & 0xFFFFF000;
         *page = 0;
         if(pd == currentPageDirectory)
@@ -366,11 +362,11 @@ void paging_destroyUserPageDirectory(pageDirectory_t* pd)
         paging_switch(kernelPageDirectory); // Leave current PD, if we attempt to delete it
 
     // Free all memory that is not from the kernel
-    for (uint32_t i=0; i<1024; i++)
+    for (uint32_t i=0; i<PT_COUNT; i++)
     {
         if (pd->tables[i] && (pd->tables[i] != kernelPageDirectory->tables[i]))
         {
-            for (uint32_t j=0; j<1024; j++)
+            for (uint32_t j=0; j<PAGE_COUNT; j++)
             {
                 uint32_t physAddress = pd->tables[i]->pages[j] & 0xFFFFF000;
 
@@ -389,13 +385,13 @@ void paging_destroyUserPageDirectory(pageDirectory_t* pd)
 
 void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
 {
-    static void* virtAddress = PCI_MEM_START;
+    static void* virtAddress = (void*)PCI_MEM_START;
     void* retVal = virtAddress;
     task_switching  = false;
 
     for (uint32_t i=0; i<numberOfPages; i++)
     {
-        if (virtAddress == PCI_MEM_END)
+        if (virtAddress == (void*)PCI_MEM_END)
         {
             textColor(ERROR);
             printf("\nNot enough PCI-memory available");
@@ -407,8 +403,8 @@ void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages)
         uint32_t pagenr = (uintptr_t)virtAddress/PAGESIZE;
 
         // Check the page table and setup the page
-        ASSERT(kernelPageDirectory->tables[pagenr/1024]);
-        kernelPageDirectory->tables[pagenr/1024]->pages[pagenr%1024] = physAddress | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
+        ASSERT(kernelPageDirectory->tables[pagenr/PAGE_COUNT]);
+        kernelPageDirectory->tables[pagenr/PAGE_COUNT]->pages[pagenr%PAGE_COUNT] = physAddress | MEM_PRESENT | MEM_WRITE | MEM_KERNEL;
 
         invalidateTLBEntry(virtAddress);
 
@@ -427,7 +423,7 @@ uintptr_t paging_getPhysAddr(void* virtAddress)
 
     // Find the page table
     uint32_t pageNumber = (uintptr_t)virtAddress / PAGESIZE;
-    pageTable_t* pt = pd->tables[pageNumber/1024];
+    pageTable_t* pt = pd->tables[pageNumber/PAGE_COUNT];
 
   #ifdef _DIAGNOSIS_
     kdebug(3, "\nvirt-->phys: pagenr: %u ", pagenr);
@@ -437,7 +433,7 @@ uintptr_t paging_getPhysAddr(void* virtAddress)
     if (pt)
     {
         // Read the address, cut off the flags, append the odd part of the address
-        return ( (pt->pages[pageNumber % 1024] & 0xFFFFF000) + ((uintptr_t)virtAddress & 0x00000FFF) );
+        return ( (pt->pages[pageNumber % PAGE_COUNT] & 0xFFFFF000) + ((uintptr_t)virtAddress & 0x00000FFF) );
     }
     else
     {

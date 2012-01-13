@@ -13,7 +13,7 @@ MultiBootHeader:            ; This is the "multiboot" header for GRUB
 
 
 KernelStart:
-    mov esp, 0x1000000
+    mov esp, 0x600000
 
     mov eax, cr0
     and eax, 0x9FFFFFFF     ; Activate CPU cache

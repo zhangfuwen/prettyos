@@ -153,7 +153,7 @@ void syscall_install()
     {
         irq_installHandler(IRQ_SYSCALL, syscall_handler);
         cpu_MSRwrite(0x174, 8); // CS
-        cpu_MSRwrite(0x175, 0xF00000); // ESP
+        cpu_MSRwrite(0x175, 0x480000); // ESP
         cpu_MSRwrite(0x176, (uintptr_t)&syscall_sysenterHandler); // EIP
     }
     else

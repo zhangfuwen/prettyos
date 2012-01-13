@@ -45,7 +45,7 @@ typedef struct
 static region_t*      regions         = 0;
 static uint32_t       regionCount     = 0;
 static uint32_t       regionMaxCount  = 0;
-static uint8_t* const heapStart       = KERNEL_HEAP_START;
+static uint8_t* const heapStart       = (void*)KERNEL_HEAP_START;
 static uint32_t       heapSize        = 0;
 static const uint32_t HEAP_MIN_GROWTH = 0x40000;
 
@@ -68,7 +68,7 @@ void heap_install()
 
     // We take the rest of the placement area
     regionCount = 0;
-    regionMaxCount = ((uintptr_t)PLACEMENT_END - (uintptr_t)regions) / sizeof(region_t);
+    regionMaxCount = (PLACEMENT_END - (uintptr_t)regions) / sizeof(region_t);
 }
 
 void* heap_getCurrentEnd()
@@ -117,12 +117,12 @@ static bool heap_grow(uint32_t size, uint8_t* heapEnd)
 
 static void* placementMalloc(uint32_t size, uint32_t alignment)
 {
-    static void* nextPlacement = PLACEMENT_BEGIN;
+    static void* nextPlacement = (void*)PLACEMENT_BEGIN;
 
     // Avoid odd addresses
     size = alignUp(size, 4);
 
-    if ((uintptr_t)nextPlacement+size > (uintptr_t)PLACEMENT_END)
+    if ((uintptr_t)nextPlacement+size > PLACEMENT_END)
         return (0);
 
     mutex_lock(mutex);

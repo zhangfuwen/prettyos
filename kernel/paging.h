@@ -3,7 +3,9 @@
 
 #include "util/util.h"
 
-#define PAGESIZE 0x1000 // size
+#define PAGESIZE   0x1000 // Size of one page in bytes
+#define PAGE_COUNT 1024   // Number of pages per page table
+#define PT_COUNT   1024   // Number of page tables per page directory
 
 
 typedef enum
@@ -25,23 +27,21 @@ typedef struct
 // Paging
 typedef struct
 {
-    uint32_t pages[1024];
+    uint32_t pages[PAGE_COUNT];
 } __attribute__((packed)) pageTable_t;
 
 typedef struct
 {
-    uint32_t     codes[1024];
-    pageTable_t* tables[1024];
+    uint32_t     codes[PT_COUNT];
+    pageTable_t* tables[PT_COUNT];
     uint32_t     physAddr;
 } __attribute__((packed)) pageDirectory_t;
 
 
 extern pageDirectory_t* kernelPageDirectory;
-extern memoryMapEntry_t* memoryMapAdress;
-extern memoryMapEntry_t* memoryMapEnd; // Read from multiboot structure
 
 
-uint32_t paging_install();
+uint32_t paging_install(memoryMapEntry_t* memoryMapBegin, memoryMapEntry_t* memoryMapEnd);
 
 bool  paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLAGS_t flags);
 void  paging_free (pageDirectory_t* pd, void* virtAddress, uint32_t size);
