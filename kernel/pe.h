@@ -4,9 +4,9 @@
 #include "filesystem/fsmanager.h"
 
 
-bool pe_filename(const char* filename);
-bool pe_header(file_t* file);
-void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd);
+bool pe_checkFilename(const char* filename);
+bool pe_checkFileformat(file_t* file);
+void* pe_prepareExecution(const void* file, size_t size, pageDirectory_t* pd);
 
 
 #endif

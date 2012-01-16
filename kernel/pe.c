@@ -73,32 +73,31 @@ enum PE_TYPE
 };
 
 
-bool pe_filename(const char* filename)
+bool pe_checkFilename(const char* filename)
 {
-    return (strcmp(filename+strlen(filename)-4, ".exe") == 0);
+    size_t len = strlen(filename);
+    return (len >= 4 && strcmp(filename+len-4, ".exe") == 0);
 }
 
-bool pe_header(file_t* file)
+bool pe_checkFileformat(file_t* file)
 {
     pe_msdosStub_t MSDOS_stub;
     fread(&MSDOS_stub, sizeof(pe_msdosStub_t), 1, file);
 
-    bool valid = true;
-    valid =          MSDOS_stub.signature[0]  == 'M';
-    valid = valid && MSDOS_stub.signature[1]  == 'Z';
+    if(MSDOS_stub.signature[0] != 'M' || MSDOS_stub.signature[1] != 'Z')
+        return(false);
 
     fseek(file, MSDOS_stub.offset, SEEK_SET);
     char PE_sig[4];
     fread(PE_sig, 4, 1, file);
-    valid = valid && PE_sig[0]    == 'P';
-    valid = valid && PE_sig[1]    == 'E';
-    valid = valid && PE_sig[2]    == 0;
-    valid = valid && PE_sig[3]    == 0;
 
-    return (valid);
+    return(PE_sig[0] == 'P' &&
+           PE_sig[1] == 'E' &&
+           PE_sig[2] == 0 &&
+           PE_sig[3] == 0);
 }
 
-void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
+void* pe_prepareExecution(const void* file, size_t size, pageDirectory_t* pd)
 {
     const pe_msdosStub_t* MSDOS_stub  = file;
     const pe_coffHeader_t* coffHeader = file + MSDOS_stub->offset + 4; // Seek to COFF header
@@ -181,7 +180,7 @@ void* pe_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

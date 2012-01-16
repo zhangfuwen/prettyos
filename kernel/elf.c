@@ -111,31 +111,30 @@ typedef struct
 } __attribute__((packed)) elf_programHeader_t;
 
 
-bool elf_filename(const char* filename)
+bool elf_checkFilename(const char* filename)
 {
-    return (strcmp(filename+strlen(filename)-4, ".elf") == 0);
+    size_t len = strlen(filename);
+    return (len >= 4 && strcmp(filename+len-4, ".elf") == 0);
 }
 
-bool elf_header(file_t* file)
+bool elf_checkFileformat(file_t* file)
 {
     elf_header_t header;
     fread(&header, sizeof(elf_header_t), 1, file);
 
-    bool valid =     header.ident[EI_MAG0]    == 0x7F;
-    valid = valid && header.ident[EI_MAG1]    == 'E';
-    valid = valid && header.ident[EI_MAG2]    == 'L';
-    valid = valid && header.ident[EI_MAG3]    == 'F';
-    valid = valid && header.ident[EI_CLASS]   == ELFCLASS32;
-    valid = valid && header.ident[EI_DATA]    == ELFDATA2LSB;
-    valid = valid && header.ident[EI_VERSION] == EV_CURRENT;
-    valid = valid && header.type              == ET_EXEC;
-    valid = valid && header.machine           == EM_386;
-    valid = valid && header.version           == EV_CURRENT;
-
-    return (valid);
+    return(header.ident[EI_MAG0]    == 0x7F &&
+           header.ident[EI_MAG1]    == 'E' &&
+           header.ident[EI_MAG2]    == 'L' &&
+           header.ident[EI_MAG3]    == 'F' &&
+           header.ident[EI_CLASS]   == ELFCLASS32 &&
+           header.ident[EI_DATA]    == ELFDATA2LSB &&
+           header.ident[EI_VERSION] == EV_CURRENT &&
+           header.type              == ET_EXEC &&
+           header.machine           == EM_386 &&
+           header.version           == EV_CURRENT);
 }
 
-void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
+void* elf_prepareExecution(const void* file, size_t size, pageDirectory_t* pd)
 {
     // Read the header
     const elf_header_t* header = (elf_header_t*)file;
@@ -152,9 +151,9 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
 
         #ifdef _DIAGNOSIS_
         textColor(GREEN);
-        printf("ELF file program header:\n");
+        printf("\nELF file program header:\n");
         const char* const types[] = { "NULL", "Loadable Segment", "Dynamic Linking Information",
-                                      "Interpreter", "Note", "Shared Library", "Program Header" };
+                                      "Interpreter", "Note", "Shared Library", "Program Header", "Thread Local Storage" };
         printf(" %s, offset %u, vaddr %Xh, paddr %Xh, filesz %u, memsz %u, flags %u, align %u\n",
             types[ph[i].type], ph[i].offset, ph[i].vaddr, ph[i].paddr, ph[i].filesz, ph[i].memsz, ph[i].flags, ph[i].align);
         textColor(TEXT);
@@ -169,19 +168,19 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
         }
 
         // Allocate code area for the user program
-        if (!paging_alloc(pd, (void*)(ph[i].vaddr), alignUp(ph[i].memsz,PAGESIZE), memFlags))
+        if (!paging_alloc(pd, (void*)(ph[i].vaddr), alignUp(ph[i].memsz, PAGESIZE), memFlags))
         {
             return (0);
         }
 
         /// TODO: check all sections, not only code
 
-        // Copy the code, using the user's page directory
+        // Copy the code, using the new page directory
         cli();
-        paging_switch(pd);
+        paging_switch(pd); // Switch to PD we want to write to
         memcpy((void*)ph[i].vaddr, file + ph[i].offset, ph[i].filesz);
         memset((void*)ph[i].vaddr + ph[i].filesz, 0, ph[i].memsz - ph[i].filesz); // to set the bss (Block Started by Symbol) to zero
-        paging_switch(currentTask->pageDirectory);
+        paging_switch(currentTask->pageDirectory); // Switch back to continue normal execution
         sti();
     }
 
@@ -189,7 +188,7 @@ void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd)
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -243,7 +243,7 @@ bool initrd_loadShell()
                 uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
 
                 pageDirectory_t* pd = paging_createUserPageDirectory();
-                void* entry = elf_prepare(buf, sz, pd);
+                void* entry = elf_prepareExecution(buf, sz, pd);
 
                 if (entry == 0)
                 {

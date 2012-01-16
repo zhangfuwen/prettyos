@@ -9,24 +9,15 @@
 #include "kheap.h"
 #include "tasking/task.h"
 #include "video/console.h"
-#include "paging.h"
 #include "elf.h"
 #include "pe.h"
-
-
-typedef struct
-{
-    bool  (*filename)(const char*);
-    bool  (*fileheader)(file_t*);
-    void* (*prepare)(const void*, size_t, pageDirectory_t*); // file content, length, page directory. Returns entry point
-} filetype_t;
 
 enum FILETYPES {FT_ELF, FT_PE, FT_END};
 
 static filetype_t filetypes[FT_END] =
 {
-    {&elf_filename, &elf_header, &elf_prepare}, // ELF
-    {&pe_filename,  &pe_header,  &pe_prepare},  // PE
+    {&elf_checkFilename, &elf_checkFileformat, &elf_prepareExecution}, // ELF
+    {&pe_checkFilename,  &pe_checkFileformat,  &pe_prepareExecution},  // PE
 };
 
 
@@ -43,10 +34,10 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
     size_t i = 0;
     for (; i < FT_END; i++) // Check name and content of the file
     {
-        if (filetypes[i].filename != 0 && filetypes[i].filename(path))
+        if (filetypes[i].checkFilename != 0 && filetypes[i].checkFilename(path))
         {
             rewind(file);
-            if (filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
+            if (filetypes[i].checkFileformat != 0 && filetypes[i].checkFileformat(file))
             {
                 break; // found
             }
@@ -58,7 +49,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
         for (i = 0; i < FT_END; i++)
         {
             rewind(file);
-            if (filetypes[i].fileheader != 0 && filetypes[i].fileheader(file))
+            if (filetypes[i].checkFileformat != 0 && filetypes[i].checkFileformat(file))
             {
                 break; // found
             }
@@ -79,13 +70,13 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
     fread(buffer, 1, size, file);
     fclose(file);
 
-    if (filetypes[i].prepare != 0)
+    if (filetypes[i].prepareExecution != 0)
     {
         // Create page directory.
         pageDirectory_t* pd = paging_createUserPageDirectory();
 
         // Prepare executable. Load it into memory.
-        void* entry = filetypes[i].prepare(buffer, size, pd);
+        void* entry = filetypes[i].prepareExecution(buffer, size, pd);
         if (entry == 0)
         {
             paging_destroyUserPageDirectory(pd);
@@ -146,7 +137,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
 }
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -5,9 +5,9 @@
 #include "paging.h"
 
 
-bool  elf_filename(const char* filename);
-bool  elf_header(file_t* file);
-void* elf_prepare(const void* file, size_t size, pageDirectory_t* pd);
+bool  elf_checkFilename(const char* filename);
+bool  elf_checkFileformat(file_t* file);
+void* elf_prepareExecution(const void* file, size_t size, pageDirectory_t* pd);
 
 
 #endif
