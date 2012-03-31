@@ -10,6 +10,8 @@
 extern bool enabledEvents;
 extern void (*_syscall)();
 
+void (**_atexit_funcs)() = 0; // Stores a zero terminated array of function pointers, called at exit
+
 
 FS_ERROR execute(const char* path, size_t argc, char* argv[])
 {
@@ -22,6 +24,9 @@ FS_ERROR execute(const char* path, size_t argc, char* argv[])
 
 void exit()
 {
+    if(_atexit_funcs)
+        for(size_t i = 0; _atexit_funcs[i]; i++)
+            _atexit_funcs[i]();
     __asm__ volatile("call *_syscall" : : "a"(2));
 }
 

@@ -1,5 +1,6 @@
 #include "string.h"
 #include "stdint.h"
+#include "errno.h"
 
 void* memchr(void* ptr, char value, size_t num)
 {
@@ -153,14 +154,14 @@ char* strncat(char* dest, const char* src, size_t n)
     return dest;
 }
 
-char* strchr(char* str, char character)
+char* strchr(const char* str, char character)
 {
     for (;;str++)
     {
         // the order here is important
         if (*str == character)
         {
-            return str;
+            return (char*)str;
         }
         if (*str == 0) // end of string
         {
@@ -183,8 +184,27 @@ char* strrchr(const char* s, int c)
 }
 
 int strcoll(const char* str1, const char* str2); /// TODO
-size_t strcspn(const char* str1, const char* str2); /// TODO
-char* strerror(int errornum); /// TODO
+
+size_t strcspn(const char* str, const char* key)
+{
+    const char* ostr = str;
+    for(; *str != 0; str++)
+        if(strchr(key, *str) != 0)
+            return(str-ostr);
+    return(str-ostr);
+}
+
+char* strerror(int errornum)
+{
+    switch(errornum) {
+        case EDOM:
+            return "Domain error";
+        case ERANGE:
+            return "Range error";
+        default:
+            return "";
+    }
+}
 
 char* strpbrk(const char* str, const char* delim)
 {
@@ -196,7 +216,14 @@ char* strpbrk(const char* str, const char* delim)
     return (0);
 }
 
-size_t strspn(const char* str1, const char* str2); /// TODO
+size_t strspn(const char* str, const char* key)
+{
+    const char* ostr = str;
+    for(; *str != 0; str++)
+        if(strchr(key, *str) == 0)
+            return(str-ostr);
+    return(str-ostr);
+}
 
 char* strstr(const char* str1, const char* str2)
 {
@@ -220,5 +247,19 @@ char* strstr(const char* str1, const char* str2)
     return (0);
 }
 
-char* strtok(char* str, const char* delimiters); /// TODO
+char* strtok(char* str, const char* delimiters)
+{
+    static char* last = 0;
+    if(!str)
+        str = last;
+    if(!str || *str == 0)
+        return 0;
+    while(*str != 0 && strchr(delimiters, *str) != 0)
+        str++;
+    char* end = str + strcspn(str, delimiters);
+    last = end+1;
+    *end = 0;
+    return(str);
+}
+
 size_t strxfrm(char* destination, const char* source, size_t num); /// TODO

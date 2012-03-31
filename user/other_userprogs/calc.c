@@ -97,7 +97,11 @@ static void SolveMul(char* term, size_t point)
         erg = getPrevNumber(point, term)*getNextNumber(point, term);
     }
     else {
-        erg = getPrevNumber(point, term)/getNextNumber(point, term);
+        int32_t nn = getNextNumber(point, term);
+        if(nn != 0)
+            erg = getPrevNumber(point, term)/getNextNumber(point, term);
+        else
+            printf("Division by zero\n");
     }
     char temp[32];
     itoa(erg, temp);
@@ -162,7 +166,7 @@ int main(size_t argc, char* argv[]) {
 
     setScrollField(5, 46);
     printLine("================================================================================", 0, 0x0B);
-    printLine("                               Calculator  v0.4.0", 2, 0x0B);
+    printLine("                               Calculator  v0.4.1", 2, 0x0B);
     printLine("--------------------------------------------------------------------------------", 4, 0x0B);
     iSetCursor(0, 6);
     puts("Please type in a term. Valid operators are: +-*/^². Brackets are supported. The Calculator does not support floats at the moment. If you type in \"exit\", the programm will close.\n\n");

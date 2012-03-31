@@ -114,20 +114,16 @@ void arp_received(network_adapter_t* adapter, arpPacket_t* packet)
         switch (ntohs(packet->operation))
         {
             case 1: // ARP-Request
+              #ifdef _ARP_DEBUG_
                 textColor(HEADLINE);
                 if (packet->sourceIP.iIP == packet->destIP.iIP) // IP requ. and searched is identical
                 {
-                  #ifdef _ARP_DEBUG_
                     printf("\nARP Gratuitous Request:");
-                  #endif
                 }
                 else
                 {
-                  #ifdef _ARP_DEBUG_
                     printf("\nARP Request:");
-                  #endif
                 }
-              #ifdef _ARP_DEBUG_
                 textColor(LIGHT_GRAY); printf("\nMAC Requesting: "); textColor(IMPORTANT); printf("%M", packet->source_mac);
                 textColor(LIGHT_GRAY); printf("  IP Requesting: ");  textColor(IMPORTANT); printf("%I", packet->sourceIP);
                 textColor(LIGHT_GRAY); printf("\nMAC Searched:   "); textColor(IMPORTANT); printf("%M", packet->dest_mac);

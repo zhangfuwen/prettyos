@@ -36,7 +36,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.180 - Rev: 1381";
+const char* const version = "0.0.3.181 - Rev: 1382";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -216,12 +216,7 @@ void main(multiboot_t* mb_struct)
 
     flpydsk_install(); // Detect FDDs
 
-
-  #ifdef _RAMDISK_DIAGNOSIS_
-    void* ramdisk_start = initrd_install(ramdisk_install(), 0);
-  #else
     initrd_install(ramdisk_install(), 0);
-  #endif
 
   #ifdef _DEVMGR_DIAGNOSIS_
     showPortList();

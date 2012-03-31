@@ -4,6 +4,10 @@
 #include "stdbool.h"
 #include "string.h"
 #include "ctype.h"
+#include "signal.h"
+
+
+extern void (**_atexit_funcs)(); // -> syscalls.c
 
 
 void* userheapAlloc(size_t increase); // -> Syscall, Userlib
@@ -11,11 +15,23 @@ void* userheapAlloc(size_t increase); // -> Syscall, Userlib
 
 void abort()
 {
-    exit();
+    raise(SIGABRT);
 }
 
 void exit(); // -> Syscall
-int atexit(void (*func)()); /// TODO
+int atexit(void (*func)())
+{
+    static size_t num = 0;
+    static size_t size = 0;
+    if(num+1 >= size) {
+        size += 5;
+        _atexit_funcs = malloc(size*sizeof(*_atexit_funcs));
+    }
+    _atexit_funcs[num] = func;
+    num++;
+    _atexit_funcs[num] = 0;
+    return(0);
+}
 
 int abs(int n); // -> math.c
 long labs(long n)

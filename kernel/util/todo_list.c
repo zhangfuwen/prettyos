@@ -21,7 +21,7 @@ typedef struct
 
 todoList_t* todolist_create()
 {
-    todoList_t* list = malloc(sizeof(list), 0, "todoList");
+    todoList_t* list = malloc(sizeof(todoList_t), 0, "todoList");
     list->queue = list_create();
     return (list);
 }
