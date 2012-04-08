@@ -15,6 +15,7 @@
 #include "descriptor_tables.h"  // idt_install, gdt_install
 #include "irq.h"                // isr_install
 #include "power_management.h"   // powmgmt_install, powmgmt_log
+#include "apic.h"               // apic_install, apic_available
 
 // Base system
 #include "kheap.h"              // heap_install, malloc, free, logHeapRegions
@@ -36,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.3.181 - Rev: 1382";
+const char* const version = "0.0.4.0 - Rev: 1383";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -81,16 +82,6 @@ static void logExec(bool b)
 #define log(Text, Func) {logText(Text); logExec(Func);} // For functions returning bool. Writes [ERROR] if false is returned. [OK] otherwise.
 #define simpleLog(Text, Func) {logText(Text); Func; logExec(true);} // For functions returning void. Writes [OK]
 
-
-// TODO: Implement APIC functionality
-bool apic_available()
-{
-    return(false);
-}
-bool apic_install()
-{
-    return(true);
-}
 
 typedef struct // http://www.lowlevel.eu/wiki/Multiboot
 {

@@ -396,6 +396,9 @@
     <ClInclude Include="..\kernel\tasking\vm86.h">
       <Filter>Kernel\include\tasking</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\apic.h">
+      <Filter>Kernel\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -655,6 +658,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\tasking\scheduler.c">
       <Filter>Kernel\Source\tasking</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\apic.c">
+      <Filter>Kernel\Source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
