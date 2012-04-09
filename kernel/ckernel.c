@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.0 - Rev: 1383";
+const char* const version = "0.0.4.1 - Rev: 1384";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -130,7 +130,7 @@ static void init(multiboot_t* mb_struct)
 
     if (apic_available())
         log("APIC", apic_install())
-    else // PIC as fallback
+    //else // PIC as fallback // Use APIC+PIC until our APIC driver is ready to replace PIC
         simpleLog("PIC", idt_install()); // Cf. interrupts.asm
 
     // Internal devices
