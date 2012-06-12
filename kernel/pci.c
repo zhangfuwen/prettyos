@@ -7,6 +7,7 @@
 #include "util/util.h"
 #include "storage/usb_hc.h"
 #include "network/network.h"
+#include "audio/ac97.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "ipc.h"
@@ -256,9 +257,18 @@ void pci_scan()
                         {
                             usb_hc_install(PCIdev);
                         }
-                        else if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00) // network adapters
+                        
+                        if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00) // Network Adapters
                         {
                             network_installDevice(PCIdev);
+                        }
+                        
+                        if (PCIdev->classID == 0x04 && PCIdev->subclassID == 0x01) // Multimedia Controller Audio
+                        {
+                            if (PCIdev->vendorID == 0x8086) // Intel
+                            {
+                                install_AC97(PCIdev);
+                            }
                         }
 
                         putch('\n');

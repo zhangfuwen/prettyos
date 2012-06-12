@@ -399,6 +399,9 @@
     <ClInclude Include="..\kernel\apic.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\audio\ac97.h">
+      <Filter>Kernel\include\audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -661,6 +664,9 @@
     </ClCompile>
     <ClCompile Include="..\kernel\apic.c">
       <Filter>Kernel\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\audio\ac97.c">
+      <Filter>Kernel\Source\audio</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
