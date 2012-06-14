@@ -6,6 +6,7 @@
     </Filter>
     <Filter Include="Kernel\include">
       <UniqueIdentifier>{6fd599b8-53bc-4045-b009-3be2446ea7a6}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="Kernel\include\cdi">
       <UniqueIdentifier>{0c4a57ed-f22f-48a5-9181-313ec5f8b5b9}</UniqueIdentifier>
@@ -39,6 +40,7 @@
     </Filter>
     <Filter Include="Kernel\Source">
       <UniqueIdentifier>{679fbde1-5cc7-41e2-89c7-50484c67ac04}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
     <Filter Include="Kernel\Source\cdi">
       <UniqueIdentifier>{6253376d-c9ab-40aa-ac8e-3d6405b248aa}</UniqueIdentifier>
@@ -402,6 +404,9 @@
     <ClInclude Include="..\kernel\audio\ac97.h">
       <Filter>Kernel\include\audio</Filter>
     </ClInclude>
+    <ClInclude Include="..\kernel\audio\audio.h">
+      <Filter>Kernel\include\audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kernel\cdi\cdi.c">
@@ -666,6 +671,9 @@
       <Filter>Kernel\Source</Filter>
     </ClCompile>
     <ClCompile Include="..\kernel\audio\ac97.c">
+      <Filter>Kernel\Source\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\audio\audio.c">
       <Filter>Kernel\Source\audio</Filter>
     </ClCompile>
   </ItemGroup>

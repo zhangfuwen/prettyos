@@ -7,7 +7,7 @@
 #include "util/util.h"
 #include "storage/usb_hc.h"
 #include "network/network.h"
-#include "audio/ac97.h"
+#include "audio/audio.h"
 #include "video/console.h"
 #include "kheap.h"
 #include "ipc.h"
@@ -265,10 +265,7 @@ void pci_scan()
                         
                         if (PCIdev->classID == 0x04 && PCIdev->subclassID == 0x01) // Multimedia Controller Audio
                         {
-                            if (PCIdev->vendorID == 0x8086) // Intel
-                            {
-                                install_AC97(PCIdev);
-                            }
+							audio_installDevice(PCIdev);
                         }
 
                         putch('\n');

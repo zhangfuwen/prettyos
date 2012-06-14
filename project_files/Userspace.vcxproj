@@ -47,6 +47,7 @@
     <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
     <IncludePath />
     <SourcePath>..\user</SourcePath>
+    <NMakePreprocessorDefinitions>__clang__</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GCC|Win32'">
     <NMakeIncludeSearchPath>$(SolutionDir)\..\user\user_tools;$(SolutionDir)\..\user\stdlibc</NMakeIncludeSearchPath>
@@ -59,6 +60,7 @@
     <NMakeForcedIncludes>$(SolutionDir)\VCcompatibility.h</NMakeForcedIncludes>
     <IncludePath />
     <SourcePath>..\user</SourcePath>
+    <NMakePreprocessorDefinitions>__clang__</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GCC-Release|Win32'">
     <BuildLog>

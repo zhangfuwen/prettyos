@@ -769,7 +769,7 @@ static int32_t showResultsRequestSense(void* addr)
             "not defined"
         };
         printf("\nSense Key:\t");
-        if(SenseKey <= 0xF)
+        if(SenseKey < sizeof(SenseKeys))
             puts(SenseKeys[SenseKey]);
         else
             printf("sense key not known!");
