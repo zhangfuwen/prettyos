@@ -6,18 +6,52 @@
 #include "ac97.h"
 #include "util/util.h"
 #include "video/console.h"
+#include "timer.h"
 
 void install_AC97(pciDev_t* device)
 {
-    textColor(GREEN);
-    printf("\nDEBUG: AC97 will now be installed!");
-    textColor(WHITE);
-/*
-    uint8_t irq = device->irq;
-    uint8_t bus = device->bus;
-    uint8_t device = device->device;
-    uint8_t func = device->func;
-*/
+    uint16_t pciCommandRegister = pci_config_read(device->bus, device->device, device->func, PCI_COMMAND, 2);
+    // printf("\nCMD REG: %x ==> ",pciCommandRegister);
+
+    pci_config_write_word(device->bus, device->device, device->func, PCI_COMMAND, pciCommandRegister | PCI_CMD_BUSMASTER | PCI_CMD_IO); 
+    
+    pciCommandRegister = pci_config_read(device->bus, device->device, device->func, PCI_COMMAND, 2);
+    // printf("%x\n",pciCommandRegister);
+
+    // first and second address room
+    uint32_t nambar  = device->bar[0].baseAddress; // NAM-BAR  // Mixer
+    uint32_t nabmbar = device->bar[1].baseAddress; // NABM-BAR // Player
+    printf("\nnambar: %X nabmbar: %X  ",nambar, nabmbar);
+
+    // reset
+    outportw(nambar  + PORT_NAM_RESET, 42);            // Each value is possible
+    outportb(nabmbar + PORT_NABM_GLB_CTRL_STAT, 0x02); // 0x02 is mandatory
+    sleepMilliSeconds(100);
+
+    // volume
+    uint8_t volume = 0; //Am lautesten!
+    outportw(nambar + PORT_NAM_MASTER_VOLUME, (volume<<8) | volume); // General volume left and right
+    outportw(nambar + PORT_NAM_MONO_VOLUME,    volume);              // Volume for Mono
+    outportw(nambar + PORT_NAM_PC_BEEP,        volume);              // Volume for PC speaker
+    outportw(nambar + PORT_NAM_PCM_VOLUME,    (volume<<8) | volume); // Volume for PCM left and right
+    sleepMilliSeconds(10);
+
+    // sample rate
+    if (!(inportw(nambar + PORT_NAM_EXT_AUDIO_ID) & 1))
+    { 
+        // sample rate is fixed to 48 kHz 
+    }
+    else
+    {
+        outportw(nambar + PORT_NAM_EXT_AUDIO_STC, inportw(nambar + PORT_NAM_EXT_AUDIO_STC) | 1); // Activate variable rate audio
+        sleepMilliSeconds(10);
+        outportw(nambar + PORT_NAM_FRONT_SPLRATE, 44100); // General sample rate: 44100 Hz
+        outportw(nambar + PORT_NAM_LR_SPLRATE,    44100); // Stereo  sample rate: 44100 Hz
+        sleepMilliSeconds(10);        
+    }
+
+    // Actual sample rate can be read from PORT_NAM_FRONT_SPLRATE or PORT_NAM_LR_SPLRATE
+    printf("sample rate: %u Hz\n", inportw(nambar + PORT_NAM_FRONT_SPLRATE));
 }
 
 /*
