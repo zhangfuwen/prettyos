@@ -6,6 +6,7 @@
 #include "ac97.h"
 #include "util/util.h"
 #include "video/console.h"
+#include "paging.h"
 #include "timer.h"
 
 void install_AC97(pciDev_t* device)
@@ -13,8 +14,7 @@ void install_AC97(pciDev_t* device)
     uint16_t pciCommandRegister = pci_config_read(device->bus, device->device, device->func, PCI_COMMAND, 2);
     // printf("\nCMD REG: %x ==> ",pciCommandRegister);
 
-    pci_config_write_word(device->bus, device->device, device->func, PCI_COMMAND, pciCommandRegister | PCI_CMD_BUSMASTER | PCI_CMD_IO); 
-    
+    pci_config_write_word(device->bus, device->device, device->func, PCI_COMMAND, pciCommandRegister | PCI_CMD_BUSMASTER | PCI_CMD_IO);
     pciCommandRegister = pci_config_read(device->bus, device->device, device->func, PCI_COMMAND, 2);
     // printf("%x\n",pciCommandRegister);
 
@@ -38,8 +38,8 @@ void install_AC97(pciDev_t* device)
 
     // sample rate
     if (!(inportw(nambar + PORT_NAM_EXT_AUDIO_ID) & 1))
-    { 
-        // sample rate is fixed to 48 kHz 
+    {
+        // sample rate is fixed to 48 kHz
     }
     else
     {
@@ -47,11 +47,34 @@ void install_AC97(pciDev_t* device)
         sleepMilliSeconds(10);
         outportw(nambar + PORT_NAM_FRONT_SPLRATE, 44100); // General sample rate: 44100 Hz
         outportw(nambar + PORT_NAM_LR_SPLRATE,    44100); // Stereo  sample rate: 44100 Hz
-        sleepMilliSeconds(10);        
+        sleepMilliSeconds(10);
     }
 
     // Actual sample rate can be read from PORT_NAM_FRONT_SPLRATE or PORT_NAM_LR_SPLRATE
     printf("sample rate: %u Hz\n", inportw(nambar + PORT_NAM_FRONT_SPLRATE));
+
+    // Generate beep of ~23 sec length
+    uint16_t buffer[65536];
+    bool tick = false;
+    for(size_t i = 0; i < 65536; i++) {
+        if(i%100 == 0)
+            tick = !tick;
+        if(tick)
+            buffer[i] = 0x7FFF;
+        else
+            buffer[i] = 0xFFFF;
+    }
+    struct buf_desc descs[32];
+    for(int i = 0; i < 32; i++) {
+        descs[i].buf = (void*)paging_getPhysAddr(buffer);
+        descs[i].len = 0xFFFE;
+        descs[i].ioc = 1;
+        descs[i].bup = 0;
+    }
+    descs[31].bup = 1;
+    outportl(nabmbar + PORT_NABM_POBDBAR, paging_getPhysAddr(descs));
+    outportb(nabmbar + PORT_NABM_POLVI, 31);
+    outportb(nabmbar + PORT_NABM_POCONTROL, 0x15); //Abspielen, und danach auch Interrupt generieren!
 }
 
 /*
