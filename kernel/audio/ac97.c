@@ -25,15 +25,15 @@ void install_AC97(pciDev_t* device)
 
     // reset
     outportw(nambar  + PORT_NAM_RESET, 42);            // Each value is possible
-    outportb(nabmbar + PORT_NABM_GLB_CTRL_STAT, 0x02); // 0x02 is mandatory
+    outportb(nabmbar + PORT_NABM_GLB_CTRL_STS, 0x02); // 0x02 is mandatory
     sleepMilliSeconds(100);
 
     // volume
     uint8_t volume = 0; //Am lautesten!
-    outportw(nambar + PORT_NAM_MASTER_VOLUME, (volume<<8) | volume); // General volume left and right
-    outportw(nambar + PORT_NAM_MONO_VOLUME,    volume);              // Volume for Mono
-    outportw(nambar + PORT_NAM_PC_BEEP,        volume);              // Volume for PC speaker
-    outportw(nambar + PORT_NAM_PCM_VOLUME,    (volume<<8) | volume); // Volume for PCM left and right
+    outportw(nambar + PORT_NAM_MASTER_VOLUME,  (volume<<8) | volume); // General volume left and right
+    outportw(nambar + PORT_NAM_MONO_VOLUME,     volume);              // Volume for Mono
+    outportw(nambar + PORT_NAM_PC_BEEP_VOLUME,  volume);              // Volume for PC speaker
+    outportw(nambar + PORT_NAM_PCM_OUT_VOLUME, (volume<<8) | volume); // Volume for PCM left and right
     sleepMilliSeconds(10);
 
     // sample rate
@@ -43,34 +43,40 @@ void install_AC97(pciDev_t* device)
     }
     else
     {
-        outportw(nambar + PORT_NAM_EXT_AUDIO_STC, inportw(nambar + PORT_NAM_EXT_AUDIO_STC) | 1); // Activate variable rate audio
+        outportw(nambar + PORT_NAM_EXT_AUDIO_STS_CTRL, inportw(nambar + PORT_NAM_EXT_AUDIO_STS_CTRL) | 1); // Activate variable rate audio
         sleepMilliSeconds(10);
-        outportw(nambar + PORT_NAM_FRONT_SPLRATE, 44100); // General sample rate: 44100 Hz
-        outportw(nambar + PORT_NAM_LR_SPLRATE,    44100); // Stereo  sample rate: 44100 Hz
+        outportw(nambar + PORT_NAM_FRONT_DAC_RATE, 44100); // General sample rate: 44100 Hz
+        outportw(nambar + PORT_NAM_LR_ADC_RATE,    44100); // Stereo  sample rate: 44100 Hz
         sleepMilliSeconds(10);
     }
 
-    // Actual sample rate can be read from PORT_NAM_FRONT_SPLRATE or PORT_NAM_LR_SPLRATE
-    printf("sample rate: %u Hz\n", inportw(nambar + PORT_NAM_FRONT_SPLRATE));
+    // Actual sample rate can be read here:
+    printf("sample rate: %u Hz\n", inportw(nambar + PORT_NAM_FRONT_DAC_RATE));
 
     // Generate beep of ~23 sec length
     uint16_t buffer[65536];
     bool tick = false;
-    for(size_t i = 0; i < 65536; i++) {
-        if(i%100 == 0)
+    
+    for (size_t i = 0; i < 65536; i++) 
+    {
+        if (i%100 == 0)
             tick = !tick;
-        if(tick)
+        if (tick)
             buffer[i] = 0x7FFF;
         else
             buffer[i] = 0xFFFF;
     }
+    
     struct buf_desc descs[32];
-    for(int i = 0; i < 32; i++) {
+    
+    for (int i = 0; i < 32; i++) 
+    {
         descs[i].buf = (void*)paging_getPhysAddr(buffer);
         descs[i].len = 0xFFFE;
         descs[i].ioc = 1;
         descs[i].bup = 0;
     }
+
     descs[31].bup = 1;
     outportl(nabmbar + PORT_NABM_POBDBAR, paging_getPhysAddr(descs));
     outportb(nabmbar + PORT_NABM_POLVI, 31);

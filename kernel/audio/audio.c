@@ -19,9 +19,12 @@ static audio_driver_t drivers[AD_END] =
 
 void audio_installDevice(pciDev_t* device)
 {
-    if(device->vendorID == 0x1102) { // SB16. (TODO: We check only vendor here. Verify that its really an SB16 (Maybe by deviceID))
+    if(device->vendorID == 0x1102)
+    { // SB16. (TODO: We check only vendor here. Verify that its really an SB16 (Maybe by deviceID))
         drivers[AD_SB16].install(device);
-    } else if(device->vendorID == 0x8086) { // AC97. (TODO: We check only vendor here. Verify that its really an AC97)
+    }
+    else if(device->vendorID == 0x8086 /* || device->vendorID == 0x1039 */) // Intel
+    { // AC97. (TODO: We check only vendor here. Verify that its really an AC97)
         drivers[AD_AC97].install(device);
     }
 }
