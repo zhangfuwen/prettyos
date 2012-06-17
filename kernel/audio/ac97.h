@@ -6,10 +6,10 @@
 
 ////////////////////////////////////////////
 // First Address space
-// NAM - Native Audio Mixer 
+// NAM - Native Audio Mixer
 
 // "Audio Codec ‘97" Revision 2.3 Revision 1.0 April, 2002, Intel
-// chapter 5.7, "Baseline Audio Register Set" 
+// chapter 5.7, "Baseline Audio Register Set"
 // Table 16: "Baseline Audio Register Map"
 
 /*
@@ -73,8 +73,12 @@ device ID (8-bits)
 //
 #define PORT_NABM_POBDBAR             0x0010
 #define PORT_NABM_POLVI               0x0015
+#define PORT_NABM_PICONTROL           0x000B
 #define PORT_NABM_POCONTROL           0x001B
-#define PORT_NABM_GLB_CTRL_STS        0x0060
+#define PORT_NABM_MCCONTROL           0x002B
+#define PORT_NABM_PISTATUS            0x0006
+#define PORT_NABM_POSTATUS            0x0016
+#define PORT_NABM_MCSTATUS            0x0026
 
 struct buf_desc
 {
@@ -84,6 +88,8 @@ struct buf_desc
     uint16_t bup :       1;
     uint16_t ioc :       1;
 } __attribute__((packed));
+
+
 
 void install_AC97(pciDev_t* device);
 

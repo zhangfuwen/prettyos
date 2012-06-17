@@ -257,15 +257,15 @@ void pci_scan()
                         {
                             usb_hc_install(PCIdev);
                         }
-                        
+
                         if (PCIdev->classID == 0x02 && PCIdev->subclassID == 0x00) // Network Adapters
                         {
                             network_installDevice(PCIdev);
                         }
-                        
+
                         if (PCIdev->classID == 0x04 && PCIdev->subclassID == 0x01) // Multimedia Controller Audio
                         {
-							audio_installDevice(PCIdev);
+                            audio_installDevice(PCIdev);
                         }
 
                         putch('\n');

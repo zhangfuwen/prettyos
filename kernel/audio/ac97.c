@@ -8,6 +8,14 @@
 #include "video/console.h"
 #include "paging.h"
 #include "timer.h"
+#include "irq.h"
+#include "kheap.h"
+
+
+static uint32_t nambar; // NAM-BAR  // Mixer
+static uint32_t nabmbar; // NABM-BAR // Player
+
+void AC97_handler(registers_t* r, pciDev_t* device);
 
 void install_AC97(pciDev_t* device)
 {
@@ -18,14 +26,18 @@ void install_AC97(pciDev_t* device)
     pciCommandRegister = pci_config_read(device->bus, device->device, device->func, PCI_COMMAND, 2);
     // printf("%x\n",pciCommandRegister);
 
+    irq_installPCIHandler(device->irq, AC97_handler, device);
+
     // first and second address room
-    uint32_t nambar  = device->bar[0].baseAddress; // NAM-BAR  // Mixer
-    uint32_t nabmbar = device->bar[1].baseAddress; // NABM-BAR // Player
+    nambar  = device->bar[0].baseAddress; // NAM-BAR  // Mixer
+    nabmbar = device->bar[1].baseAddress; // NABM-BAR // Player
     printf("\nnambar: %X nabmbar: %X  ",nambar, nabmbar);
 
     // reset
-    outportw(nambar  + PORT_NAM_RESET, 42);            // Each value is possible
-    outportb(nabmbar + PORT_NABM_GLB_CTRL_STS, 0x02); // 0x02 is mandatory
+    outportw(nambar  + PORT_NAM_RESET, 42);        // Each value is possible
+    outportb(nabmbar + PORT_NABM_PICONTROL, 0x02); // 0x02 enforces reset
+    outportb(nabmbar + PORT_NABM_POCONTROL, 0x02); // 0x02 enforces reset
+    outportb(nabmbar + PORT_NABM_MCCONTROL, 0x02); // 0x02 enforces reset
     sleepMilliSeconds(100);
 
     // volume
@@ -54,10 +66,9 @@ void install_AC97(pciDev_t* device)
     printf("sample rate: %u Hz\n", inportw(nambar + PORT_NAM_FRONT_DAC_RATE));
 
     // Generate beep of ~23 sec length
-    uint16_t buffer[65536];
     bool tick = false;
-    
-    for (size_t i = 0; i < 65536; i++) 
+    uint16_t* buffer = malloc(sizeof(uint16_t)*65536, 64, "AC97 sample buffer");
+    for (size_t i = 0; i < 65536; i++)
     {
         if (i%100 == 0)
             tick = !tick;
@@ -66,22 +77,33 @@ void install_AC97(pciDev_t* device)
         else
             buffer[i] = 0xFFFF;
     }
-    
-    struct buf_desc descs[32];
-    
-    for (int i = 0; i < 32; i++) 
+
+    struct buf_desc* descs = malloc(sizeof(struct buf_desc)*32, 64, "AC97 buffer descriptor");
+    for (int i = 0; i < 32; i++)
     {
         descs[i].buf = (void*)paging_getPhysAddr(buffer);
         descs[i].len = 0xFFFE;
         descs[i].ioc = 1;
         descs[i].bup = 0;
     }
-
     descs[31].bup = 1;
+
     outportl(nabmbar + PORT_NABM_POBDBAR, paging_getPhysAddr(descs));
     outportb(nabmbar + PORT_NABM_POLVI, 31);
     outportb(nabmbar + PORT_NABM_POCONTROL, 0x15); //Abspielen, und danach auch Interrupt generieren!
 }
+
+void AC97_handler(registers_t* r, pciDev_t* device)
+{
+    int pi = inportb(nabmbar + PORT_NABM_PISTATUS) & 0x1C;
+    int po = inportb(nabmbar + PORT_NABM_POSTATUS) & 0x1C;
+    int mc = inportb(nabmbar + PORT_NABM_MCSTATUS) & 0x1C;
+
+    outportb(nabmbar + PORT_NABM_PISTATUS, pi);
+    outportb(nabmbar + PORT_NABM_POSTATUS, po);
+    outportb(nabmbar + PORT_NABM_MCSTATUS, mc);
+}
+
 
 /*
 * Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
