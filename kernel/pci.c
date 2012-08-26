@@ -191,7 +191,7 @@ void pci_scan()
                     if (PCIdev->irq != 255)
                     {
                         char path[50];
-                        char* end = path + snprintf(path, 50, "PrettyOS/PCI/%u/", counter);
+                        char* end = path + snprintf(path, 50, "PrettyOS/PCI/%u/", (uint32_t)counter);
 
                         strcpy(end, "Bus");
                         int64_t Bus = bus;

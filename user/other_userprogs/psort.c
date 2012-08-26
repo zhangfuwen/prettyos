@@ -82,7 +82,7 @@ int main()
                 for (size_t i = 0; i < amount; i++)
                     numbers[i] = rand();
             }
-            printf("Sorting %i numbers..\n", amount);
+            printf("Sorting %u numbers..\n", amount);
             uint32_t t = getCurrentMilliseconds();
             qsort(numbers, amount, sizeof(*numbers), compare);
             printf("Elapsed time: %i\n", getCurrentMilliseconds() - t);

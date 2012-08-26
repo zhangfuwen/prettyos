@@ -717,7 +717,7 @@ FS_ERROR flpydsk_write_ia(int32_t i, void* a, FLOPPY_MODE option)
     while ((retVal = flpydsk_write(val, option==SECTOR?1:18)) != 0)
     {
         timeout--;
-        printf("write error: attempts left: %d\n", timeout);
+        printf("write error: attempts left: %u\n", timeout);
         if (timeout == 0)
         {
             printf("timeout\n");

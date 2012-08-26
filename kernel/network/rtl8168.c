@@ -84,7 +84,7 @@ void rtl8168_install(network_adapter_t* adapter)
         sleepMilliSeconds(10);
         if (!(*((volatile uint8_t*)(rAdapter->MMIO_base + RTL8168_CHIPCMD)) & RTL8168_CMD_RESET))
         {
-            printf("\nwaiting successful (%d).\n", k);
+            printf("\nwaiting successful (%u).\n", k);
             break;
         }
         if (k > 100)

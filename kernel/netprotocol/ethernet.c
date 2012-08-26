@@ -38,7 +38,7 @@ void ethernet_received(network_adapter_t* adapter, ethernet_t* eth, uint32_t len
     }
 
   #ifdef _NETWORK_DATA_
-    printf("\nLength: %d", length);
+    printf("\nLength: %u", length);
 
     textColor(GRAY); printf(" %M\t<== %M\n", eth->recv_mac, eth->send_mac); // MAC adresses
 

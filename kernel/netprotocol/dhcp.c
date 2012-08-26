@@ -292,7 +292,9 @@ void DHCP_AnalyzeServerMessage(network_adapter_t* adapter, dhcp_t* dhcp)
 
 static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint16_t count)
 {
+  #ifdef _NETWORK_DATA_
     uint32_t leaseTime=0;
+  #endif
 
     textColor(TEXT);
     switch (opt[count+1]) // 1: message  2: length  3 to (2+length): data
@@ -318,14 +320,12 @@ static uint16_t showOptionsBytes(network_adapter_t* adapter, uint8_t* opt, uint1
             break;
       #endif
         case 51: // Lease time
+          #ifdef _NETWORK_DATA_
             for (uint16_t i=0; i<opt[count+2]; i++)
             {
-              #ifdef _NETWORK_DATA_
                 printf("%u ", opt[count+3+i]);
-              #endif
                 leaseTime += ((opt[count+3+i])<<(24-8*i));
             }
-          #ifdef _NETWORK_DATA_
             printf("  %u hours", leaseTime/3600);
           #endif
             break;

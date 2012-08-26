@@ -309,7 +309,7 @@ static int checkSCSICommand(void* MSDStatus, usb_device_t* device, uint16_t Tran
     else
     {
         textColor(0x06);
-        printf("\nCSW data residue: %d",CSWDataResidue);
+        printf("\nCSW data residue: %u", CSWDataResidue);
         textColor(TEXT);
     }
 

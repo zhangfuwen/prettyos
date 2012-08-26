@@ -311,7 +311,7 @@ int main()
                     fileTransfer = 1;
                     binaryFileTransfer = 0;
                     fileSize = 0;
-                    printf("Save file.(max. size: %i)\nEnter filename(server):\n", maxFileSize);
+                    printf("Save file.(max. size: %u)\nEnter filename(server):\n", maxFileSize);
                     char filename[100];
                     gets(filename);
                     printf("\nEnter transfer mode(A == ASCII, I == Binary):\n");

@@ -48,7 +48,7 @@ int main()
             case EVENT_TCP_CONNECTED:
                 printf("ESTABLISHED.\n");
                 char pStr[100];
-                int number = rand();
+                unsigned int number = rand();
                 snprintf(pStr, 100, "NICK Pretty%u\r\nUSER Pretty%u void servername : Pretty%u\r\n", number, number, number);
                 tcp_send(connection, pStr, strlen(pStr));
                 break;
