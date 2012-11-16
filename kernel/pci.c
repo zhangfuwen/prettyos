@@ -12,10 +12,6 @@
 #include "kheap.h"
 #include "ipc.h"
 
-#ifdef _PCI_VEND_PROD_LIST_
-  #include "pciVendProdlist.h" // http://www.pcidatabase.com/pci_c_header.php
-#endif
-
 
 list_t* pci_devices = 0;
 
@@ -120,12 +116,14 @@ void pci_scan()
 {
     pci_devices = list_create();
 
+  #ifdef _DIAGNOSIS_
     textColor(LIGHT_GRAY);
     printf("   => PCI devices:");
     textColor(TABLE_HEADING);
     printf("\nB:D:F\tIRQ\tDescription");
     printf("\n--------------------------------------------------------------------------------");
     textColor(TEXT);
+  #endif
     int64_t counter = 0;
     for (uint16_t bus = 0; bus < PCIBUSES; ++bus)
     {
@@ -212,43 +210,8 @@ void pci_scan()
                         int64_t DeviceID = PCIdev->deviceID;
                         ipc_setInt(path, &DeviceID);
 
+                      #ifdef _DIAGNOSIS_
                         printf("%d:%d.%d\t%d", PCIdev->bus, PCIdev->device, PCIdev->func, PCIdev->irq);
-
-                      #ifdef _PCI_VEND_PROD_LIST_
-                        // Find Vendor
-                        bool found = false;
-                        for (uint32_t i = 0; i < PCI_VENTABLE_LEN; i++)
-                        {
-                            if (PciVenTable[i].VenId == PCIdev->vendorID)
-                            {
-                                printf("\t%s", PciVenTable[i].VenShort); // Found! Display name and break out
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found)
-                        {
-                            printf("\tvend: %xh", PCIdev->vendorID); // Vendor not found, display ID
-                        }
-                        else
-                        {
-                            // Find Device
-                            found = false;
-                            for (uint32_t i = 0; i < PCI_DEVTABLE_LEN; i++)
-                            {
-                                if (PciDevTable[i].DevId == PCIdev->deviceID && PciDevTable[i].VenId == PCIdev->vendorID) // VendorID and DeviceID have to fit
-                                {
-                                    printf(", %s", PciDevTable[i].ChipDesc); // Found! Display name and break out
-                                    found = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!found)
-                        {
-                            printf(", dev: %xh", PCIdev->deviceID); // Device not found, display ID
-                        }
-                      #else
                         printf("\tvend: %xh, dev: %xh", PCIdev->vendorID, PCIdev->deviceID);
                       #endif
 
@@ -268,7 +231,9 @@ void pci_scan()
                             audio_installDevice(PCIdev);
                         }
 
+                      #ifdef _DIAGNOSIS_
                         putch('\n');
+                      #endif
 
                         counter++;
                     } // if irq != 255
@@ -277,13 +242,15 @@ void pci_scan()
         } // for device
     } // for bus
     ipc_setInt("PrettyOS/PCI/Number of Devices", &counter);
+  #ifdef _DIAGNOSIS_
     textColor(TABLE_HEADING);
     printf("--------------------------------------------------------------------------------\n");
     textColor(TEXT);
+  #endif
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -253,7 +253,7 @@ IPC_ERROR ipc_getFolder(const char* path, char* destination, size_t length) // T
     for(dlelement_t* e = node->data.folder->head; e != 0; e = e->next)
     {
         ipc_node_t* child = e->data;
-        strcat(destination, child->data.string);
+        strcat(destination, child->name);
         strcat(destination, "|");
     }
 
@@ -398,7 +398,7 @@ IPC_ERROR ipc_setAccess(const char* path, IPC_RIGHTS permissions, uint32_t task)
 
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
