@@ -1836,17 +1836,127 @@ FS_ERROR FAT_pinstall(partition_t* part)
 
 FS_ERROR FAT_folderAccess(folder_t* folder, folderAccess_t mode)
 {
+    // TODO: Not only root dir
     // Read directory content. Analyze it as a FAT_dirEntry_t array. Put all valid entries into the already created subfolder and files lists.
-    return (CE_GOOD);
+
+  #ifdef _FAT_DIAGNOSIS_
+    serial_log(SER_LOG_FAT, "\r\n>>>>> FAT_folderAccess <<<<<");
+  #endif
+
+    // TODO: Get rid of FAT_file_t
+    FAT_file_t tempFile;
+    tempFile.volume = folder->volume->data;
+    FAT_partition_t* fpart = folder->volume->data;
+    tempFile.dirfirstCluster = fpart->FatRootDirCluster;
+    tempFile.dircurrCluster = fpart->FatRootDirCluster;
+    tempFile.entry = 0;
+
+    FS_ERROR error              = CE_GOOD;
+    uint32_t fHandle            = tempFile.entry;
+
+    ///memset(fileptrDest->name, 0x20, FILE_NAME_SIZE);
+  #ifdef _FAT_DIAGNOSIS_
+    serial_log(SER_LOG_FAT, "\r\nfHandle (searchFile): %d", fHandle);
+  #endif
+    if (fHandle == 0 || (fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) != 0) // Maximum 16 entries possible
+    {
+        if (cacheFileEntry(&tempFile, &fHandle, true) == 0)
+        {
+            return CE_BADCACHEREAD;
+        }
+    }
+
+    while (true) // Loop until you reach the end or find the file
+    {
+      #ifdef _FAT_DIAGNOSIS_
+        serial_log(SER_LOG_FAT, "\r\n\r\nfHandle %u\r\n", fHandle);
+      #endif
+        FAT_dirEntry_t* entry;
+
+        if ((fHandle & MASK_MAX_FILE_ENTRY_LIMIT_BITS) == 0 && fHandle != 0) // 4-bit mask because 16 root entries max per sector
+        {
+            tempFile.dircurrCluster = tempFile.dirfirstCluster;
+            entry = cacheFileEntry(&tempFile, &fHandle, true);
+          #ifdef _FAT_DIAGNOSIS_
+            FAT_showDirectoryEntry(dir);
+          #endif
+        }
+        else
+            entry = cacheFileEntry(&tempFile, &fHandle, false);
+
+        if (entry->Name[0] == DIR_EMPTY) break; // free from here on
+
+        if ((uint8_t)entry->Name[0] != DIR_DEL &&            // Entry is not deleted
+           (entry->Attr & ATTR_LONG_NAME) != ATTR_LONG_NAME) // Entry is not part of long file name (VFAT)
+        {
+            fsnode_t* node = malloc(sizeof(fsnode_t), 0, "fsnode");
+            node->name = malloc(8+1+3+1, 0, "fsnode.name"); // Space for filename.ext (8+3)
+
+            // Filename
+            size_t letters = 0;
+            for (uint8_t j = 0; j < 8; j++)
+            {
+                if (entry->Name[j] != 0x20) // Empty space
+                {
+                    node->name[letters] = entry->Name[j];
+                    letters++;
+                }
+            }
+            if (!(entry->Attr & ATTR_VOLUME) && // No volume label
+                 entry->Extension[0] != 0x20 && entry->Extension[1] != 0x20 && entry->Extension[2] != 0x20) // Has extension
+            {
+                node->name[letters] = '.';
+                letters++;
+            }
+
+            for (uint8_t j = 0; j < 3; j++)
+            {
+                if (entry->Extension[j] != 0x20) // Empty space
+                {
+                    node->name[letters] = entry->Extension[j];
+                    letters++;
+                }
+            }
+            node->name[letters] = 0;
+
+            if(!(entry->Attr & ATTR_DIRECTORY) && !(entry->Attr & ATTR_VOLUME))
+                node->size = entry->FileSize;
+
+            node->attributes = 0;
+            if(entry->Attr & ATTR_VOLUME)
+                node->attributes |= NODE_VOLUME;
+            if(entry->Attr & ATTR_DIRECTORY)
+                node->attributes |= NODE_DIRECTORY;
+            if(entry->Attr & ATTR_READ_ONLY)
+                node->attributes |= NODE_READONLY;
+            if(entry->Attr & ATTR_HIDDEN)
+                node->attributes |= NODE_HIDDEN;
+            if(entry->Attr & ATTR_SYSTEM)
+                node->attributes |= NODE_SYSTEM;
+            if(entry->Attr & ATTR_ARCHIVE)
+                node->attributes |= NODE_ARCHIVE;
+
+            list_append(folder->nodes, node);
+        }
+        // increment it no matter what happened
+        fHandle++;
+    } // while
+
+    return (error);
 }
 
 void FAT_folderClose(folder_t* folder)
 {
+    for(dlelement_t* e = folder->nodes->head; e; e = e->next) {
+        fsnode_t* node = e->data;
+        free(node->name);
+        free(e->data);
+    }
 }
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -37,6 +37,7 @@ struct task
 
     // Information needed for cleanup
     list_t* files;
+    list_t* folders;
     bool    speaker;
 };
 

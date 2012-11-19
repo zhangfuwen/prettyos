@@ -37,7 +37,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.9 - Rev: 1393";
+const char* const version = "0.0.4.10 - Rev: 1394";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -359,6 +359,39 @@ void main(multiboot_t* mb_struct)
                                 break;
                             case 'v':
                                 scheduler_insertTask(create_cthread(&video_test, "VBE"));
+                                break;
+                            case 'f':
+                                textColor(HEADLINE);
+                                puts("\n<Floppy Disk - Root Directory>");
+                                textColor(TABLE_HEADING);
+                                puts("\nFile\t\tSize (Bytes)\tAttributes\n");
+                                textColor(TEXT);
+
+                                folder_t* folder = folderAccess("1:0:", FOLDER_OPEN);
+                                for(dlelement_t* e = folder->nodes->head; e; e = e->next) {
+                                    fsnode_t* node = e->data;
+
+                                    int letters = printf("%s", node->name);
+                                    if (letters < 8) putch('\t');
+
+                                    // Filesize
+                                    if (!(node->attributes & NODE_VOLUME) && !(node->attributes & NODE_DIRECTORY))
+                                        printf("\t%d\t\t", node->size);
+                                    else
+                                        puts("\t\t\t");
+
+                                    // Attributes
+                                    if (node->attributes & NODE_VOLUME)    puts("(vol) ");
+                                    if (node->attributes & NODE_DIRECTORY) puts("(dir) ");
+                                    if (node->attributes & NODE_READONLY)  puts("(r/o) ");
+                                    if (node->attributes & NODE_HIDDEN)    puts("(hid) ");
+                                    if (node->attributes & NODE_SYSTEM)    puts("(sys) ");
+                                    if (node->attributes & NODE_ARCHIVE)   puts("(arc)" );
+
+                                    putch('\n');
+                                }
+                                folderClose(folder);
+                                putch('\n');
                                 break;
                         }
                     }

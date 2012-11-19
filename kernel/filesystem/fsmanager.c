@@ -297,16 +297,14 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
         return (0);
     }
 
-    folder->files     = list_create();
-    folder->subfolder = list_create();
+    folder->nodes     = list_create();
     folder->folder    = folder->volume->rootFolder; // HACK. Not all folders are in the root folder
     folder->name      = malloc(strlen(getFilename(path))+1, 0, "fsmgr-foldername");
     strcpy(folder->name, getFilename(path));
 
     if (folder->volume->type->folderAccess(folder, mode) != CE_GOOD)
     {   // cleanup
-        list_free(folder->files);
-        list_free(folder->subfolder);
+        list_free(folder->nodes);
         free(folder->name);
         free(folder);
         return (0);
@@ -318,8 +316,7 @@ folder_t* folderAccess(const char* path, folderAccess_t mode)
 void folderClose(folder_t* folder)
 {
     folder->volume->type->folderClose(folder);
-    list_free(folder->files);
-    list_free(folder->subfolder);
+    list_free(folder->nodes);
     free(folder->name);
     free(folder);
 }
@@ -337,11 +334,20 @@ void fsmanager_cleanup(task_t* task)
         }
         list_free(task->files);
     }
+    if (task->folders)
+    {
+        for (dlelement_t* e = task->files->head; e != 0; e = e->next)
+        {
+            folder_t* folder = e->data;
+            folderClose(folder);
+        }
+        list_free(task->folders);
+    }
 }
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

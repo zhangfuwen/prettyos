@@ -2,6 +2,7 @@
 #define FSMANAGER_H
 
 #include "os.h"
+#include "util/util.h"
 #include "util/list.h"
 #include "tasking/scheduler.h"
 
@@ -113,6 +114,24 @@ typedef struct partition
     bool          mount;   // false: not mounted
 } partition_t;
 
+enum FSNODE_ATTRIBUTES
+{
+    NODE_VOLUME    = BIT(0),
+    NODE_DIRECTORY = BIT(1),
+    NODE_HIDDEN    = BIT(2),
+    NODE_READONLY  = BIT(3),
+    NODE_LINK      = BIT(4),
+    NODE_SYSTEM    = BIT(5),
+    NODE_ARCHIVE   = BIT(6)
+};
+
+typedef struct
+{
+    char*         name;       // Name of the node
+    uint64_t      size;       // Total size of the file in bytes (0 for folders)
+    uint8_t       attributes; // Attributes
+} fsnode_t;
+
 typedef struct folder
 {
     partition_t*   volume;    // Partition containing the file
@@ -121,8 +140,7 @@ typedef struct folder
 
     char*          name;      // name of the node
 
-    list_t*        subfolder; // All folders inside this folder
-    list_t*        files;     // All files inside this folder
+    list_t*        nodes;     // All files and folders inside this folder. Stored as fsnode_t
 } folder_t;
 
 typedef struct file

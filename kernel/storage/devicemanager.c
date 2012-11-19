@@ -135,6 +135,8 @@ void showPortList()
                 printf("\nUSB 1.1 (UHCI) ");
             else if (ports[i]->type == &USB_EHCI)
                 printf("\nUSB 2.0        ");
+            else
+                printf("\nUnknown        ");
 
             textColor(IMPORTANT);
             printf("\t%c", 'A'+i); // number
@@ -145,7 +147,9 @@ void showPortList()
             {
                 if(ports[i]->type == &FDD)
                     flpydsk_refreshVolumeName(ports[i]->insertedDisk);
-                printf("\t%s", ports[i]->insertedDisk->name); // Attached disk
+
+                if(ports[i]->insertedDisk->name)
+                    printf("\t%s", ports[i]->insertedDisk->name); // Attached disk
             }
             else
             {
@@ -182,6 +186,7 @@ void showDiskList()
             if      (disks[i]->type == &FLOPPYDISK) printf("\nFloppy");
             else if (disks[i]->type == &RAMDISK)    printf("\nRAMdisk");
             else if (disks[i]->type == &USB_MSD)    printf("\nUSB MSD");
+            else                                    printf("\nUnknown");
 
             textColor(IMPORTANT);
             printf("\t%u", i+1); // Number
@@ -211,14 +216,6 @@ void showDiskList()
 
                 if (disks[i]->type == &FLOPPYDISK) // Serial
                 {
-                    //HACK
-                    if(disks[i]->partition[j]->serial == 0)
-                    {
-                        disks[i]->partition[j]->serial = malloc(13, 0, "devmgr-partserial");
-                    }
-
-                    disks[i]->partition[j]->serial[12] = 0;
-                    strncpy(disks[i]->partition[j]->serial, disks[i]->name, 12); // TODO: floppy disk device: use the current serials of the floppy disks
                     puts(disks[i]->partition[j]->serial);
                 }
                 else if (disks[i]->type == &RAMDISK)
@@ -523,7 +520,7 @@ FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
 }
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
