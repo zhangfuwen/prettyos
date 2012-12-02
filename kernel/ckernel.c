@@ -32,12 +32,15 @@
 #include "video/textgui.h"      // TextGUI_ShowMSG, TextGUI_AskYN
 #include "filesystem/initrd.h"  // initrd_install, ramdisk_install, readdir_fs, read_fs, finddir_fs
 #include "storage/flpydsk.h"    // flpydsk_install
+#ifdef _ENABLE_HDD_
+#include "storage/hdd.h"        // hdd_install
+#endif
 
 // Network
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.10 - Rev: 1394";
+const char* const version = "0.0.4.11 - Rev: 1395";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -47,6 +50,7 @@ extern diskType_t* ScreenDest; // HACK for screenshots
 
 todoList_t* kernel_idleTasks; // List of functions that are executed in kernel idle loop
 
+extern disk_t* disks[DISKARRAYSIZE]; //HACK
 
 static void logText(const char* str)
 {
@@ -207,6 +211,10 @@ void main(multiboot_t* mb_struct)
 
     flpydsk_install(); // Detect FDDs
 
+#ifdef _ENABLE_HDD_
+    hdd_install(); //TODO: Make dangerous optional features available over multiboot kernel command line
+#endif
+
     initrd_install(ramdisk_install(), 0);
 
   #ifdef _DEVMGR_DIAGNOSIS_
@@ -243,6 +251,53 @@ void main(multiboot_t* mb_struct)
     printf("--------------------------------------------------------------------------------");
     textColor(TEXT);
 
+#ifdef _ENABLE_HDD_
+    uint8_t buf[512];
+
+    for(int i = 0; i < DISKARRAYSIZE; ++i)
+    {
+        if (disks[i])
+        {
+            if (disks[i]->type == &HDDPIODISK)
+            {
+                printf("Disk found! ATA-Channel is %i (address %X)\n", ((hdd_t*)disks[i]->data)->channel, (uint32_t)&((hdd_t*)(disks[i]->data))->channel);
+
+                const char* hddTestStr = "PrettyOS is the greatest OS of the world.\nEven better than Windows, Linux or MacOSX 8)\n";
+
+                printf("Testing disk with the following data: %s\n", hddTestStr);
+
+                memcpy(buf, hddTestStr, strlen(hddTestStr) + 1);
+
+                FS_ERROR err = hdd_writeSectorPIO(0, buf, disks[i]);
+
+                if (err == CE_GOOD)
+                {
+                    printf("Written successful!\n");
+                }
+                else
+                {
+                    printf("ERROR during sectorWrite: %d", err);
+                }
+
+                memset(buf, '#', 512);
+
+                buf[511] = 0;
+
+                err = hdd_readSectorPIO(0, buf, disks[i]);
+
+                if (err == CE_GOOD)
+                {
+                    printf("Read successful!\nContent: %s", buf);
+                }
+                else
+                {
+                    printf("ERROR during sectorRead: %d", err);
+                }
+            }
+        }
+    }
+
+#endif
 
     const char* progress    = "|/-\\";    // Rotating asterisk
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.

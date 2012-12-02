@@ -97,6 +97,7 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     newTask->threads       = 0; // No threads associated with the task at the moment. created later if necessary
     newTask->eventQueue    = 0; // Event handling is disabled per default
     newTask->files         = 0;
+    newTask->folders       = 0;
     newTask->speaker       = false;
 
     if (newTask->privilege == 3 && newTask->type != VM86)

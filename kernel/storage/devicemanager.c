@@ -11,6 +11,7 @@
 #include "flpydsk.h"
 #include "filesystem/fat.h"
 #include "uhci.h"
+#include "hdd.h"
 #ifdef _CACHE_DIAGNOSIS_
   #include "timer.h"
 #endif
@@ -24,11 +25,13 @@ portType_t FDD      = {.motorOff = &flpydsk_motorOff, .pollDisk = 0},
            USB_UHCI = {.motorOff = 0,                 .pollDisk = &uhci_pollDisk},
            USB_OHCI = {.motorOff = 0,                 .pollDisk = 0},
            USB_EHCI = {.motorOff = 0,                 .pollDisk = 0},
-           RAM      = {.motorOff = 0,                 .pollDisk = 0};
+           RAM      = {.motorOff = 0,                 .pollDisk = 0},
+           HDD      = {.motorOff = 0,                 .pollDisk = 0};
 
 diskType_t FLOPPYDISK = {.readSector = &flpydsk_readSector, .writeSector = &flpydsk_writeSector},
            USB_MSD    = {.readSector = &usb_read,           .writeSector = &usb_write},
-           RAMDISK    = {.readSector = 0,                   .writeSector = 0};
+           RAMDISK    = {.readSector = 0,                   .writeSector = 0},
+           HDDPIODISK = {.readSector = &hdd_readSectorPIO,   .writeSector = &hdd_writeSectorPIO};
 
 // Cache
 #define NUMCACHE 20

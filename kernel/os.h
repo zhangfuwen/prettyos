@@ -10,6 +10,7 @@
 #define _EHCI_ENABLE_        // EHCI driver will be installed and used on the disadvantage of UHCI/OHCI if supported by the attached device
 #define _OHCI_ENABLE_        // OHCI driver will be installed
 #define _UHCI_ENABLE_        // UHCI driver will be installed
+//#define _ENABLE_HDD_         // HDD driver will be enabled | !!!DRIVER IN DEVELOPMENT STAGE, NEVER USE IT ON REAL HW!!!
 
 // Additional debug output (Should be disabled per default)
 /// #define _DIAGNOSIS_            // General diagnosis output - activates prints to the screen about some details and memory use
@@ -46,6 +47,7 @@
 #define SER_LOG_HEAP   1
 #define SER_LOG_VM86   2
 #define SER_LOG_FAT    1
+#define SER_LOG_HRDDSK 1
 
 extern const char* const version; // PrettyOS version string
 extern struct todoList* kernel_idleTasks;

@@ -23,8 +23,8 @@ typedef struct
     FS_ERROR (*writeSector)(uint32_t, void*, struct disk*);
 } diskType_t;
 
-extern portType_t FDD, USB_UHCI, USB_OHCI, USB_EHCI, RAM;
-extern diskType_t FLOPPYDISK, USB_MSD, RAMDISK;
+extern portType_t FDD, USB_UHCI, USB_OHCI, USB_EHCI, RAM, HDD;
+extern diskType_t FLOPPYDISK, USB_MSD, RAMDISK, HDDPIODISK;
 
 typedef struct disk
 {
