@@ -1878,7 +1878,7 @@ FS_ERROR FAT_folderAccess(folder_t* folder, folderAccess_t mode)
             tempFile.dircurrCluster = tempFile.dirfirstCluster;
             entry = cacheFileEntry(&tempFile, &fHandle, true);
           #ifdef _FAT_DIAGNOSIS_
-            FAT_showDirectoryEntry(dir);
+            FAT_showDirectoryEntry(entry);
           #endif
         }
         else

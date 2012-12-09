@@ -278,9 +278,6 @@
     <ClInclude Include="..\kernel\cdi-osdep.h">
       <Filter>Kernel\include\cdi</Filter>
     </ClInclude>
-    <ClInclude Include="..\kernel\pciVendProdList.h">
-      <Filter>Kernel\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\kernel\memory.h">
       <Filter>Kernel\include</Filter>
     </ClInclude>

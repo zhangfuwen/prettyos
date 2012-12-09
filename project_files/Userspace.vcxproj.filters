@@ -265,5 +265,8 @@
     <ClInclude Include="..\user\other_userprogs\pong.h">
       <Filter>Other Userprogs</Filter>
     </ClInclude>
+    <ClInclude Include="..\user\other_userprogs\pciVendProdList.h">
+      <Filter>Other Userprogs</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

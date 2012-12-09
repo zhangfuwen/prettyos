@@ -30,7 +30,7 @@ typedef struct disk
 {
     diskType_t*  type;
     partition_t* partition[PARTITIONARRAYSIZE]; // 0 if partition is not used
-    size_t       size;                          // size of disk in bytes
+    uint64_t     size;                          // size of disk in bytes
     char         name[15];
     void*        data;                          // Contains additional information depending on disk-type
     uint32_t     accessRemaining;               // Used to control motor

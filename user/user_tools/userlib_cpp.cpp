@@ -6,8 +6,24 @@
 #include "userlib.hpp"
 #include "stdlib.h"
 
-
-#if (__GNUC__ >= 4 && __GNUC_MINOR__ >= 5) || defined(__clang__)
+#if (__GNUC__ >= 4 && __GNUC_MINOR__ >= 7) || defined(__clang__)
+void* operator new(long unsigned int size)
+{
+    return malloc(size);
+}
+void* operator new[](long unsigned int size)
+{
+    return malloc(size);
+}
+void operator delete(void* ptr)
+{
+    free(ptr);
+}
+void operator delete[](void* ptr)
+{
+    free(ptr);
+}
+#elif (__GNUC__ >= 4 && __GNUC_MINOR__ >= 5) || defined(__clang__)
 void* operator new(unsigned int size)
 {
     return malloc(size);
@@ -45,7 +61,7 @@ void operator delete[](void* ptr)
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

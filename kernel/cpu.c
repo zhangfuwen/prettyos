@@ -212,7 +212,7 @@ void fpu_test()
 
     putch('[');
 
-    if (squareroot == 1.00)
+    if (fabs(squareroot - 1.0) < 0.000001)
     {
         textColor(SUCCESS);
         printf("PASSED");

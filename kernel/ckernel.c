@@ -40,7 +40,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.11 - Rev: 1396";
+const char* const version = "0.0.4.12 - Rev: 1397";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -184,7 +184,7 @@ static void showMemorySize()
     int64_t ramsize;
     ipc_getInt("PrettyOS/RAM (Bytes)", &ramsize);
 
-    printf("%Sa (%u Bytes)\n", (size_t)ramsize, (uint32_t)ramsize);
+    printf("%Sa (%u Bytes)\n", ramsize, (uint32_t)ramsize);
     textColor(LIGHT_GRAY);
 }
 

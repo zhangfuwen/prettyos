@@ -371,7 +371,7 @@ size_t vprintf(const char* args, va_list ap)
                         break;
                     case 'S': // Size: prints a size in bytes. Can autoscale them to KiB, MiB and GiB
                     {
-                        size_t size = va_arg(ap, size_t);
+                        size_t size = va_arg(ap, uint64_t);
                         switch(toLower(*++args)) // Second letter determines several properties:
                         {
                             case 'g': // GiB at maximum
@@ -464,7 +464,7 @@ size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
