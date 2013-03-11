@@ -80,11 +80,9 @@ int main()
     setScrollField(0, 39);
     event_enable(true);
     char entry[MAX_CHAR_PER_LINE+1];
-    char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1];
+    char entryCache[ENTRY_CACHE_SIZE][MAX_CHAR_PER_LINE+1] = {{0}};
     int curEntry = -1;
     bool insertMode = false;
-
-    memset(entryCache, 0, ENTRY_CACHE_SIZE*(MAX_CHAR_PER_LINE+1));
 
     while (true)
     {

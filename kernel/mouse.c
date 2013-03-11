@@ -27,8 +27,8 @@ mouse_button_t mouse_buttons = 0; // Status of mouse buttons
 
 
 static void mouse_wait(uint8_t type);
-static void mouse_write(int8_t data);
-static char mouse_read();
+static void mouse_write(uint8_t data);
+static uint8_t mouse_read();
 static void mouse_handler(registers_t* a_r);
 
 
@@ -254,7 +254,7 @@ static void mouse_wait(uint8_t type) // Data: 0, Signal: 1
     }
 }
 
-static void mouse_write(int8_t data)
+static void mouse_write(uint8_t data)
 {
     // Wait to be able to send a command
     mouse_wait(1);
@@ -274,7 +274,7 @@ static void mouse_write(int8_t data)
     }
 }
 
-static char mouse_read()
+static uint8_t mouse_read()
 {
     // Get response from mouse
     mouse_wait(0);

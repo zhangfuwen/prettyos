@@ -101,8 +101,7 @@ int main()
                 //printf("length: %u", header->length);
 
 
-                char reqstr[5000];
-                memset(reqstr,0,5000);
+                char reqstr[5000] = {0};
                 strcpy(reqstr,data);
 
 
@@ -296,8 +295,7 @@ int main()
 
 
 
-                    char astr[1000];
-                    memset(astr,0,1000);
+                    char astr[1000] = {0};
 
                     if (httpstatuscode==200) {
                         strcat(astr,"HTTP/1.1 200 OK\r\n");

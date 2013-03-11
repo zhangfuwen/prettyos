@@ -348,7 +348,7 @@ static FAT_dirEntry_t* getFatDirEntry(FAT_file_t* fileptr, uint32_t* fHandle)
     fileptr->dircurrCluster = fileptr->dirfirstCluster;
     FAT_dirEntry_t* dir = cacheFileEntry(fileptr, fHandle, true);
 
-    if (dir == 0 || dir->Name[0] == DIR_EMPTY || dir->Name[0] == DIR_DEL)
+    if (dir == 0 || (uint8_t)dir->Name[0] == DIR_EMPTY || (uint8_t)dir->Name[0] == DIR_DEL)
     {
         return (0);
     }
@@ -393,9 +393,9 @@ static uint8_t fillFILEPTR(FAT_file_t* fileptr, uint32_t* fHandle)
     else
         dir = cacheFileEntry(fileptr, fHandle, false);
 
-    if (dir == 0 || dir->Name[0] == DIR_EMPTY)
+    if (dir == 0 || (uint8_t)dir->Name[0] == DIR_EMPTY)
         return NO_MORE;
-    if (dir->Name[0] == DIR_DEL)
+    if ((uint8_t)dir->Name[0] == DIR_DEL)
         return NOT_FOUND;
 
     memcpy(fileptr->name, dir->Name, DIR_NAMESIZE);
@@ -707,11 +707,11 @@ static uint32_t fatFindEmptyCluster(FAT_file_t* fileptr)
     fatRead(volume, c);
 
     uint32_t curcls = c;
-    uint32_t value = 0x0;
 
     while (c)
     {
-        if ((value = fatRead(volume, c)) == clusterVal[volume->type].fail)
+        uint32_t value = fatRead(volume, c);
+        if (value == clusterVal[volume->type].fail)
             return (0);
 
         if (value == CLUSTER_EMPTY)
@@ -953,7 +953,7 @@ FS_ERROR FAT_fileErase(FAT_file_t* fileptr, uint32_t* fHandle, bool EraseCluster
     {
         return CE_BADCACHEREAD;
     }
-    if (dir->Name[0] == DIR_EMPTY || dir->Name[0] == DIR_DEL)
+    if ((uint8_t)dir->Name[0] == DIR_EMPTY || (uint8_t)dir->Name[0] == DIR_DEL)
     {
         return CE_FILE_NOT_FOUND;
     }
@@ -1034,19 +1034,18 @@ uint8_t FAT_FindEmptyEntries(FAT_file_t* fileptr, uint32_t* fHandle)
         return(false); // Failure
     }
 
-    uint32_t bHandle;
-    char a = ' ';
+    uint8_t a = (uint8_t)' ';
     for(;;)
     {
         uint8_t amountfound = 0;
-        bHandle = *fHandle;
+        uint32_t bHandle = *fHandle;
 
         do
         {
             dir = cacheFileEntry(fileptr, fHandle, false);
             if (dir != 0)
             {
-                a = dir->Name[0];
+                a = (uint8_t)dir->Name[0];
             }
             (*fHandle)++;
         } while ((a == DIR_DEL || a == DIR_EMPTY) && dir != 0 &&  ++amountfound < 1);

@@ -12,7 +12,7 @@
 #define MAX 2000
 
 uint16_t timeout=MAX;
-bool point[79][42];
+bool point[79][42] = {{0}};
 uint8_t fighterPosition = 0;
 
 static void clearLine(uint8_t line)
@@ -104,8 +104,6 @@ int main()
 {
     srand(getCurrentSeconds()); // initialize random generator
     textColor(0x0F);
-
-    memset(point, 0, sizeof(**point)*79*42);
 
     iSetCursor(fighterPosition,43);
     putchar(1);

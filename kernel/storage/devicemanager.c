@@ -17,8 +17,8 @@
 #endif
 
 
-disk_t* disks[DISKARRAYSIZE];
-port_t* ports[PORTARRAYSIZE];
+disk_t* disks[DISKARRAYSIZE] = {0};
+port_t* ports[PORTARRAYSIZE] = {0};
 partition_t* systemPartition = 0;
 
 portType_t FDD      = {.motorOff = &flpydsk_motorOff, .pollDisk = 0},
@@ -51,9 +51,6 @@ static cache_t caches[NUMCACHE];
 
 void deviceManager_install(partition_t* systemPart)
 {
-    memset(disks, 0, DISKARRAYSIZE*sizeof(disk_t*));
-    memset(ports, 0, PORTARRAYSIZE*sizeof(port_t*));
-
     for (uint16_t i = 0; i < NUMCACHE; i++) // Invalidate all read caches
     {
         caches[i].valid = false;

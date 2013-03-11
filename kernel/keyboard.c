@@ -59,13 +59,12 @@ static const KEY_t scancodeToKey_E0[] =      // cf. http://www.win.tue.nl/~aeb/l
     0,          0,          0,          0,          0,          0,           0,            0,
 };
 
-static bool pressedKeys[__KEY_LAST]; // for monitoring pressed keys
+static bool pressedKeys[__KEY_LAST] = {false}; // for monitoring pressed keys
 static void keyboard_handler(registers_t* r);
 
 
 void keyboard_install()
 {
-    memset(pressedKeys, false, __KEY_LAST*sizeof(bool));
     irq_installHandler(IRQ_KEYBOARD, keyboard_handler); // Installs 'keyboard_handler' to IRQ_KEYBOARD
 
     while (inportb(0x64) & 1) // wait until buffer is empty

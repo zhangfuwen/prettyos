@@ -6,7 +6,7 @@
 #include "userlib.hpp"
 #include "stdlib.h"
 
-#if (__GNUC__ >= 4 && __GNUC_MINOR__ >= 7) || defined(__clang__)
+#if (__GNUC__ >= 4 && __GNUC_MINOR__ >= 7)
 void* operator new(long unsigned int size)
 {
     return malloc(size);

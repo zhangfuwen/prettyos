@@ -14,7 +14,6 @@ int32_t flpydsk_read_directory()
 {
     // Read track
     static uint8_t track[9216]; // Cache for one track
-    memset(track, 0, 9216);
     floppyDrive[0]->drive.insertedDisk->accessRemaining += 18;
     for (int i = 0; i < 18; i++) // Read one track
     {
