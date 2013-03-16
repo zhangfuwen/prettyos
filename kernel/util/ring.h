@@ -18,7 +18,7 @@ typedef struct
 } ring_t;
 
 
-ring_t* ring_create();                                       // Allocates memory for a ring, returns a pointer to it
+ring_t* ring_create(void);                                       // Allocates memory for a ring, returns a pointer to it
 bool    ring_insert(ring_t* ring, void* data, bool single);  // Inserts an element in the ring at the current position. If single==true then it will be inserted only if its not already in the ring
 bool    ring_isEmpty(ring_t* ring);                          // Returns true, if the ring is empty (data == 0)
 bool    ring_deleteFirst(ring_t* ring, void* data);          // Deletes the first element equal to data, returns true if an element has been deleted

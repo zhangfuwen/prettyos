@@ -214,7 +214,7 @@ static inline void invalidateTLBEntry(uint8_t* p)
 }
 
 
-static uint32_t physMemAlloc()
+static uint32_t physMemAlloc(void)
 {
     // Search for a free uint32_t, i.e. one that not only contains ones
     for (; firstFreeDWORD < MAX_DWORDS; firstFreeDWORD++)
@@ -338,7 +338,7 @@ void paging_free(pageDirectory_t* pd, void* virtAddress, uint32_t size)
     }
 }
 
-pageDirectory_t* paging_createUserPageDirectory()
+pageDirectory_t* paging_createUserPageDirectory(void)
 {
     // Allocate memory for the page directory
     pageDirectory_t* pd = (pageDirectory_t*) malloc(sizeof(pageDirectory_t), PAGESIZE,"pag-userPD");
@@ -482,7 +482,7 @@ void* paging_getVirtAddr(uintptr_t physAddress)
 }
 
 
-void paging_analyzeBitTable()
+void paging_analyzeBitTable(void)
 {
     uint32_t k = 0, k_old = 2;
     int64_t ramsize;

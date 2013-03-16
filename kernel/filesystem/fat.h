@@ -68,9 +68,9 @@ typedef struct
     uint32_t fatsize;           // sectors in FAT
     uint8_t  fatcopy;           // copies of FAT
     uint8_t  SecPerClus;        // sectors per cluster
+    uint8_t  type;              // FAT12, 16 or 32 (for array access)
     uint32_t FatRootDirCluster;
     uint32_t reservedSectors;
-    uint8_t  type;              // FAT12, 16 or 32 (for array access)
 } FAT_partition_t;
 
 // File
@@ -85,8 +85,8 @@ typedef struct
     uint16_t time;            // last update time
     uint16_t date;            // last update date
     char     name[FILE_NAME_SIZE];
-    uint32_t entry;           // file's entry position in its directory
     uint16_t chk;             // checksum = ~(entry+name[0])
+    uint32_t entry;           // file's entry position in its directory
     uint16_t attributes;      // file's attributes
     uint32_t dirfirstCluster; // first cluster of the file's directory
     uint32_t dircurrCluster;  // current cluster of the file's directory

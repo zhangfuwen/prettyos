@@ -59,7 +59,7 @@ static mutex_t* mutex = 0;
 static void* placementMalloc(uint32_t size, uint32_t alignment);
 
 
-void heap_install()
+void heap_install(void)
 {
     mutex = mutex_create();
 
@@ -71,7 +71,7 @@ void heap_install()
     regionMaxCount = (PLACEMENT_END - (uintptr_t)regions) / sizeof(region_t);
 }
 
-void* heap_getCurrentEnd()
+void* heap_getCurrentEnd(void)
 {
     return (heapStart + heapSize);
 }
@@ -373,7 +373,7 @@ void free(void* addr)
     textColor(TEXT);
 }
 
-void heap_logRegions()
+void heap_logRegions(void)
 {
     printf("\nDebug: Heap regions sent to serial output.\n");
     serial_log(SER_LOG_HEAP,"\r\n\r\nregionMaxCount: %u\r\n", regionMaxCount);
@@ -394,7 +394,7 @@ void heap_logRegions()
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

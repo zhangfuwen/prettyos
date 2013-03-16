@@ -8,7 +8,7 @@
 
 
 extern bool enabledEvents;
-extern void (*_syscall)();
+extern void (*_syscall)(void);
 
 void (**_atexit_funcs)() = 0; // Stores a zero terminated array of function pointers, called at exit
 
@@ -22,7 +22,7 @@ FS_ERROR execute(const char* path, size_t argc, char* argv[])
 
 // TODO: (2) createThread
 
-void exit()
+void exit(void)
 {
     if(_atexit_funcs)
         for(size_t i = 0; _atexit_funcs[i]; i++)
@@ -39,7 +39,7 @@ bool wait(BLOCKERTYPE reason, void* data, uint32_t timeout)
 
 // TODO: (4) createConsoleThread
 
-uint32_t getMyPID()
+uint32_t getMyPID(void)
 {
     uint32_t ret;
     __asm__ volatile("call *_syscall" : "=a"(ret) : "a"(6));
@@ -197,7 +197,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
     return (ret);
 }
 
-uint32_t getCurrentMilliseconds()
+uint32_t getCurrentMilliseconds(void)
 {
     uint32_t ret;
     __asm__ volatile("call *_syscall" : "=a"(ret) : "a"(40));
@@ -247,7 +247,7 @@ void console_setProperties(console_properties_t properties)
     __asm__ volatile("call *_syscall" : : "a"(62), "b"(properties));
 }
 
-void refreshScreen()
+void refreshScreen(void)
 {
     __asm__ volatile("call *_syscall" : : "a"(63));
 }
@@ -332,7 +332,7 @@ bool udp_unbind(uint16_t port)
     return (ret);
 }
 
-uint32_t getMyIP()
+uint32_t getMyIP(void)
 {
     uint32_t ret;
     __asm__ volatile("call *_syscall" : "=a"(ret) : "a"(91));
@@ -341,7 +341,7 @@ uint32_t getMyIP()
 
 
  // deprecated, to be substituted
-int32_t floppy_dir()
+int32_t floppy_dir(void)
 {
     int32_t ret;
     __asm__ volatile("call *_syscall" : "=a"(ret) : "a"(100));
@@ -358,7 +358,7 @@ void printLine(const char* message, uint32_t line, uint8_t attribute)
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

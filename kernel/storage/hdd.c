@@ -287,15 +287,12 @@ static FS_ERROR writeSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
     int i;
     for(i = 0; i < 256; ++i)
     {
-        nop(); // ATA needs a 'tiny delay of jmp $+2'
-        nop(); // I hope 4x nop is enough, too.
-        nop();
-        nop();
+        __asm__ volatile("jmp .+2"); // ATA needs a 'tiny delay of jmp $+2'
 
         outportw(port+ATA_REG_DATA, bufu16[i]);
     }
 
-    if(!ataWaitIRQ(hd->channel, ATA_STATUS_DF  | ATA_STATUS_ERR, &portval))
+    if(!ataWaitIRQ(hd->channel, ATA_STATUS_DF | ATA_STATUS_ERR, &portval))
     {
         serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Failed to write (post data send): %y\n", portval);
         mutex_unlock(hd->rwLock);

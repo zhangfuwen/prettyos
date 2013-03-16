@@ -78,7 +78,7 @@ char* formatPath(char* opath)
 }
 
 
-void startVBEShell()
+void startVBEShell(void)
 {
     event_enable(true);
     char entry[MAX_CHAR_PER_LINE+1];
@@ -366,7 +366,7 @@ EVALUATION: // evaluation of entry
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

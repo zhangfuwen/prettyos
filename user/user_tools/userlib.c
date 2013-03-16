@@ -39,7 +39,7 @@ void iSetCursor(uint16_t x, uint16_t y)
     setCursor(temp);
 }
 
-char getchar()
+char getchar(void)
 {
     char ret = 0;
     EVENT_t ev = event_poll(&ret, 1, enabledEvents ? EVENT_TEXT_ENTERED : EVENT_NONE);
@@ -55,7 +55,7 @@ char getchar()
     return (ret);
 }
 
-uint32_t getCurrentSeconds()
+uint32_t getCurrentSeconds(void)
 {
     return (getCurrentMilliseconds()/1000);
 }
@@ -302,7 +302,7 @@ IP_t stringToIP(char* str)
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

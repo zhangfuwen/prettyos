@@ -19,7 +19,7 @@ typedef struct
 } todoList_task_t;
 
 
-todoList_t* todolist_create()
+todoList_t* todolist_create(void)
 {
     todoList_t* list = malloc(sizeof(todoList_t), 0, "todoList");
     list->queue = list_create();
@@ -84,7 +84,7 @@ void todolist_delete(todoList_t* list)
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

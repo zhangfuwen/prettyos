@@ -273,7 +273,7 @@ void vm86_initPageDirectory(pageDirectory_t* pd, void* address, void* data, size
     sti();
 }
 
-void vm86_executeSync(pageDirectory_t* pd, void (*entry)())
+void vm86_executeSync(pageDirectory_t* pd, void (*entry)(void))
 {
     task_t* vm86task = create_vm86_task(pd, entry);
     cli(); // To avoid a race condition, we try to avoid task switches while creating task and initializing the blocker
@@ -284,7 +284,7 @@ void vm86_executeSync(pageDirectory_t* pd, void (*entry)())
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

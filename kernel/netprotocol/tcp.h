@@ -129,7 +129,7 @@ typedef struct
 } tcpSendBufferPacket;
 
 
-tcpConnection_t* tcp_createConnection();
+tcpConnection_t* tcp_createConnection(void);
 void tcp_deleteConnection(tcpConnection_t* connection);
 void tcp_cleanup(task_t* task);
 void tcp_bind(tcpConnection_t* connection, network_adapter_t* adapter);
@@ -137,7 +137,7 @@ void tcp_connect(tcpConnection_t* connection);
 void tcp_close(tcpConnection_t* connection);
 void tcp_receive(network_adapter_t* adapter, tcpPacket_t* tcp, size_t length, IP_t transmittingIP);
 void tcp_send(tcpConnection_t* connection, void* data, uint32_t length);
-void tcp_showConnections();
+void tcp_showConnections(void);
 tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* adapter, TCP_state state);
 
 // User functions

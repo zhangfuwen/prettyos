@@ -53,16 +53,16 @@ typedef enum
 extern int64_t* cpu_frequency;
 
 
-void     cpu_install();
-void     cpu_analyze();
-void     cpu_calculateFrequency();
+void     cpu_install(void);
+void     cpu_analyze(void);
+void     cpu_calculateFrequency(void);
 bool     cpu_supports(CPU_FEATURE feature);
 uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg);
 uint64_t cpu_MSRread(uint32_t msr);
 void     cpu_MSRwrite(uint32_t msr, uint64_t value);
 
-bool fpu_install();
-void fpu_test();
+bool fpu_install(void);
+void fpu_test(void);
 
 
 #endif

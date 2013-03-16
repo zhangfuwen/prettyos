@@ -163,7 +163,7 @@ void network_receivedPacket(network_adapter_t* adapter, uint8_t* data, size_t le
     todoList_add(kernel_idleTasks, &network_handleReceivedBuffer, buffer, length+sizeof(adapter), 0);
 }
 
-void network_displayArpTables()
+void network_displayArpTables(void)
 {
     if (adapters == 0) // No adapters installed
         return;
@@ -192,14 +192,14 @@ network_adapter_t* network_getAdapter(IP_t IP)
     return (0);
 }
 
-network_adapter_t* network_getFirstAdapter()
+network_adapter_t* network_getFirstAdapter(void)
 {
     if (adapters == 0)
         return (0);
     return (adapters->head->data);
 }
 
-uint32_t getMyIP()
+uint32_t getMyIP(void)
 {
     network_adapter_t* adapter = network_getFirstAdapter();
     if (adapter)
@@ -223,7 +223,7 @@ void dns_getServer(IP_t* server)
 
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

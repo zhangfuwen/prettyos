@@ -4,9 +4,9 @@
 #include "os.h"
 
 
-void* heap_getCurrentEnd();
-void  heap_install();
-void  heap_logRegions();
+void* heap_getCurrentEnd(void);
+void  heap_install(void);
+void  heap_logRegions(void);
 void* malloc(uint32_t size, uint32_t alignment, char* comment);
 
 #ifdef _BROKENFREE_DIAGNOSIS_

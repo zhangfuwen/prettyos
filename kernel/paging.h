@@ -47,14 +47,14 @@ bool  paging_alloc(pageDirectory_t* pd, void* virtAddress, uint32_t size, MEMFLA
 void  paging_free (pageDirectory_t* pd, void* virtAddress, uint32_t size);
 void* paging_acquirePciMemory(uint32_t physAddress, uint32_t numberOfPages);
 
-pageDirectory_t* paging_createUserPageDirectory();
+pageDirectory_t* paging_createUserPageDirectory(void);
 void             paging_destroyUserPageDirectory(pageDirectory_t* pd);
 void             paging_switch(pageDirectory_t* pd);
 
 uintptr_t paging_getPhysAddr(void*     virtAddress);
 void*     paging_getVirtAddr(uintptr_t physAddress);
 
-void      paging_analyzeBitTable();
+void      paging_analyzeBitTable(void);
 
 
 #endif

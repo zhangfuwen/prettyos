@@ -31,12 +31,18 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
+CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti
 ifeq ($(COMPILER),CLANG)
-	CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
-	CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -Xclang -triple=i386-pc-unknown
+	CCFLAGS+= -Wno-tautological-constant-out-of-range-compare -Xclang -triple=i386-pc-unknown
+	CPPFLAGS+= -Xclang -triple=i386-pc-unknown
+	ifeq ($(MESSAGEFORMAT), VS)
+		CCFLAGS+= -fdiagnostics-format=msvc
+		CPPFLAGS+= -fdiagnostics-format=msvc
+	endif
 else
-	CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
-	CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-pic -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti -lgcc
+	CCFLAGS+= -fno-pic
+	CPPFLAGS+= -fno-pic
 endif
 ARFLAGS= rs
 

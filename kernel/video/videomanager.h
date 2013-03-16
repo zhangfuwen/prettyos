@@ -21,7 +21,7 @@ typedef struct
     const char* driverName;
 
     // Setup functions
-    size_t (*detect)(); // Returns number of hardware devices detected and supported by this driver
+    size_t (*detect)(void); // Returns number of hardware devices detected and supported by this driver
     void   (*createDevice)(struct videoDevice*); // Sets up the device
     void   (*freeDevice)(struct videoDevice*); // Uninstalls the devices, frees memory
     void   (*createModeList)(struct videoDevice*, list_t*); // Fills in all available video modes
@@ -85,8 +85,8 @@ extern videoMode_t* video_currentMode;
 
 
 // General functions
-void video_install();
-void video_test();
+void video_install(void);
+void video_test(void);
 void video_setMode(videoMode_t* mode);
 void video_createModeList(list_t* list);
 void video_freeModeList(list_t* list);

@@ -52,9 +52,9 @@ clean.bat</NMakeCleanCommandLine>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Release|Win32'">
     <NMakeBuildCommandLine>cd ..
-build.bat -release -clang</NMakeBuildCommandLine>
+build.bat -release -clang -vs</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>cd ..
-rebuild.bat -release -clang</NMakeReBuildCommandLine>
+rebuild.bat -release -clang -vs</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>cd ..
 clean.bat</NMakeCleanCommandLine>
     <NMakeOutput />
@@ -79,9 +79,9 @@ clean.bat</NMakeCleanCommandLine>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang|Win32'">
     <NMakeBuildCommandLine>cd ..
-build.bat -clang</NMakeBuildCommandLine>
+build.bat -clang -vs</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>cd ..
-rebuild.bat -clang</NMakeReBuildCommandLine>
+rebuild.bat -clang -vs</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>cd ..
 clean.bat</NMakeCleanCommandLine>
     <NMakeOutput />

@@ -2,8 +2,8 @@
 #define GUI_H
 
 
-void StartGUI();
-void EndGUI();
+void StartGUI(void);
+void EndGUI(void);
 
 
 #endif

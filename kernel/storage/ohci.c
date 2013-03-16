@@ -60,7 +60,7 @@ void ohci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     sleepMilliSeconds(20); // HACK: Avoid race condition between ohci_install and the thread just created. Problem related to curOHCI global variable
 }
 
-static void ohci_start()
+static void ohci_start(void)
 {
     ohci_t* o = curOHCI;
 
@@ -1095,7 +1095,7 @@ static void ohci_toggleFrameInterval(ohci_t* o)
 
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

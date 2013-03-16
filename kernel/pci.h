@@ -49,15 +49,15 @@ typedef struct
 
 typedef struct
 {
-   uint8_t   bus;
-   uint8_t   device;
-   uint8_t   func;
    uint16_t  vendorID;
    uint16_t  deviceID;
    uint8_t   classID;
    uint8_t   subclassID;
    uint8_t   interfaceID;
    uint8_t   revID;
+   uint8_t   bus;
+   uint8_t   device;
+   uint8_t   func;
    uint8_t   irq;
    pciBar_t  bar[6];
    void*     data; // Pointer to internal data of associated driver.
@@ -67,7 +67,7 @@ typedef struct
 extern list_t* pci_devices;
 
 
-void     pci_scan();
+void     pci_scan(void);
 uint32_t pci_config_read       (uint8_t bus, uint8_t device, uint8_t func, uint8_t reg_off, uint8_t length);
 void     pci_config_write_byte (uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint8_t  val);
 void     pci_config_write_word (uint8_t bus, uint8_t device, uint8_t func, uint8_t reg, uint16_t val);

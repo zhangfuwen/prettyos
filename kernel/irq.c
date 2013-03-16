@@ -157,7 +157,7 @@ static const char* const exceptionMessages[] =
     "Reserved",                "Reserved",                      "Reserved",                  "Reserved"
 };
 
-static void quitTask()
+static void quitTask(void)
 {
     textColor(ERROR);
     printf("\n| <Severe Failure - Task Halted> Press key for exit! |");
@@ -315,7 +315,7 @@ static void PF(registers_t* r)
 }
 
 
-void isr_install()
+void isr_install(void)
 {
     for (uint8_t i = 0; i < 32; i++)
     {
@@ -408,7 +408,7 @@ HANDLED:
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

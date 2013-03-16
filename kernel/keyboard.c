@@ -63,7 +63,7 @@ static bool pressedKeys[__KEY_LAST] = {false}; // for monitoring pressed keys
 static void keyboard_handler(registers_t* r);
 
 
-void keyboard_install()
+void keyboard_install(void)
 {
     irq_installHandler(IRQ_KEYBOARD, keyboard_handler); // Installs 'keyboard_handler' to IRQ_KEYBOARD
 
@@ -73,7 +73,7 @@ void keyboard_install()
     }
 }
 
-static uint8_t getScancode()
+static uint8_t getScancode(void)
 {
     volatile uint8_t scancode = 0;
 
@@ -247,7 +247,7 @@ static void keyboard_handler(registers_t* r)
     }
 }
 
-char getch()
+char getch(void)
 {
     char ret = 0;
     EVENT_t ev = event_poll(&ret, 1, EVENT_NONE);
@@ -270,7 +270,7 @@ bool keyPressed(KEY_t Key)
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

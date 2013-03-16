@@ -258,7 +258,7 @@ int main()
 
 // Play Game
 
-void RenderGame()
+void RenderGame(void)
 {
     // Draw border around the playfield
     textColor(0x88); DrawRect(0, 0, COLUMNS,   LINES  );
@@ -327,7 +327,7 @@ void RenderGame()
     }
 }
 
-void UpdateGame()
+void UpdateGame(void)
 {
     ballx = (ballx + ballxspeed);
     bally = (bally + ballyspeed);
@@ -389,7 +389,7 @@ void UpdateGame()
     GetGameControl(); // get input from player
 }
 
-void ResetBall()
+void ResetBall(void)
 {
     Sound_Goal();
     sleep(500);
@@ -409,7 +409,7 @@ void ResetBall()
     }
 }
 
-void RunGame()
+void RunGame(void)
 {
     switch (gamemode)
     {
@@ -553,7 +553,7 @@ void RunGame()
 
 
 
-void RenderApp()
+void RenderApp(void)
 {
     switch(appmode)
     {
@@ -595,7 +595,7 @@ void RenderApp()
 
 // Menu
 
-void Menu_SelectorUp()
+void Menu_SelectorUp(void)
 {
     switch (currentmenu)
     {
@@ -685,7 +685,7 @@ void Menu_SelectorUp()
     }
 }
 
-void Menu_SelectorDown()
+void Menu_SelectorDown(void)
 {
     switch (currentmenu)
     {
@@ -775,7 +775,7 @@ void Menu_SelectorDown()
     }
 }
 
-void Menu_Select()
+void Menu_Select(void)
 {
     switch (currentmenu)
     {
@@ -952,7 +952,7 @@ void Menu_Select()
     }
 }
 
-void DrawMainMenu()
+void DrawMainMenu(void)
 {
     currentmenu=MENU_MAIN;
     DrawMenuStructure();
@@ -982,7 +982,7 @@ void DrawMainMenu()
 
 }
 
-void DrawOptionsMenu()
+void DrawOptionsMenu(void)
 {
     currentmenu=MENU_OPTIONS;
     DrawMenuStructure();
@@ -1092,7 +1092,7 @@ void DrawOptionsMenu()
 
 }
 
-void DrawSoloGameMenu()
+void DrawSoloGameMenu(void)
 {
     currentmenu=MENU_SOLOGAME;
     DrawMenuStructure();
@@ -1104,7 +1104,7 @@ void DrawSoloGameMenu()
     iSetCursor(26,38); DrawMenuPoint("Return to game menu" , sologame_menu_selected,2);
 }
 
-void DrawLANGameMenu()
+void DrawLANGameMenu(void)
 {
     currentmenu=MENU_LANGAME;
     DrawMenuStructure();
@@ -1116,7 +1116,7 @@ void DrawLANGameMenu()
     iSetCursor(26,38);  DrawMenuPoint("Return to game menu",langame_menu_selected,2);
 }
 
-void DrawInternetGameMenu()
+void DrawInternetGameMenu(void)
 {
     currentmenu=MENU_INTERNETGAME;
     DrawMenuStructure();
@@ -1128,7 +1128,7 @@ void DrawInternetGameMenu()
     iSetCursor(26,38);  DrawMenuPoint("Return to game menu",internetgame_menu_selected,2);
 }
 
-void DrawCreditsMenu()
+void DrawCreditsMenu(void)
 {
     currentmenu=MENU_CREDITS;
     DrawMenuStructure();
@@ -1146,7 +1146,7 @@ void DrawCreditsMenu()
 
 }
 
-void DrawExitMenu()
+void DrawExitMenu(void)
 {
     currentmenu=MENU_EXIT;
     DrawMenuStructure();
@@ -1157,7 +1157,7 @@ void DrawExitMenu()
     iSetCursor(26,32); DrawMenuPoint("No",exit_menu_selected,1);
 }
 
-void DrawGameMenu()
+void DrawGameMenu(void)
 {
     currentmenu = MENU_GAME;
     DrawMenuStructure();
@@ -1170,7 +1170,7 @@ void DrawGameMenu()
     iSetCursor(26,36);  DrawMenuPoint("Return to main menu",game_menu_selected,3);
 }
 
-void DrawMenuStructure()
+void DrawMenuStructure(void)
 {
     DrawMenuHeader();
     DrawMenuContentBox(0);
@@ -1209,7 +1209,7 @@ void DrawMenuPoint(char* name, uint8_t currentlySelected, uint8_t id)
     printf(" %s",name);
 }
 
-void DrawMenuSlideIn()
+void DrawMenuSlideIn(void)
 {
     if(option_menuanimation)
     {
@@ -1225,7 +1225,7 @@ void DrawMenuSlideIn()
     clearScreen(0x00);
 }
 
-void DrawMenuSlideOut()
+void DrawMenuSlideOut(void)
 {
     if(option_menuanimation)
     {
@@ -1354,7 +1354,7 @@ void DrawMenuContentBox(uint16_t addlines)
 
 // GFX
 
-void clearScreen2()
+void clearScreen2(void)
 {
     clearScreen(0x00);
 }
@@ -1388,7 +1388,7 @@ void SetSpace(uint16_t x, uint16_t y)
     putchar(' ');
 }
 
-void FlipIfNeeded()
+void FlipIfNeeded(void)
 {
     if (DOUBLEBUFFERING)
     {
@@ -1398,7 +1398,7 @@ void FlipIfNeeded()
 
 // Input
 
-void GetGameControl()
+void GetGameControl(void)
 {
     switch(gamemode)
     {
@@ -1493,7 +1493,7 @@ void GetGameControl()
     }
 }
 
-void WaitKey()
+void WaitKey(void)
 {
     char buffer[8192];
     EVENT_t ev = event_poll(buffer, 8192, EVENT_NONE);
@@ -1521,7 +1521,7 @@ void WaitKey()
 
 // Error
 
-void NotImplementedError()
+void NotImplementedError(void)
 {
     Error("This feature is not (yet) implemented.",false);
 }
@@ -1692,7 +1692,7 @@ void Error(char* message, bool critical)
     textColor(0x0F);
 }
 
-void DrawMenuHeader()
+void DrawMenuHeader(void)
 {
     iSetCursor(0,2);
 
@@ -1934,7 +1934,7 @@ void DrawMenuHeader()
 
 // Sound
 
-void Sound_Denied()
+void Sound_Denied(void)
 {
     if(option_sound)
     {
@@ -1943,7 +1943,7 @@ void Sound_Denied()
     }
 }
 
-void Sound_OK()
+void Sound_OK(void)
 {
     if(option_sound)
     {
@@ -1952,7 +1952,7 @@ void Sound_OK()
     }
 }
 
-void Sound_Select()
+void Sound_Select(void)
 {
     if(option_sound)
     {
@@ -1960,7 +1960,7 @@ void Sound_Select()
     }
 }
 
-void Sound_Error()
+void Sound_Error(void)
 {
     if(option_sound)
     {
@@ -1969,7 +1969,7 @@ void Sound_Error()
     }
 }
 
-void Sound_Goal()
+void Sound_Goal(void)
 {
     if(option_sound)
     {
@@ -1977,7 +1977,7 @@ void Sound_Goal()
     }
 }
 
-void Sound_GotIt()
+void Sound_GotIt(void)
 {
     if(option_sound)
     {
@@ -1986,7 +1986,7 @@ void Sound_GotIt()
 }
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

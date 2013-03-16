@@ -31,7 +31,7 @@ typedef struct
 extern floppy_t* floppyDrive[MAX_FLOPPY];
 
 
-void flpydsk_install();
+void flpydsk_install(void);
 void flpydsk_motorOn (port_t* port);
 void flpydsk_motorOff(port_t* port);
 void flpydsk_refreshVolumeName(disk_t* disk);

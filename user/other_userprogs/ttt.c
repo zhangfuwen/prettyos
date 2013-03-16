@@ -26,7 +26,7 @@ static void SetField(uint8_t x, uint8_t y, uint8_t Player)
         putchar('O');
 }
 
-static void gewinnen()
+static void gewinnen(void)
 {
     if ((tictactoe[0] == tictactoe[1] && tictactoe[0] == tictactoe[2] && tictactoe[0] == X) ||
         (tictactoe[3] == tictactoe[4] && tictactoe[3] == tictactoe[5] && tictactoe[3] == X) ||
@@ -143,7 +143,7 @@ int main()
 }
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

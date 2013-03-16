@@ -4,8 +4,8 @@
 #include "os.h"
 
 
-bool apic_available();
-bool apic_install();
+bool apic_available(void);
+bool apic_install(void);
 
 
 #endif

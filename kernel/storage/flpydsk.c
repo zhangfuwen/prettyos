@@ -129,7 +129,7 @@ static floppy_t* createFloppy(uint8_t ID)
     floppy_t* fdd        = malloc(sizeof(floppy_t), 0, "flpydsk-FDD");
     fdd->ID              = ID;
     fdd->motor           = false; // floppy motor is off
-    fdd->RW_Lock         = mutex_create(1);
+    fdd->RW_Lock         = mutex_create();
     fdd->accessRemaining = 0;
     fdd->lastTrack       = 0xFFFFFFFF;
     fdd->trackBuffer     = malloc(0x2400, 0, "flpydsk-TrackBuffer");
@@ -164,7 +164,7 @@ static floppy_t* createFloppy(uint8_t ID)
 
 static uint8_t flpydsk_readVersion();
 // Looks for Floppy drives and installs them
-void flpydsk_install()
+void flpydsk_install(void)
 {
     if ((cmos_read(CMOS_FLOPPYTYPE)>>4) == 4) // 1st floppy 1,44 MB: 0100....b
     {
@@ -211,7 +211,7 @@ void flpydsk_install()
 /// Basic Controller In/Out Routines
 
 // return fdc status
-static uint8_t flpydsk_readStatus()
+static uint8_t flpydsk_readStatus(void)
 {
     return inportb(FLPYDSK_MSR); // just return main status register
 }
@@ -237,7 +237,7 @@ static void flpydsk_sendCommand(uint8_t cmd)
 }
 
 // get data from fdc
-static uint8_t flpydsk_readData()
+static uint8_t flpydsk_readData(void)
 {
     // same as above function but returns data register for reading
     for (uint16_t i = 0; i < 500; i++)
@@ -331,19 +331,19 @@ static void flpydsk_driveData(uint32_t stepr, uint32_t loadt, uint32_t unloadt, 
     flpydsk_sendCommand((loadt << 1)         | (dma==false) ? 0 : 1);
 }
 
-static uint8_t flpydsk_readVersion()
+static uint8_t flpydsk_readVersion(void)
 {
     flpydsk_sendCommand(FDC_CMD_VERSION);
     return (flpydsk_readData());
 }
 
-static bool flpydsk_lock()
+static bool flpydsk_lock(void)
 {
     flpydsk_sendCommand(FDC_CMD_LOCK);
     return (flpydsk_readData() & BIT(4));
 }
 
-static void flpydsk_getDump()
+static void flpydsk_getDump(void)
 {
     #ifdef _FLOPPY_DIAGNOSIS_
     textColor(HEADLINE);
@@ -375,7 +375,7 @@ static void flpydsk_getDump()
     #endif
 }
 
-static void flpydsk_configure()
+static void flpydsk_configure(void)
 {
     if (flpydsk_version == 0x90) // Enhanced FDC
     {
@@ -390,14 +390,14 @@ static void flpydsk_configure()
 }
 
 // disable controller
-static void flpydsk_disableController()
+static void flpydsk_disableController(void)
 {
     flpydsk_writeDOR(0);
     CurrentDrive->motor = false; // Attention! The motor had been turned off, although flpydsk_control_motor was not called
 }
 
 // enable controller
-static void flpydsk_enableController()
+static void flpydsk_enableController(void)
 {
     irq_resetCounter(IRQ_FLOPPY);
     flpydsk_writeDOR(FLPYDSK_DOR_MASK_RESET | FLPYDSK_DOR_MASK_DMA);
@@ -407,7 +407,7 @@ static void flpydsk_enableController()
 
 static int32_t flpydsk_calibrate(floppy_t* drive);
 // reset controller
-static void flpydsk_reset()
+static void flpydsk_reset(void)
 {
     flpydsk_disableController();
     flpydsk_enableController();
@@ -747,7 +747,7 @@ void flpydsk_refreshVolumeName(disk_t* disk)
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

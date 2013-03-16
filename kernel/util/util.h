@@ -33,11 +33,11 @@ void panic_assert(const char* file, uint32_t line, const char* desc);
 #define SET_BIT(val, bit) __asm__ volatile("bts %1, %0" : "+r"(val) : "r"(bit))
 
 
-static inline void nop() { __asm__ volatile ("nop"); } // Do nothing
-static inline void hlt() { __asm__ volatile ("hlt"); } // Wait until next interrupt
-static inline void sti() { __asm__ volatile ("sti"); } // Enable interrupts
-static inline void cli() { __asm__ volatile ("cli"); } // Disable interrupts
-static inline uint64_t rdtsc()
+static inline void nop(void) { __asm__ volatile ("nop"); } // Do nothing
+static inline void hlt(void) { __asm__ volatile ("hlt"); } // Wait until next interrupt
+static inline void sti(void) { __asm__ volatile ("sti"); } // Enable interrupts
+static inline void cli(void) { __asm__ volatile ("cli"); } // Disable interrupts
+static inline uint64_t rdtsc(void)
 {
     uint64_t val;
     __asm__ volatile ("rdtsc" : "=A"(val)); // "=A" for getting 64 bit value
@@ -122,11 +122,11 @@ char* toupper(char* s);
 char* tolower(char* s);
 
 char* gets(char* s);
-void  waitForKeyStroke();
+void  waitForKeyStroke(void);
 
 void systemControl(SYSTEM_CONTROL todo); // Reboot, Shutdown, ...
 
-void bootscreen();
+void bootscreen(void);
 
 void   reverse(char* s);
 int8_t ctoi(char c);
@@ -144,7 +144,7 @@ double   fabs(double x);
 double   sqrt(double x);
 
 void srand(uint32_t val);
-uint32_t rand();
+uint32_t rand(void);
 
 
 #endif

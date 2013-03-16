@@ -27,9 +27,9 @@ typedef enum
 } KEY_t;
 
 
-void keyboard_install();
+void keyboard_install(void);
 
-char getch();
+char getch(void);
 bool keyPressed(KEY_t key);
 
 

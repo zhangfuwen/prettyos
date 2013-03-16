@@ -20,8 +20,8 @@ extern int32_t mouse_zh; // horizontal mousewheel
 extern mouse_button_t mouse_buttons; // Status of mouse buttons
 
 
-void mouse_install();
-void mouse_uninstall();
+void mouse_install(void);
+void mouse_uninstall(void);
 void mouse_setsamples(uint8_t samples_per_second);
 
 

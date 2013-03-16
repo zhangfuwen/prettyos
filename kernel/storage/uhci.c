@@ -49,7 +49,7 @@ void uhci_install(pciDev_t* PCIdev, uintptr_t bar_phys, size_t memorySize)
     sleepMilliSeconds(20); // HACK: Avoid race condition between uhci_install and the thread just created. Problem related to curUHCI global variable
 }
 
-static void uhci_start()
+static void uhci_start(void)
 {
     uhci_t* u = curUHCI;
 
@@ -822,7 +822,7 @@ bool isTransactionSuccessful(uhci_transaction_t* uT)
 }
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

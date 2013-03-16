@@ -52,17 +52,17 @@ enum COLORS
 extern VIDEOMODES videomode;
 extern bool autoRefresh;
 
-bool vga_install();
+bool vga_install(void);
 void vga_setPixel(uint8_t x, uint8_t y, uint16_t value);
-void refreshUserScreen();
-void vga_clearScreen();
+void refreshUserScreen(void);
+void vga_clearScreen(void);
 void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
-void vga_updateCursor();
+void vga_updateCursor(void);
 uint8_t AsciiToCP437(uint8_t ascii);
 void writeInfo(uint8_t line, const char* content, ...);
-void saveScreenshot();
-void takeScreenshot();
-void mt_screenshot();
+void saveScreenshot(void);
+void takeScreenshot(void);
+void mt_screenshot(void);
 
 
 #endif

@@ -10,7 +10,7 @@
 
 size_t failures = 0;
 
-void testFailed()
+void testFailed(void)
 {
     failures++;
     textColor(0x0C);
@@ -18,14 +18,14 @@ void testFailed()
     textColor(0x0F);
 }
 
-void testPassed()
+void testPassed(void)
 {
     textColor(0x0A);
     printf(" Test passed!");
     textColor(0x0F);
 }
 
-void ask()
+void ask(void)
 {
     char c = getchar();
     if (c == 'f' || c == 'n') testFailed();
@@ -107,7 +107,7 @@ int main()
 
 ///mutex_t* taskingTestMutex;
 bool taskingTestRunning = true;
-void taskingTestFunc1()
+void taskingTestFunc1(void)
 {
     while (taskingTestRunning)
     {
@@ -117,7 +117,7 @@ void taskingTestFunc1()
         ///mutex_unlock(taskingTestMutex);
     }
 }
-void taskingTestFunc2()
+void taskingTestFunc2(void)
 {
     while (taskingTestRunning)
     {
@@ -139,7 +139,7 @@ void taskingTestFunc() // TODO: Check if it gives different results with and wit
     }
     taskingTestFunc1(); // Use this task as the eleventh instance of the testing tasks
 }
-void taskingTest()
+void taskingTest(void)
 {
     ///taskingTestProtector = mutex_create();
     ///mutex_lock(taskingTestProtector); // Halt the created task until the main function steps to the next test
@@ -152,7 +152,7 @@ void taskingTest()
     ///mutex_free(taskingTestProtector);
 }
 
-void fileTest()
+void fileTest(void)
 {
     textColor(0x0E);
     printf("\n\n\nFILES");

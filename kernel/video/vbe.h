@@ -72,7 +72,7 @@ typedef struct
 } vbe_videoDevice_t;
 
 
-size_t vbe_detect();
+size_t vbe_detect(void);
 void   vbe_createDevice(videoDevice_t* device);
 void   vbe_freeDevice(videoDevice_t* device);
 void   vbe_createModeList(videoDevice_t* device, list_t* list);

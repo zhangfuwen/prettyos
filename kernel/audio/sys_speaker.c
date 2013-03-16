@@ -34,7 +34,7 @@ void sound(uint32_t frequency)
     currentTask->speaker = true;
 }
 
-void noSound()
+void noSound(void)
 {
     outportb(COUNTER_2_CONTROLPORT, inportb(COUNTER_2_CONTROLPORT) & ~(AUX_GATE_2 | AUX_OUT_2));
     currentTask->speaker = false;
@@ -48,13 +48,13 @@ void beep(uint32_t freq, uint32_t duration)
     noSound();
 }
 
-void msgbeep()
+void msgbeep(void)
 {
     beep(440, 1000);
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

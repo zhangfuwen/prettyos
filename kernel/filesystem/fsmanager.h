@@ -197,6 +197,6 @@ folder_t* folderAccess(const char* path, folderAccess_t mode);
 void      folderClose (folder_t* folder);
 
 // General functions
-void fsmanager_cleanup();
+void fsmanager_cleanup(task_t* task);
 
 #endif

@@ -147,7 +147,7 @@ static void* syscalls[] =
 static void syscall_handler(registers_t* r);
 void syscall_sysenterHandler();
 
-void syscall_install()
+void syscall_install(void)
 {
     if(cpu_supports(CF_SYSENTEREXIT))
     {
@@ -198,7 +198,7 @@ __asm__ ("syscall_sysenterHandler:"
             "sysexit;");           // Leave kernel
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

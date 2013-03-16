@@ -29,9 +29,9 @@ struct file;
 
 // syscalls (only non-standard functions, because we do not want to include stdio.h here.
 FS_ERROR execute(const char* path, size_t argc, char* argv[]);
-void exit();
+void exit(void);
 bool wait(BLOCKERTYPE reason, void* data, uint32_t timeout);
-uint32_t getMyPID();
+uint32_t getMyPID(void);
 
 void* userheapAlloc(size_t increase);
 
@@ -41,7 +41,7 @@ bool waitForEvent(uint32_t timeout);
 void event_enable(bool b);
 EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter);
 
-uint32_t getCurrentMilliseconds();
+uint32_t getCurrentMilliseconds(void);
 
 void systemControl(SYSTEM_CONTROL todo);
 
@@ -51,13 +51,13 @@ void setCursor(position_t pos);
 void getCursor(position_t* pos);
 void clearScreen(uint8_t backgroundColor);
 void console_setProperties(console_properties_t properties);
-void refreshScreen();
+void refreshScreen(void);
 
 bool keyPressed(KEY_t key);
 
 void beep(uint32_t frequency, uint32_t duration);
 
-uint32_t getMyIP();
+uint32_t getMyIP(void);
 void dns_setServer(IP_t server);
 void dns_getServer(IP_t* server);
 

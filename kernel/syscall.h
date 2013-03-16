@@ -3,6 +3,6 @@
 
 #include "os.h"
 
-void syscall_install();
+void syscall_install(void);
 
 #endif

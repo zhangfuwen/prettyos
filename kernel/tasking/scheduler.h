@@ -24,14 +24,14 @@ typedef struct
 } blocker_t;
 
 
-void     scheduler_install();
-bool     scheduler_shouldSwitchTask();
+void     scheduler_install(void);
+bool     scheduler_shouldSwitchTask(void);
 uint32_t scheduler_taskSwitch(uint32_t esp);
 void     scheduler_insertTask(task_t* task);
 void     scheduler_deleteTask(task_t* task);
 bool     scheduler_blockCurrentTask(BLOCKERTYPE, void* data, uint32_t timeout); // false in case of timeout
 void     scheduler_unblockEvent(BLOCKERTYPE type, void* data);
-void     scheduler_log();
+void     scheduler_log(void);
 
 
 #endif

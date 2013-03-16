@@ -48,7 +48,7 @@ void semaphore_delete(semaphore_t* obj)
 
 
 // Mutex
-mutex_t* mutex_create()
+mutex_t* mutex_create(void)
 {
     mutex_t* obj = malloc(sizeof(mutex_t), 0, "mutex");
     obj->blocks = 0;
@@ -91,7 +91,7 @@ void mutex_delete(mutex_t* obj)
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

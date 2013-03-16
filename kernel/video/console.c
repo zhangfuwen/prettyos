@@ -27,7 +27,7 @@ static bool scroll_flag = true;
 static void scroll();
 
 
-inline uint8_t getTextColor()
+inline uint8_t getTextColor(void)
 {
     return (currentTask->attrib);
 }
@@ -40,10 +40,10 @@ inline void textColor(uint8_t color) // bit 0-3: foreground bit 4-7: background
     }
 }
 
-void kernel_console_init()
+void kernel_console_init(void)
 {
     kernelConsole.tasks = list_create();
-    kernelConsole.mutex = mutex_create(1);
+    kernelConsole.mutex = mutex_create();
     memset(kernelConsole.vidmem, 0, COLUMNS * LINES * sizeof(uint16_t));
 
     reachableConsoles[KERNELCONSOLE_ID] = &kernelConsole;
@@ -59,7 +59,7 @@ void console_init(console_t* console, const char* name)
     console->scrollEnd   = USER_END-USER_BEGIN;
     console->properties  = CONSOLE_AUTOREFRESH|CONSOLE_AUTOSCROLL;
     console->tasks       = list_create();
-    console->mutex       = mutex_create(1);
+    console->mutex       = mutex_create();
     strcpy(console->name, name);
     memset(console->vidmem, 0, COLUMNS * LINES * 2);
 
@@ -158,7 +158,7 @@ void console_clear(uint8_t backcolor)
     mutex_unlock(console_current->mutex);
 }
 
-static void move_cursor_right()
+static void move_cursor_right(void)
 {
     ++console_current->cursor.x;
 
@@ -173,7 +173,7 @@ static void move_cursor_right()
         vga_updateCursor();
 }
 
-static void move_cursor_left()
+static void move_cursor_left(void)
 {
     if (console_current->cursor.x)
     {
@@ -189,7 +189,7 @@ static void move_cursor_left()
         vga_updateCursor();
 }
 
-static void move_cursor_home()
+static void move_cursor_home(void)
 {
     console_current->cursor.x = 0;
 
@@ -277,7 +277,7 @@ void puts(const char* text)
     mutex_unlock(console_current->mutex);
 }
 
-static void scroll()
+static void scroll(void)
 {
     mutex_lock(console_current->mutex);
 
@@ -464,7 +464,7 @@ size_t cprintf(const char* message, uint32_t line, uint8_t attribute, ...)
 
 
 /*
-* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

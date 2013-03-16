@@ -59,7 +59,7 @@ void deviceManager_install(partition_t* systemPart)
     systemPartition = systemPart;
 }
 
-void deviceManager_checkDrives()
+void deviceManager_checkDrives(void)
 {
     for (size_t i = 0; i < PORTARRAYSIZE; i++)
     {
@@ -112,7 +112,7 @@ void removeDisk(disk_t* disk)
     }
 }
 
-void showPortList()
+void showPortList(void)
 {
     textColor(HEADLINE);
     printf("\n\nAvailable ports:");
@@ -162,7 +162,7 @@ void showPortList()
     textColor(TEXT);
 }
 
-void showDiskList()
+void showDiskList(void)
 {
     textColor(HEADLINE);
     printf("\n\nAttached disks:");
@@ -380,7 +380,7 @@ FS_ERROR analyzeDisk(disk_t* disk)
 
 
 #ifdef _CACHE_DIAGNOSIS_
-static void logCache()
+static void logCache(void)
 {
     printf("\n\nCaches:\nID\tdisk\t\tsector\towner\t\tvalid\tsynced");
     textColor(LIGHT_GRAY);
@@ -520,7 +520,7 @@ FS_ERROR singleSectorRead(uint32_t sector, uint8_t* buffer, disk_t* disk)
 }
 
 /*
-* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

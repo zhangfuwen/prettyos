@@ -189,12 +189,12 @@ typedef struct uhci
     uint16_t       bar;               // start of I/O space (base address register)
     frPtr_t*       framelistAddrVirt; // virtual adress of frame list
     uhciQH_t*      qhPointerVirt;     // virtual adress of QH
-    uint8_t        rootPorts;         // number of rootports
     size_t         memSize;           // memory size of IO space
     mutex_t*       framelistLock;     // mutex for access on the frame list
     mutex_t*       qhLock;            // mutex for access on the QH
-    bool           enabledPortFlag;   // root ports enabled
     uhci_port_t*   ports;             // root ports
+    uint8_t        rootPorts;         // number of rootports
+    bool           enabledPortFlag;   // root ports enabled
     bool           run;               // hc running (RS bit)
     uint8_t        num;               // Number of the UHCI
 } uhci_t;

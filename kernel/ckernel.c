@@ -40,7 +40,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.14 - Rev: 1399";
+const char* const version = "0.0.4.15 - Rev: 1400";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -176,7 +176,7 @@ static void init(multiboot_t* mb_struct)
     sti();
 }
 
-static void showMemorySize()
+static void showMemorySize(void)
 {
     textColor(LIGHT_GRAY);
     printf("   => Memory: ");

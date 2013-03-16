@@ -28,7 +28,7 @@ extern uintptr_t vidswtch_com_start;
 extern uintptr_t vidswtch_com_end;
 
 
-static void vbe_readVIB()
+static void vbe_readVIB(void)
 {
     *(char*)0x3400 = 'V';
     *(char*)0x3401 = 'B';
@@ -95,7 +95,7 @@ void Get_DAC_C(uint8_t PaletteColorNumber, uint8_t* Red, uint8_t* Green, uint8_t
     *Blue  = inportb(0x03C9);
 }
 
-static void vgaDebug()
+static void vgaDebug(void)
 {
   #ifdef _VBE_DEBUG_
     textColor(YELLOW);
@@ -155,7 +155,7 @@ static void modeDebug(ModeInfoBlock_t* mib)
 }
 
 // Interface functions
-size_t vbe_detect()
+size_t vbe_detect(void)
 {
     vbe_pd = paging_createUserPageDirectory();
     vm86_initPageDirectory(vbe_pd, (void*)0x100, &vidswtch_com_start, (uintptr_t)&vidswtch_com_end - (uintptr_t)&vidswtch_com_start);
@@ -353,7 +353,7 @@ void vbe_flipScreen(videoDevice_t* device)
 }
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

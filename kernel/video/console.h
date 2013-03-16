@@ -20,10 +20,10 @@ typedef enum
 typedef struct // Defines the User-Space of the display
 {
     uint8_t    ID; // Number of the console. Used to access it via the reachableConsoles array
-    char*      name;
-    console_properties_t properties;
     uint8_t    scrollBegin;
     uint8_t    scrollEnd;
+    char*      name;
+    console_properties_t properties;
     position_t cursor;
     mutex_t*   mutex;
     list_t*    tasks;
@@ -37,7 +37,7 @@ extern console_t*          console_current;
 extern console_t kernelConsole;
 
 
-void kernel_console_init();
+void kernel_console_init(void);
 void console_init(console_t* console, const char* name);
 void console_exit(console_t* console);
 void console_cleanup(task_t* task);
@@ -45,7 +45,7 @@ bool console_display(uint8_t ID);
 
 void console_clear(uint8_t backcolor);
 void textColor(uint8_t color); // bit 4-7: background; bit 1-3: foreground
-uint8_t getTextColor();
+uint8_t getTextColor(void);
 void console_setProperties(console_properties_t properties);
 void setScrollField(uint8_t begin, uint8_t end);
 void console_setPixel(uint8_t x, uint8_t y, uint16_t value);

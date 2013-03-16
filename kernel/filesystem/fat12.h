@@ -4,7 +4,7 @@
 #include "os.h"
 
 
-int32_t flpydsk_read_directory();
+int32_t flpydsk_read_directory(void);
 
 
 #endif

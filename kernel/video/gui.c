@@ -18,7 +18,7 @@ extern BMPInfo_t cursor_start;
 extern window_t* window_list[MAX_WINDOWS];
 
 
-void StartGUI()
+void StartGUI(void)
 {
     init_window_manager();
     button_t button;
@@ -78,7 +78,7 @@ void StartGUI()
     EndGUI();
 }
 
-void EndGUI()
+void EndGUI(void)
 {
     for (int i = 1; i < MAX_WINDOWS; i++)
     {
@@ -88,7 +88,7 @@ void EndGUI()
 }
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

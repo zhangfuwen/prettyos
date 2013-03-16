@@ -113,7 +113,7 @@ tcpConnection_t* tcp_findConnection(IP_t IP, uint16_t port, network_adapter_t* a
     return (0);
 }
 
-tcpConnection_t* tcp_createConnection()
+tcpConnection_t* tcp_createConnection(void)
 {
     if (tcpConnections == 0)
     {
@@ -1092,12 +1092,12 @@ static void calculateRTO(tcpConnection_t* connection, uint32_t rtt)
     connection->tcb.rto = min(connection->tcb.rto, RTO_MAXVALUE);
 }
 
-static uint16_t tcp_getFreeSocket()
+static uint16_t tcp_getFreeSocket(void)
 {
     return (LowestPortNum + rand() % (0xFFFF - LowestPortNum));
 }
 
-static uint32_t tcp_getConnectionID()
+static uint32_t tcp_getConnectionID(void)
 {
     static uint16_t ID = 1;
     return ID++;
@@ -1105,7 +1105,7 @@ static uint32_t tcp_getConnectionID()
 
 
 // Debug functions
-void tcp_showConnections()
+void tcp_showConnections(void)
 {
     if (tcpConnections == 0)
         return;
@@ -1345,7 +1345,7 @@ bool tcp_uclose(uint32_t ID)
 
 
 /*
- * Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+ * Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
  *
  * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

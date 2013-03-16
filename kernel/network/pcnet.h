@@ -29,11 +29,11 @@ typedef struct
 typedef struct
 {
     network_adapter_t* device;
-    bool               initialized;
     PCNet_descriptor*  receiveDesc;
-    uint8_t            currentRecDesc;
     PCNet_descriptor*  transmitDesc;
+    uint8_t            currentRecDesc;
     uint8_t            currentTransDesc;
+    bool               initialized;
     void*              receiveBuf[8];
     void*              transmitBuf[8];
     uint16_t           IO_base;

@@ -21,8 +21,8 @@ typedef struct
 } PM_SYSTEM_t;
 
 
-void powmgmt_install(); // Detects and configures power management system (chooses best one, that is supported)
-void powmgmt_log(); // Prints the supported PM-systems
+void powmgmt_install(void); // Detects and configures power management system (chooses best one, that is supported)
+void powmgmt_log(void); // Prints the supported PM-systems
 bool powmgmt_action(PM_STATES state); // Enters to a power management state. Returns true if supported (or a workaround is found) and successful
 
 

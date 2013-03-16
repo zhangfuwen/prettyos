@@ -23,9 +23,9 @@ static position_t cursor = {0, 0};
 static mutex_t* videoLock = 0;
 
 
-bool vga_install()
+bool vga_install(void)
 {
-    videoLock = mutex_create(1);
+    videoLock = mutex_create();
     vidmem = paging_acquirePciMemory(VIDEORAM, 2);
     return(vidmem != 0);
 }
@@ -37,7 +37,7 @@ void vga_setPixel(uint8_t x, uint8_t y, uint16_t value)
     mutex_unlock(videoLock);
 }
 
-void vga_clearScreen()
+void vga_clearScreen(void)
 {
     mutex_lock(videoLock);
     memset(vidmem, 0, COLUMNS * LINES * 2);
@@ -205,7 +205,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...)
     va_end(ap);
 }
 
-static void refreshInfoBar()
+static void refreshInfoBar(void)
 {
     memset(vidmem + (USER_BEGIN + LINES - 7) * COLUMNS, 0, 3 * COLUMNS * 2); // Clearing info-area
     kprintf(infoBar[0], 45, 14);
@@ -226,7 +226,7 @@ void writeInfo(uint8_t line, const char* args, ...)
     }
 }
 
-void refreshUserScreen()
+void refreshUserScreen(void)
 {
     mutex_lock(videoLock);
 
@@ -273,7 +273,7 @@ void refreshUserScreen()
     mutex_unlock(videoLock);
 }
 
-void vga_updateCursor()
+void vga_updateCursor(void)
 {
     uint16_t position = (console_displayed->cursor.y+2) * COLUMNS + console_displayed->cursor.x;
     // cursor HIGH port to vga INDEX register
@@ -285,7 +285,7 @@ void vga_updateCursor()
 }
 
 static uint8_t screenCache[SCREENSHOT_BYTES];
-void takeScreenshot()
+void takeScreenshot(void)
 {
     puts("\nTake screenshot. ");
     int32_t NewLine = 0;
@@ -310,7 +310,7 @@ void takeScreenshot()
 
 extern disk_t* disks[DISKARRAYSIZE]; // HACK
 diskType_t*    ScreenDest = &FLOPPYDISK; // HACK
-void saveScreenshot()
+void saveScreenshot(void)
 {
     char Pfad[20];
 
@@ -337,7 +337,7 @@ void saveScreenshot()
 }
 
 /*
-* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

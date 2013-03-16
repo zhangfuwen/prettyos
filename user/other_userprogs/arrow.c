@@ -33,7 +33,7 @@ static void setWeapon(uint8_t x, uint8_t y)
     putchar('v');
 }
 
-static void generateWeapons()
+static void generateWeapons(void)
 {
     clearLine(1);
     clearLine(2);
@@ -44,7 +44,7 @@ static void generateWeapons()
     }
 }
 
-static void deleteWeapons()
+static void deleteWeapons(void)
 {
     int i = fighterPosition + 1 + rand()%(79-fighterPosition);
     for (int8_t j=41; j>=0; j--)
@@ -63,7 +63,7 @@ static void deleteWeapons()
     }
 }
 
-static void moveFighter()
+static void moveFighter(void)
 {
     if (keyPressed(KEY_A) && fighterPosition > 0)
     {
@@ -90,12 +90,12 @@ static void moveFighter()
     }
 }
 
-bool checkCrash()
+bool checkCrash(void)
 {
     return (point[fighterPosition][41]);
 }
 
-bool checkWin()
+bool checkWin(void)
 {
     return (fighterPosition >= 79);
 }
@@ -158,7 +158,7 @@ int main()
 
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

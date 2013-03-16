@@ -15,7 +15,7 @@ static bool cpuid_available = false;
 
 int64_t* cpu_frequency;
 
-void cpu_install()
+void cpu_install(void)
 {
     ipc_node_t* node;
     ipc_createNode("PrettyOS/CPU/Frequency (kHz)", &node, IPC_INTEGER);
@@ -52,7 +52,7 @@ static void printSupport(bool b)
     textColor(LIGHT_GRAY);
 }
 
-void cpu_analyze()
+void cpu_analyze(void)
 {
     textColor(LIGHT_GRAY);
     if (!cpuid_available)
@@ -85,7 +85,7 @@ void cpu_analyze()
     printf("%s\n", cpu_vendor);
 }
 
-void cpu_calculateFrequency()
+void cpu_calculateFrequency(void)
 {
     static uint64_t LastRdtscValue = 0; // rdtsc: read time-stamp counter
 
@@ -174,7 +174,7 @@ void cpu_MSRwrite(uint32_t msr, uint64_t value)
 
 task_t* volatile FPUTask = 0;
 
-bool fpu_install()
+bool fpu_install(void)
 {
     if (!(cmos_read(CMOS_DEVICES) & BIT(1)) || (cpu_supports(CF_CPUID) && !cpu_supports(CF_FPU)))
         return (false);
@@ -193,7 +193,7 @@ bool fpu_install()
     return (true);
 }
 
-void fpu_test()
+void fpu_test(void)
 {
     textColor(LIGHT_GRAY);
     printf("   => FPU test: ");
@@ -230,7 +230,7 @@ void fpu_test()
 
 
 /*
-* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

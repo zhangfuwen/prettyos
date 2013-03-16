@@ -35,7 +35,7 @@ static list_t* basicVideoDevices;
 videoMode_t* video_currentMode = 0;
 
 
-void video_install()
+void video_install(void)
 {
     basicVideoDevices = list_create();
     for (size_t i = 0; i < VDD_COUNT; i++)
@@ -58,7 +58,7 @@ void video_install()
     }
 }
 
-void video_test()
+void video_test(void)
 {
     extern BMPInfo_t bmp_start;
 
@@ -307,7 +307,7 @@ BGRA_t video_getPixel(videoDevice_t* buffer, uint32_t x, uint32_t y)
 }
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

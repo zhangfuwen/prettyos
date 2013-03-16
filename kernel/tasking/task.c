@@ -44,7 +44,7 @@ list_t* tasks; // List of all tasks. Not sorted by pid
 static uint32_t next_pid = 1; // The next available process ID (kernel has 0, so we start with 1 here).
 
 
-void tasking_install()
+void tasking_install(void)
 {
   #ifdef _TASKING_DIAGNOSIS_
     textColor(TEXT);
@@ -66,7 +66,7 @@ void tasking_install()
     task_switching = true;
 }
 
-uint32_t getpid()
+uint32_t getpid(void)
 {
     return (currentTask->pid);
 }
@@ -84,7 +84,7 @@ bool waitForTask(task_t* blockingTask, uint32_t timeout)
 
 
 /// Functions to create tasks
-task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(), uint8_t privilege, console_t* console, size_t argc, char* argv[])
+task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(void), uint8_t privilege, console_t* console, size_t argc, char* argv[])
 {
     task_t* newTask = malloc(sizeof(task_t), 0, "task_t");
     newTask->type          = type;
@@ -173,7 +173,7 @@ task_t* create_task(taskType_t type, pageDirectory_t* directory, void(*entry)(),
     return (newTask);
 }
 
-task_t* create_cprocess(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)
+task_t* create_cprocess(pageDirectory_t* directory, void(*entry)(void), uint8_t privilege, size_t argc, char* argv[], const char* consoleName)
 {
   #ifdef _TASKING_DIAGNOSIS_
     printf("create ctask");
@@ -188,7 +188,7 @@ task_t* create_cprocess(pageDirectory_t* directory, void(*entry)(), uint8_t priv
     return (newTask);
 }
 
-task_t* create_process(pageDirectory_t* directory, void(*entry)(), uint8_t privilege, size_t argc, char* argv[])
+task_t* create_process(pageDirectory_t* directory, void(*entry)(void), uint8_t privilege, size_t argc, char* argv[])
 {
   #ifdef _TASKING_DIAGNOSIS_
     printf("create task");
@@ -201,7 +201,7 @@ task_t* create_process(pageDirectory_t* directory, void(*entry)(), uint8_t privi
     return (newTask);
 }
 
-task_t* create_cthread(void(*entry)(), const char* consoleName)
+task_t* create_cthread(void(*entry)(void), const char* consoleName)
 {
   #ifdef _TASKING_DIAGNOSIS_
     printf("create cthread");
@@ -226,7 +226,7 @@ task_t* create_cthread(void(*entry)(), const char* consoleName)
     return (newTask);
 }
 
-task_t* create_thread(void(*entry)())
+task_t* create_thread(void(*entry)(void))
 {
   #ifdef _TASKING_DIAGNOSIS_
     printf("create thread");
@@ -247,7 +247,7 @@ task_t* create_thread(void(*entry)())
     return (newTask);
 }
 
-task_t* create_vm86_task(pageDirectory_t* pd, void(*entry)())
+task_t* create_vm86_task(pageDirectory_t* pd, void(*entry)(void))
 {
   #ifdef _TASKING_DIAGNOSIS_
     printf("create vm86 task");
@@ -395,7 +395,7 @@ void task_kill(uint32_t pid)
     }
 }
 
-void exit()
+void exit(void)
 {
     kill(currentTask);
 }
@@ -471,7 +471,7 @@ void task_log(task_t* t)
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

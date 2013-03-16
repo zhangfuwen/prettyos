@@ -14,7 +14,7 @@ static uint8_t  serialPorts;
 static uint16_t IOports[4]; // Contains the ports used to access
 
 
-void serial_init()
+void serial_init(void)
 {
     textColor(LIGHT_GRAY);
     printf("\n   => Serial ports:");
@@ -97,7 +97,7 @@ void serial_log(uint8_t com, const char* msg, ...)
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

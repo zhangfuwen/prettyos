@@ -59,7 +59,7 @@ extern uintptr_t apm_com_end;
 
 static pageDirectory_t* apm_pd;
 
-bool apm_install()
+bool apm_install(void)
 {
     apm_pd = paging_createUserPageDirectory();
     vm86_initPageDirectory(apm_pd, (void*)0x100, &apm_com_start, (uintptr_t)&apm_com_end - (uintptr_t)&apm_com_start);
@@ -125,14 +125,14 @@ static PM_SYSTEM_t powmgmt_systems[_PM_SYSTEMS_END] = {
     {.action = 0}             // ACPI
 };
 
-void powmgmt_install()
+void powmgmt_install(void)
 {
     powmgmt_systems[PM_NO].supported = true; // Always available
     powmgmt_systems[PM_APM].supported = false;// = apm_install();
     powmgmt_systems[PM_ACPI].supported = false; // Unsupported by PrettyOS
 }
 
-void powmgmt_log()
+void powmgmt_log(void)
 {
     textColor(LIGHT_GRAY);
     printf("   => APM: ");
@@ -160,7 +160,7 @@ bool powmgmt_action(PM_STATES state)
 }
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

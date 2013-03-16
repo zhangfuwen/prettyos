@@ -32,7 +32,7 @@ static uint8_t mouse_read();
 static void mouse_handler(registers_t* a_r);
 
 
-void mouse_install()
+void mouse_install(void)
 {
     // Enable the auxiliary mouse device
     mouse_wait(1);
@@ -274,7 +274,7 @@ static void mouse_write(uint8_t data)
     }
 }
 
-static uint8_t mouse_read()
+static uint8_t mouse_read(void)
 {
     // Get response from mouse
     mouse_wait(0);
@@ -295,7 +295,7 @@ void mouse_setsamples(uint8_t samples_per_second)
     }
 }
 
-void mouse_uninstall()
+void mouse_uninstall(void)
 {
     irq_uninstallHandler(IRQ_MOUSE);
     mouse_write(0xFF);
@@ -303,7 +303,7 @@ void mouse_uninstall()
 
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

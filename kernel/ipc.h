@@ -62,7 +62,7 @@ IPC_ERROR ipc_setAccess(const char* path, IPC_RIGHTS permissions, uint32_t task)
 // Public interface (kernel)
 ipc_node_t* ipc_getNode(const char* path);
 IPC_ERROR   ipc_createNode(const char* path, ipc_node_t** node, IPC_TYPE type);
-void        ipc_print();
+void        ipc_print(void);
 
 
 #endif

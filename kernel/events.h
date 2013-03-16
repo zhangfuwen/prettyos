@@ -33,7 +33,7 @@ typedef struct
 } event_queue_t;
 
 
-event_queue_t* event_createQueue();
+event_queue_t* event_createQueue(void);
 void           event_deleteQueue(event_queue_t* queue);
 void           event_enable(bool b); // Enables/Disables event handling for the current task
 EVENT_t        event_poll(void* destination, size_t maxLength, EVENT_t filter); // Takes an event from the event queue of the current task

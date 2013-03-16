@@ -19,14 +19,14 @@ void error(const char* string) {
     textColor(TEXT);
 }
 
-void showHelp() {
+void showHelp(void) {
     printf("Command line arguments:\n"
            "    --help, -?       Prints available command line arguments\n"
            "    --showpci, -sp   Shows all PCI devices present\n"
            "\n");
 }
 
-void showPciDevices() {
+void showPciDevices(void) {
     textColor(TABLE_HEADING);
     printf("\nB:D:F\tIRQ\tDescription");
     printf("\n--------------------------------------------------------------------------------");
@@ -143,7 +143,7 @@ int main(size_t argc, char* argv[])
 }
 
 /*
-* Copyright (c) 2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2012-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

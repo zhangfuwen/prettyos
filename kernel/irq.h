@@ -43,7 +43,7 @@ typedef struct
 } __attribute__((packed)) registers_t;
 
 
-void isr_install();
+void isr_install(void);
 uint32_t irq_handler(uintptr_t esp);
 void irq_installHandler(IRQ_NUM_t irq, void (*handler)(registers_t*));
 void irq_installCDIHandler(IRQ_NUM_t irq, void (*handler)(struct cdi_device*), struct cdi_device* device);

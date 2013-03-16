@@ -7,7 +7,7 @@
 // Most emulators implement serial interface with output to a file, e.g. called "serial1.txt" (qemu: -serial file:serial1.txt)
 
 
-void serial_init();
+void serial_init(void);
 void serial_write(uint8_t com, char a);
 bool serial_received(uint8_t com);
 char serial_read(uint8_t com);

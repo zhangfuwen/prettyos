@@ -208,7 +208,7 @@ IPC_ERROR ipc_createNode(const char* path, ipc_node_t** node, IPC_TYPE type)
     return (createNode(parent, node, nodename, type));
 }
 
-void ipc_print()
+void ipc_print(void)
 {
     textColor(HEADLINE);
     puts("\nIPC:");
@@ -398,7 +398,7 @@ IPC_ERROR ipc_setAccess(const char* path, IPC_RIGHTS permissions, uint32_t task)
 
 
 /*
-* Copyright (c) 2011-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

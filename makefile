@@ -53,18 +53,17 @@ KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
+CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O2 -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude
 ifeq ($(COMPILER),CLANG)
-	ifeq ($(CONFIG),RELEASE)
-		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer    -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
-	else
-		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -Wno-uninitialized -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude -Xclang -triple=i386-pc-unknown
+	CCFLAGS+= -Wno-invalid-source-encoding -Xclang -triple=i386-pc-unknown
+	ifeq ($(MESSAGEFORMAT), VS)
+		CCFLAGS+= -fdiagnostics-format=msvc
 	endif
 else
-	ifeq ($(CONFIG),RELEASE)
-		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer    -fno-common -Iinclude
-	else
-		CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-pic -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -Iinclude
-	endif
+	CCFLAGS+= -fno-pic
+endif
+ifeq ($(CONFIG),RELEASE)
+	CCFLAGS+= -ffunction-sections -fdata-sections
 endif
 LDFLAGS= -nostdlib --warn-common -nmagic -gc-sections -s
 
@@ -87,12 +86,12 @@ $(STAGE1DIR)/boot.bin: $(STAGE1DIR)/boot.asm $(STAGE1DIR)/*.inc
 $(STAGE2DIR)/BOOT2.BIN: $(STAGE2DIR)/boot2.asm $(STAGE2DIR)/*.inc
 	$(NASM) -f bin -Ox $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
 
-$(USERDIR)/vm86/vidswtch.COM: $(USERDIR)/vm86/vidswtch.asm
-	$(NASM) $(USERDIR)/vm86/vidswtch.asm -Ox -o $(USERDIR)/vm86/vidswtch.COM
-$(USERDIR)/vm86/apm.COM: $(USERDIR)/vm86/apm.asm
-	$(NASM) $(USERDIR)/vm86/apm.asm -Ox -o $(USERDIR)/vm86/apm.COM
+$(USERDIR)/vm86/VIDSWTCH.COM: $(USERDIR)/vm86/vidswtch.asm
+	$(NASM) $(USERDIR)/vm86/vidswtch.asm -Ox -o $(USERDIR)/vm86/VIDSWTCH.COM
+$(USERDIR)/vm86/APM.COM: $(USERDIR)/vm86/apm.asm
+	$(NASM) $(USERDIR)/vm86/apm.asm -Ox -o $(USERDIR)/vm86/APM.COM
 
-$(OBJDIR)/$(KERNELDIR)/data.o: $(KERNELDIR)/data.asm $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/vidswtch.COM $(USERDIR)/vm86/apm.COM
+$(OBJDIR)/$(KERNELDIR)/data.o: $(KERNELDIR)/data.asm $(KERNELDIR)/initrd.dat $(USERDIR)/vm86/VIDSWTCH.COM $(USERDIR)/vm86/APM.COM
 	$(NASM) $(KERNELDIR)/data.asm $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$(KERNELDIR)/data.o
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNELDIR)/initrd.dat $(OBJDIR)/$(KERNELDIR)/data.o $(KERNEL_OBJECTS)

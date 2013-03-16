@@ -3,10 +3,16 @@ IF [%1]==[-release] (
 	SET flags=OS=WINDOWS CONFIG=RELEASE
 	IF [%2]==[-clang] (
 		SET flags=OS=WINDOWS CONFIG=RELEASE COMPILER=CLANG
+		IF [%3]==[-vs] (
+			SET flags=OS=WINDOWS CONFIG=RELEASE COMPILER=CLANG MESSAGEFORMAT=VS
+		)
 	)
 )
 IF [%1]==[-clang] (
 	SET flags=OS=WINDOWS COMPILER=CLANG
+	IF [%2]==[-vs] (
+		SET flags=OS=WINDOWS COMPILER=CLANG MESSAGEFORMAT=VS
+	)
 )
 tools\mingw32-make FloppyImage.img %flags%
 

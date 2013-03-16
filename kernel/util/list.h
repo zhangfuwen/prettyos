@@ -20,7 +20,7 @@ typedef struct
 } list_t;
 
 
-list_t*      list_create();                                            // Allocates memory for a list, returns a pointer to that list.
+list_t*      list_create(void);                                            // Allocates memory for a list, returns a pointer to that list.
 void         list_free(list_t* hd);                                    // Deletes everything that has been allocated for this list.
 dlelement_t* list_insert(list_t* list, dlelement_t* next, void* data); // Inserts a new element before an element of the list (0 = append). Returns a pointer to the new element.
 dlelement_t* list_append(list_t* list, void* data);                    // Inserts a new element at the end of the list and returns a pointer to it.

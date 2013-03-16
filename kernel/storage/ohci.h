@@ -219,8 +219,8 @@ typedef struct ohci
     uint32_t       indexED;         // index at ED
     uint8_t        rootPorts;       // number of rootports
     bool           enabledPortFlag; // root ports enabled
-    ohci_port_t*   ports;           // root ports
     uint8_t        num;             // number of the OHCI
+    ohci_port_t*   ports;           // root ports
     uint32_t       powerWait;       // wait time (ms) for ports after power-on
     usb_transferType_t lastTT;
 } ohci_t;

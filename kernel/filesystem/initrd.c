@@ -31,7 +31,7 @@ extern uintptr_t file_data_end;
 /// TODO: ==> device/filesystem manager
 fs_node_t* install_initrd(void* location);
 
-disk_t* ramdisk_install()
+disk_t* ramdisk_install(void)
 {
     static port_t RAMport;
     static disk_t RAMdisk;
@@ -213,7 +213,7 @@ fs_node_t* install_initrd(void* location)
     return (initrd_root);
 }
 
-bool initrd_loadShell()
+bool initrd_loadShell(void)
 {
     bool shell_found = false;
     dirent_t* node = 0;
@@ -273,7 +273,7 @@ bool initrd_loadShell()
 }
 
 /*
-* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

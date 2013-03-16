@@ -8,7 +8,7 @@
 #include "kheap.h"
 
 
-ring_t* ring_create()
+ring_t* ring_create(void)
 {
     ring_t* ring  = malloc(sizeof(ring_t), 0, "ring");
     ring->current = 0;
@@ -133,7 +133,7 @@ void ring_move(ring_t* dest, ring_t* source, void* data)
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

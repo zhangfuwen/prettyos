@@ -29,7 +29,7 @@ blockerType_t blocker[] =
 
 
 // Function for freetime task. Executed when the ring of running tasks is empty.
-static void doNothing()
+static void doNothing(void)
 {
     while (true)
     {
@@ -37,7 +37,7 @@ static void doNothing()
     }
 }
 
-void scheduler_install()
+void scheduler_install(void)
 {
     // Init scheduler rings
     runningTasks = ring_create();
@@ -101,7 +101,7 @@ bool scheduler_shouldSwitchTask() // This function increases performance if ther
     return (runningTasks->begin == 0 || runningTasks->begin != runningTasks->begin->next); // No running tasks or only one running task
 }
 
-static task_t* scheduler_getNextTask()
+static task_t* scheduler_getNextTask(void)
 {
     checkBlocked();
 
@@ -171,7 +171,7 @@ bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout
     return ((bool)currentTask->blocker.data); // data field contains the reason for unblock after the block is released
 }
 
-void scheduler_log()
+void scheduler_log(void)
 {
     textColor(HEADLINE);
     printf("\n\ncurrent task: ");
@@ -224,7 +224,7 @@ void scheduler_log()
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

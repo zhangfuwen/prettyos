@@ -184,7 +184,7 @@ char* gets(char* s)
     return (s);
 }
 
-void waitForKeyStroke()
+void waitForKeyStroke(void)
 {
     textColor(LIGHT_GRAY);
     printf("\n             - - - - - - - - - - - press key - - - - - - - - - - -");
@@ -577,7 +577,7 @@ void systemControl(SYSTEM_CONTROL todo) // TODO: Improve it.
 
 // BOOTSCREEN
 #ifdef _BOOTSCREEN_
-static void bootsound()
+static void bootsound(void)
 {
     // Melody
     // C Es F G F Es
@@ -601,7 +601,7 @@ static void bootsound()
     beep(523, 1000); // C
 }
 
-void bootscreen()
+void bootscreen(void)
 {
     task_t* soundtask = create_thread(&bootsound);
     scheduler_insertTask(soundtask);
@@ -1012,7 +1012,7 @@ void srand(uint32_t val)
     seed = val;
 }
 
-uint32_t rand()
+uint32_t rand(void)
 {
     return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7FFF);
 }

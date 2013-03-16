@@ -15,7 +15,7 @@
 
 bool vm86_sensitiveOpcodehandler(registers_t* ctx);
 void vm86_initPageDirectory(pageDirectory_t* pd, void* address, void*data, size_t size);
-void vm86_executeSync(pageDirectory_t* pd, void (*entry)());
+void vm86_executeSync(pageDirectory_t* pd, void (*entry)(void));
 
 
 #endif

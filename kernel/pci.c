@@ -112,7 +112,7 @@ bool pci_deviceSentInterrupt(pciDev_t* dev)
     return (statusRegister & BIT(3));
 }
 
-void pci_scan()
+void pci_scan(void)
 {
     pci_devices = list_create();
 
@@ -250,7 +250,7 @@ void pci_scan()
 }
 
 /*
-* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

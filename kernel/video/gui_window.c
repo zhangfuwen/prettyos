@@ -17,7 +17,7 @@ static window_t* volatile current_window = 0;
 window_t* window_list[MAX_WINDOWS];
 
 
-void init_window_manager()
+void init_window_manager(void)
 {
     window_t* desktop = malloc(sizeof(window_t), 0, "desktop window");
     // We need to initialise the Desktop
@@ -36,7 +36,7 @@ void init_window_manager()
     current_window = desktop;
 }
 
-static uint16_t getnewwid()
+static uint16_t getnewwid(void)
 {
     static uint32_t wid = 0;
     wid++;
@@ -93,7 +93,7 @@ void DrawWindow(uint16_t id)
 }
 
 /*
-* Copyright (c) 2010-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

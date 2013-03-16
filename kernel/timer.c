@@ -21,15 +21,15 @@ void timer_install(uint16_t sysfreq)
     timer_setFrequency(sysfreq); // x Hz, meaning a tick every 1000/x milliseconds
 }
 
-uint32_t timer_getSeconds()
+uint32_t timer_getSeconds(void)
 {
     return ((uint32_t)timer_ticks/systemfrequency);
 }
-uint32_t timer_getMilliseconds()
+uint32_t timer_getMilliseconds(void)
 {
     return (((uint32_t)timer_ticks*1000)/systemfrequency);
 }
-uint64_t timer_getTicks()
+uint64_t timer_getTicks(void)
 {
     return (timer_ticks);
 }
@@ -71,7 +71,7 @@ void timer_setFrequency(uint32_t freq)
     outportb(COUNTER_0_DATAPORT, BYTE2(divisor));
 }
 
-uint16_t timer_getFrequency()
+uint16_t timer_getFrequency(void)
 {
     return (systemfrequency);
 }
@@ -85,7 +85,7 @@ void delay(uint32_t microsec)
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

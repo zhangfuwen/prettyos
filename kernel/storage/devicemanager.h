@@ -64,12 +64,12 @@ typedef struct
 
 
 void deviceManager_install(partition_t* systemPart);
-void deviceManager_checkDrives();
+void deviceManager_checkDrives(void);
 void attachPort(port_t* port);
 void attachDisk(disk_t* disk);
 void removeDisk(disk_t* disk);
-void showPortList();
-void showDiskList();
+void showPortList(void);
+void showDiskList(void);
 
 partition_t* getPartition(const char* path);
 const char*  getFilename (const char* path);

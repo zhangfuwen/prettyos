@@ -185,13 +185,13 @@ typedef struct ehci
 
 
 void ehci_install(pciDev_t* PCIdev, uintptr_t bar_phys);
-void ehci_start();
+void ehci_start(void);
 void ehci_initHC(ehci_t* e);
 void ehci_startHC(ehci_t* e);
 void ehci_resetHC(ehci_t* e);
 void ehci_enablePorts(ehci_t* e);
 void ehci_resetPort(ehci_t* e, uint8_t port);
-void ehci_portCheck();
+void ehci_portCheck(void);
 
 void ehci_setupUSBDevice(ehci_t* e, uint8_t portNumber);
 void ehci_showUSBSTS(ehci_t* e);

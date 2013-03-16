@@ -9,7 +9,7 @@
 #include "tasking/task.h"
 
 
-event_queue_t* event_createQueue()
+event_queue_t* event_createQueue(void)
 {
     event_queue_t* queue = malloc(sizeof(event_queue_t), 0, "event_queue");
     queue->num = 0;
@@ -201,7 +201,7 @@ void event_enable(bool b)
 
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

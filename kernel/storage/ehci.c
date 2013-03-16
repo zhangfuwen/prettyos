@@ -70,7 +70,7 @@ static void ehci_analyze(ehci_t* e)
   #endif
 }
 
-void ehci_start()
+void ehci_start(void)
 {
     ehci_t* e = curEHCI;
 
@@ -530,7 +530,7 @@ static void ehci_handler(registers_t* r, pciDev_t* device)
 *                                                                                                      *
 *******************************************************************************************************/
 
-void ehci_portCheck()
+void ehci_portCheck(void)
 {
     ehci_t* e = curEHCI;
 
@@ -766,7 +766,7 @@ void ehci_issueTransfer(usb_transfer_t* transfer)
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

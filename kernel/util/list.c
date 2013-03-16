@@ -8,7 +8,7 @@
 #include "kheap.h"
 
 
-list_t* list_create()
+list_t* list_create(void)
 {
     list_t* list = malloc(sizeof(list_t), 0, "listHead");
     if (list)
@@ -169,7 +169,7 @@ bool list_isEmpty(list_t* list)
 }
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

@@ -10,7 +10,7 @@
 #include "fat.h"
 
 
-int32_t flpydsk_read_directory()
+int32_t flpydsk_read_directory(void)
 {
     // Read track
     static uint8_t track[9216]; // Cache for one track
@@ -85,7 +85,7 @@ int32_t flpydsk_read_directory()
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
