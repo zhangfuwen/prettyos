@@ -24,11 +24,13 @@ typedef enum
 
 typedef enum
 {
-    IRQ_TIMER    = 0,
-    IRQ_KEYBOARD = 1,
-    IRQ_FLOPPY   = 6,
-    IRQ_MOUSE    = 12,
-    IRQ_SYSCALL  = 95 // PrettyOS SYSCALL_NUMBER 127 minus 32 // cf. interrupts.asm
+    IRQ_TIMER         = 0,
+    IRQ_KEYBOARD      = 1,
+    IRQ_FLOPPY        = 6,
+    IRQ_MOUSE         = 12,
+    IRQ_ATA_PRIMARY   = 14,
+    IRQ_ATA_SECONDARY = 15,
+    IRQ_SYSCALL       = 95 // PrettyOS SYSCALL_NUMBER 127 minus 32 // cf. interrupts.asm
 } IRQ_NUM_t;
 
 // This defines what the stack looks like after an ISR was running

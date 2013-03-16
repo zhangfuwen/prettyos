@@ -960,7 +960,7 @@ void bootscreen()
     puts("\n\n\n\n\n\n");
 
     textColor(YELLOW);
-    puts("                  Copyright (c) 2009-2011  The PrettyOS Team");
+    puts("                  Copyright (c) 2009-2013  The PrettyOS Team");
     textColor(TEXT);
 
     for (uint8_t x = 6; x < 72; x++)
@@ -1019,7 +1019,7 @@ uint32_t rand()
 
 
 /*
-* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

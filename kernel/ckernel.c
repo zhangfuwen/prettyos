@@ -40,7 +40,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.13 - Rev: 1398";
+const char* const version = "0.0.4.14 - Rev: 1399";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -276,7 +276,7 @@ void main(multiboot_t* mb_struct)
                 }
                 else
                 {
-                    printf("ERROR during sectorWrite: %d", err);
+                    printf("ERROR during sectorWrite: %d\n", err);
                 }
 
                 memset(buf, '#', 512);
@@ -287,11 +287,11 @@ void main(multiboot_t* mb_struct)
 
                 if (err == CE_GOOD)
                 {
-                    printf("Read successful!\nContent: %s", buf);
+                    printf("Read successful!\nContent: %s\n", buf);
                 }
                 else
                 {
-                    printf("ERROR during sectorRead: %d", err);
+                    printf("ERROR during sectorRead: %d\n", err);
                 }
             }
         }
@@ -493,7 +493,7 @@ void main(multiboot_t* mb_struct)
 }
 
 /*
-* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

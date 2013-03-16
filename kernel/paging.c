@@ -426,7 +426,7 @@ uintptr_t paging_getPhysAddr(void* virtAddress)
     pageTable_t* pt = pd->tables[pageNumber/PAGE_COUNT];
 
   #ifdef _DIAGNOSIS_
-    kdebug(3, "\nvirt-->phys: pagenr: %u ", pagenr);
+    kdebug(3, "\nvirt-->phys: pagenr: %u ", pageNumber);
     kdebug(3, "pt: %Xh\n", pt);
   #endif
 
@@ -531,7 +531,7 @@ void paging_analyzeBitTable()
 
 
 /*
-* Copyright (c) 2009-2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
