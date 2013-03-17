@@ -450,13 +450,13 @@ void task_log(task_t* t)
 
         if (!t->parent->pid)
             textColor(IMPORTANT);
-        printf("  %u", t->parent->pid);
+        printf("%u ", t->parent->pid);
         textColor(TEXT);
     }
 
     if (t->threads && t->threads->head)
     {
-        printf("child-threads:");
+        printf("  child-threads:");
 
         textColor(IMPORTANT);
         for (dlelement_t* e = t->threads->head; e != 0; e = e->next)

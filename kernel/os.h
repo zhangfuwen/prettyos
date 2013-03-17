@@ -11,6 +11,7 @@
 #define _OHCI_ENABLE_        // OHCI driver will be installed
 #define _UHCI_ENABLE_        // UHCI driver will be installed
 //#define _ENABLE_HDD_         // HDD driver will be enabled | !!!DRIVER IN DEVELOPMENT STAGE, NEVER USE IT ON REAL HW!!!
+//#define _AUDIO_ENABLE_       // Audio drivers will be enabled | Don't work well so far, so not enabled
 
 // Additional debug output (Should be disabled per default)
 /// #define _DIAGNOSIS_            // General diagnosis output - activates prints to the screen about some details and memory use

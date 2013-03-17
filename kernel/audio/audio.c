@@ -8,6 +8,7 @@
 #include "sb16.h"
 
 
+#ifdef _AUDIO_ENABLE_
 enum {AD_AC97, AD_SB16, AD_END};
 
 static audio_driver_t drivers[AD_END] =
@@ -15,10 +16,12 @@ static audio_driver_t drivers[AD_END] =
     {&install_AC97},
     {&install_SB16}
 };
+#endif
 
 
 void audio_installDevice(pciDev_t* device)
 {
+#ifdef _AUDIO_ENABLE_
     if(device->vendorID == 0x1102)
     { // SB16. (TODO: We check only vendor here. Verify that its really an SB16 (Maybe by deviceID))
         drivers[AD_SB16].install(device);
@@ -27,11 +30,12 @@ void audio_installDevice(pciDev_t* device)
     { // AC97. (TODO: We check only vendor here. Verify that its really an AC97)
         drivers[AD_AC97].install(device);
     }
+#endif
 }
 
 
 /*
-* Copyright (c) 2009-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

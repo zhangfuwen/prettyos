@@ -117,34 +117,26 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
     {
         case CR_EAX:
         {
-            register uint32_t temp;
-            __asm__ ("movl %1, %%eax\n"
-                     "cpuid\n"
-                     "mov %%eax, %0" : "=r"(temp) : "r"(function));
+            volatile uint32_t temp; // Has to be volatile to make it work with gcc
+            __asm__ volatile ("cpuid" : "=a"(temp) : "a"(function));
             return (temp);
         }
         case CR_EBX:
         {
-            register uint32_t temp;
-            __asm__ ("movl %1, %%eax\n"
-                     "cpuid\n"
-                     "mov %%ebx, %0" : "=r"(temp) : "r"(function));
+            volatile uint32_t temp;
+            __asm__ volatile ("cpuid" : "=b"(temp) : "a"(function));
             return (temp);
         }
         case CR_ECX:
         {
-            register uint32_t temp;
-            __asm__ ("movl %1, %%eax\n"
-                     "cpuid\n"
-                     "mov %%ecx, %0" : "=r"(temp) : "r"(function));
+            volatile uint32_t temp;
+            __asm__ volatile ("cpuid" : "=c"(temp) : "a"(function));
             return (temp);
         }
         case CR_EDX:
         {
-            register uint32_t temp;
-            __asm__ ("movl %1, %%eax\n"
-                     "cpuid\n"
-                     "mov %%edx, %0" : "=r"(temp) : "r"(function));
+            volatile uint32_t temp;
+            __asm__ volatile ("cpuid" : "=d"(temp) : "a"(function));
             return (temp);
         }
         default:

@@ -128,6 +128,7 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
         if(maxLength >= sizeof(size_t)) // Buffer is large enough to store at least the size of the event. Just issue EVENT_BUFFER_TO_SMALL event, leave event in queue.
         {
             *(uint32_t*)destination = ev->length;
+            mutex_unlock(task->eventQueue->mutex);
             return (EVENT_BUFFER_TO_SMALL);
         }
 
@@ -161,7 +162,9 @@ EVENT_t event_poll(void* destination, size_t maxLength, EVENT_t filter)
 
 event_t* event_peek(event_queue_t* eventQueue, uint32_t i)
 {
+    mutex_lock(eventQueue->mutex);
     dlelement_t* elem = list_getElement(eventQueue->list, i);
+    mutex_unlock(eventQueue->mutex);
 
     if (elem == 0)
     {

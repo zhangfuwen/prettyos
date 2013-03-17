@@ -136,7 +136,7 @@ static void mouse_handler(registers_t* r)
 {
     static bool erroroccurred = false;
     static uint8_t bytecounter = 0;
-    static int8_t bytes[4];
+    static uint8_t bytes[4];
 
     bytes[bytecounter] = inportb(0x60); // Receive byte
     switch (bytecounter)
@@ -265,7 +265,7 @@ static void mouse_write(uint8_t data)
     // Finally write
     outportb(0x60, data);
     // If necessary, wait for ACK
-    if (data != 0xEB && data != 0xEC && data != 0xF2 && data != 0xFF)
+    if (data != 0xFF)
     {
         if (mouse_read() != 0xFA)
         {

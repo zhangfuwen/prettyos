@@ -86,12 +86,11 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
         // Copy argv to kernel PD (intermediate)
         if (argc != 0)
         {
-            char** nArgv = malloc(sizeof(char*)*argc, 0, "");
+            char* nArgv[argc];
             for (size_t index = 0; index < argc; index++)
             {
                 size_t argsize = strlen(argv[index]) + 1;
-                void* addr = malloc(argsize, 0, "");
-                nArgv[index] = addr;
+                nArgv[index] = malloc(argsize, 0, "temporary argv");
                 memcpy(nArgv[index], argv[index], argsize);
             }
 
@@ -116,7 +115,6 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
             {
                 free(nArgv[index]);
             }
-            free(nArgv);
 
             // Execute the task.
             scheduler_insertTask(create_cprocess(pd, entry, 3, argc, nnArgv, path));
@@ -137,7 +135,7 @@ FS_ERROR executeFile(const char* path, size_t argc, char* argv[])
 }
 
 /*
-* Copyright (c) 2011-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
