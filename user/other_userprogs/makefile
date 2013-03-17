@@ -37,9 +37,9 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O2 -ffunction-sections -fdata-sections -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
 ifeq ($(COMPILER),CLANG)
-	CCFLAGS+= -Wno-tautological-constant-out-of-range-compare -Wno-invalid-source-encoding -Xclang -triple=i386-pc-unknown
+	CCFLAGS+= -Wno-invalid-source-encoding -Xclang -triple=i386-pc-unknown
 	ifeq ($(MESSAGEFORMAT), VS)
 		CCFLAGS+= -fdiagnostics-format=msvc
 	endif

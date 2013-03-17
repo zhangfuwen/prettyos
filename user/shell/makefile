@@ -37,7 +37,7 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -O2 -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
 ifeq ($(COMPILER),CLANG)
 	CCFLAGS+= -Xclang -triple=i386-pc-unknown
 	ifeq ($(MESSAGEFORMAT), VS)

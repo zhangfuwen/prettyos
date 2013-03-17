@@ -179,7 +179,7 @@ static void syscall_handler(registers_t* r)
       push %5; \
       call *%6; \
       add $20, %%esp;"
-       : "=a" (r->eax) : "D" (r->edi), "S" (r->esi), "d" (r->edx), "c" (r->ecx), "b" (r->ebx), "a" (syscalls[r->eax]));
+       : "=a" (r->eax) : "D" (r->edi), "S" (r->esi), "d" (r->edx), "c" (r->ecx), "b" (r->ebx), "a" (syscalls[r->eax]) : "esp", "memory");
 
     console_current = kernelTask.console;
 }

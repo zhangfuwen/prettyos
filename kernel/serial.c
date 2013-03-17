@@ -92,6 +92,7 @@ void serial_log(uint8_t com, const char* msg, ...)
     {
         serial_write(com, array[i]);
     }
+    va_end(ap);
 }
 #endif
 

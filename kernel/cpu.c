@@ -32,7 +32,7 @@ void cpu_install(void)
                       "pushfl\n"
                       "pop %%eax\n"
                       "sub %%ecx, %%eax\n"
-                      "mov %%eax, %0\n" : "=r"(result) :);
+                      "mov %%eax, %0\n" : "=r"(result) : : "ecx", "eax");
     cpuid_available = (result == 0);
 
     if(cpu_supports(CF_PGE)) // We take this to indicate availability of CR4 register

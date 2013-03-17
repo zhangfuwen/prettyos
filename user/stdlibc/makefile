@@ -28,7 +28,7 @@ else
 endif
 
 # Compiler-/Linker-Flags
-CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O2 -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
 ifeq ($(COMPILER),CLANG)
 	CCFLAGS+= -Xclang -triple=i386-pc-unknown
 	ifeq ($(MESSAGEFORMAT), VS)

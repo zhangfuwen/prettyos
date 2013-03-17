@@ -199,7 +199,7 @@ size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
     char m_buffer[32]; // Larger is not needed at the moment
 
     size_t pos;
-    for (pos = 0; *args && pos < length - 1; args++)
+    for (pos = 0; *args && pos < length; args++)
     {
         switch (*args)
         {
@@ -264,6 +264,8 @@ size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
                 break;
         }
     }
+    if(pos < length)
+        buffer[pos] = 0;
     return (pos);
 }
 
