@@ -1753,7 +1753,6 @@ FS_ERROR FAT_format(partition_t* part) // TODO: Remove floppy dependancies. Make
     return CE_GOOD;
 }
 
-extern uint32_t usbMSDVolumeMaxLBA; // HACK
 FS_ERROR FAT_pinstall(partition_t* part)
 {
   #ifdef _FAT_DIAGNOSIS_
@@ -1828,7 +1827,7 @@ FS_ERROR FAT_pinstall(partition_t* part)
       #endif
     }
 
-    fpart->maxcls = (usbMSDVolumeMaxLBA - fpart->dataLBA - part->start) / fpart->SecPerClus;
+    fpart->maxcls = part->size/fpart->SecPerClus;
     return (CE_GOOD);
 }
 

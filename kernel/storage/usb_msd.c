@@ -15,7 +15,7 @@ static const uint32_t CSWMagicNotOK = 0x01010101;
 static const uint32_t CSWMagicOK    = 0x53425355; // USBS
 static const uint32_t CBWMagic      = 0x43425355; // USBC
 
-uint32_t usbMSDVolumeMaxLBA;
+static uint32_t usbMSDVolumeMaxLBA;
 
 
 static int32_t showResultsRequestSense(void* addr);

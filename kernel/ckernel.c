@@ -40,7 +40,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.18 - Rev: 1403";
+const char* const version = "0.0.4.19 - Rev: 1404";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -251,53 +251,6 @@ void main(multiboot_t* mb_struct)
     printf("--------------------------------------------------------------------------------");
     textColor(TEXT);
 
-#ifdef _ENABLE_HDD_
-    uint8_t buf[512];
-
-    for(int i = 0; i < DISKARRAYSIZE; ++i)
-    {
-        if (disks[i])
-        {
-            if (disks[i]->type == &HDDPIODISK)
-            {
-                printf("Disk found! ATA-Channel is %i (address %X)\n", ((hdd_t*)disks[i]->data)->channel, (uint32_t)&((hdd_t*)(disks[i]->data))->channel);
-
-                const char* hddTestStr = "PrettyOS is the greatest OS of the world.\nEven better than Windows, Linux or MacOSX 8)\n";
-
-                printf("Testing disk with the following data: %s\n", hddTestStr);
-
-                memcpy(buf, hddTestStr, strlen(hddTestStr) + 1);
-
-                FS_ERROR err = hdd_writeSectorPIO(0, buf, disks[i]);
-
-                if (err == CE_GOOD)
-                {
-                    printf("Written successful!\n");
-                }
-                else
-                {
-                    printf("ERROR during sectorWrite: %d\n", err);
-                }
-
-                memset(buf, '#', 512);
-
-                buf[511] = 0;
-
-                err = hdd_readSectorPIO(0, buf, disks[i]);
-
-                if (err == CE_GOOD)
-                {
-                    printf("Read successful!\nContent: %s\n", buf);
-                }
-                else
-                {
-                    printf("ERROR during sectorRead: %d\n", err);
-                }
-            }
-        }
-    }
-
-#endif
 
     const char* progress    = "|/-\\";    // Rotating asterisk
     uint32_t CurrentSeconds = 0xFFFFFFFF; // Set on a high value to force a refresh of the statusbar at the beginning.
@@ -373,6 +326,11 @@ void main(multiboot_t* mb_struct)
                             case 'u': // Taking a screenshot (USB)
                                 ScreenDest = &USB_MSD; // HACK
                                 printf("Save screenshot to USB.");
+                                saveScreenshot();
+                                break;
+                            case 'h': // Taking a screenshot (HDD)
+                                ScreenDest = &HDDPIODISK; // HACK
+                                printf("Save screenshot to HDD.");
                                 saveScreenshot();
                                 break;
                         }

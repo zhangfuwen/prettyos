@@ -172,6 +172,16 @@ static FS_ERROR readSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
 
     mutex_lock(hd->rwLock);
 
+    uint8_t stat = 0;
+
+    if(!ataPoll(hd->channel, ATA_STATUS_ERR | ATA_STATUS_DF, ATA_STATUS_RDY, &stat))
+    {
+        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Read] Drive was not ready in 30 sec: %y\n", stat);
+
+        mutex_unlock(hd->rwLock);
+        return CE_BAD_SECTOR_READ;
+    }
+
     // high nibble: 0xE = master, 0xF = slave
     // low nibble: highest 4 bit of the 28 bit lba
     outportb(port+ATA_REG_DRIVE, (slave? 0xF0 : 0xE0) | ((sector >> 24) & 0x0F));
@@ -189,11 +199,9 @@ static FS_ERROR readSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
 
     outportb(port+ATA_REG_STATUSCMD, 0x20); // Read sector(s)
 
-    uint8_t stat = 0;
-
     if(!ataWaitIRQ(hd->channel, ATA_STATUS_ERR | ATA_STATUS_DF, &stat))
     {
-        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Read] Failed to read: %y\n", stat);
+        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Read] Failed to read: %y\r\n", stat);
         mutex_unlock(hd->rwLock);
 
         // TODO: Reset drive
@@ -202,12 +210,12 @@ static FS_ERROR readSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
     }
     else
     {
-        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Read] Got IRQ, now checking the status: %y\n", stat);
+        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Read] Got IRQ, now checking the status: %y\r\n", stat);
     }
 
     if(!(stat & ATA_STATUS_RDY && stat & ATA_STATUS_DRQ))
     {
-        serial_log(SER_LOG_HRDDSK, "[ATA-PIO-Read28] IRQ generated with no error, but either RDY or DRQ is 0: %y\n", stat);
+        serial_log(SER_LOG_HRDDSK, "[ATA-PIO-Read28] IRQ generated with no error, but either RDY or DRQ is 0: %y\r\n", stat);
         mutex_unlock(hd->rwLock);
 
         return CE_BAD_SECTOR_READ;
@@ -251,13 +259,13 @@ static FS_ERROR writeSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
 
     if(!ataPoll(hd->channel, ATA_STATUS_ERR | ATA_STATUS_DF, ATA_STATUS_RDY, &portval))
     {
-        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Drive was not ready in 30 sec: %y\n", portval);
+        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Drive was not ready in 30 sec: %y\r\n", portval);
 
         mutex_unlock(hd->rwLock);
         return CE_WRITE_ERROR;
     }
 
-    // high nibble: 0xE = master, 0xF = slave
+    // high nibble: 0xE0 = master, 0xF0 = slave
     // low nibble: highest 4 bit of the 28 bit lba
     outportb(port+ATA_REG_DRIVE, (slave? 0xF0 : 0xE0) | ((sector >> 24) & 0x0F));
 
@@ -276,7 +284,7 @@ static FS_ERROR writeSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
 
     if(!ataPoll(hd->channel, ATA_STATUS_ERR | ATA_STATUS_DF, ATA_STATUS_RDY | ATA_STATUS_DRQ, &portval))
     {
-        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Failed to write (pre data send): %y\n", portval);
+        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Failed to write (pre data send): %y\r\n", portval);
 
         mutex_unlock(hd->rwLock);
         return CE_WRITE_ERROR;
@@ -294,7 +302,7 @@ static FS_ERROR writeSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
 
     if(!ataWaitIRQ(hd->channel, ATA_STATUS_DF | ATA_STATUS_ERR, &portval))
     {
-        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Failed to write (post data send): %y\n", portval);
+        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Failed to write (post data send): %y\r\n", portval);
         mutex_unlock(hd->rwLock);
 
         // TODO: Reset drive
@@ -307,7 +315,7 @@ static FS_ERROR writeSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
 
     if(!ataPoll(hd->channel, ATA_STATUS_ERR | ATA_STATUS_ERR, ATA_STATUS_RDY, &portval))
     {
-        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Error during cache flush: %y\n", portval);
+        serial_log(SER_LOG_HRDDSK, "[ATA-PIO28-Write] Error during cache flush: %y\r\n", portval);
 
         mutex_unlock(hd->rwLock);
         return CE_WRITE_ERROR;
@@ -345,7 +353,7 @@ static bool hdd_ATAIdentify(HDD_ATACHANNEL channel, uint16_t *output)
 
     if (inportb(port+ATA_REG_STATUSCMD) == 0xFF) // Floating port
     {
-        serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] floating port: %d \n", (int32_t)channel);
+        serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] floating port: %d\r\n", (int32_t)channel);
         return false;
     }
 
@@ -362,7 +370,7 @@ static bool hdd_ATAIdentify(HDD_ATACHANNEL channel, uint16_t *output)
 
     if ((tmp=inportb(port+ATA_REG_STATUSCMD)) == 0) // Drive does not exist
     {
-        serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] drive does not exist (returned %y from port %x): %d \n",
+        serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] drive does not exist (returned %y from port %x): %d\r\n",
             tmp, (uint16_t)(port+ATA_REG_STATUSCMD), (int32_t)channel);
         return false;
     }
@@ -371,12 +379,12 @@ static bool hdd_ATAIdentify(HDD_ATACHANNEL channel, uint16_t *output)
     {
         if (inportb(port+ATA_REG_LBAMID) || inportb(port+ATA_REG_LBAHI)) // Nonstandard device --> not supported
         {
-            serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] nonstandard device: %d \n", (int32_t)channel);
+            serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] nonstandard device: %d\r\n", (int32_t)channel);
             return false;
         }
         if (inportb(port+ATA_REG_STATUSCMD) & ATA_STATUS_ERR)
         {
-            serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] error bit in status reg was set: %d \n", (int32_t)channel);
+            serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] error bit in status reg was set: %d\r\n", (int32_t)channel);
             return false;
         }
     }
@@ -402,7 +410,7 @@ void hdd_install(void)
     {
         if (hdd_ATAIdentify((HDD_ATACHANNEL)i, buf))
         {
-            serial_log(SER_LOG_HRDDSK, "[hdd_install]Disk connected in ATA-Channel %d\n", i);
+            serial_log(SER_LOG_HRDDSK, "[hdd_install]Disk connected in ATA-Channel %d\r\n", i);
             hdd_t* hd = malloc(sizeof(hdd_t), 0, "hdd-HDD");
 
             hd->channel = (HDD_ATACHANNEL)i;
@@ -446,10 +454,11 @@ void hdd_install(void)
             for(int j = 0; j < PARTITIONARRAYSIZE; ++j)
                 hd->drive->insertedDisk->partition[i] = 0;
 
-            serial_log(SER_LOG_HRDDSK, "[hdd_install] Size of disk at channel %d is %d\n", i, hd->drive->insertedDisk->size);
+            serial_log(SER_LOG_HRDDSK, "[hdd_install] Size of disk at channel %d is %d\r\n", i, hd->drive->insertedDisk->size);
 
             attachDisk(hd->drive->insertedDisk); // disk == hard disk
             attachPort(hd->drive);
+            analyzeDisk(hd->drive->insertedDisk);
         }
     }
 }

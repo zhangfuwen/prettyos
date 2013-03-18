@@ -135,6 +135,8 @@ void showPortList(void)
                 printf("\nUSB 1.1 (UHCI) ");
             else if (ports[i]->type == &USB_EHCI)
                 printf("\nUSB 2.0        ");
+            else if (ports[i]->type == &HDD)
+                printf("\nATA (PIO)      ");
             else
                 printf("\nUnknown        ");
 
@@ -186,6 +188,7 @@ void showDiskList(void)
             if      (disks[i]->type == &FLOPPYDISK) printf("\nFloppy");
             else if (disks[i]->type == &RAMDISK)    printf("\nRAMdisk");
             else if (disks[i]->type == &USB_MSD)    printf("\nUSB MSD");
+            else if (disks[i]->type == &HDDPIODISK) printf("\nHDD");
             else                                    printf("\nUnknown");
 
             textColor(IMPORTANT);
@@ -418,8 +421,6 @@ void devicemanager_flushCaches(void* owner)
 
 static void fillCache(uint32_t sector, disk_t* disk, uint8_t* buffer, bool write, void* owner)
 {
-    static uint8_t currCache = 0;
-
     bool done = false;
     for (uint16_t i = 0; i < NUMCACHE; i++) // Look for cache that can be updated
     {
@@ -446,6 +447,7 @@ static void fillCache(uint32_t sector, disk_t* disk, uint8_t* buffer, bool write
 
     if(!done)
     {
+        static uint8_t currCache = 0;
         if(caches[currCache].valid)
             flushCache(caches+currCache); // Write cache before its overwritten
         // fill new cache
