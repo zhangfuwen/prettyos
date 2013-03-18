@@ -29,11 +29,11 @@ static volatile bool v86_if;
 
 bool vm86_sensitiveOpcodehandler(registers_t* ctx)
 {
-    uint8_t*  ip      = FP_TO_LINEAR(ctx->cs, ctx->eip);
-    uint16_t* ivt     = 0;
-    uint16_t* stack   = (uint16_t*)FP_TO_LINEAR(ctx->ss, ctx->useresp);
-    uint32_t* stack32 = (uint32_t*)stack;
-    bool isOperand32  = false;
+    uint8_t*  ip           = FP_TO_LINEAR(ctx->cs, ctx->eip);
+    volatile uint16_t* ivt = 0; // Has to be volatile to work with current clang
+    uint16_t* stack        = (uint16_t*)FP_TO_LINEAR(ctx->ss, ctx->useresp);
+    uint32_t* stack32      = (uint32_t*)stack;
+    bool isOperand32       = false;
 
     // regarding opcodes, cf. "The Intel® 64 and IA-32 Architectures Software Developer’s Manual, Volumes 2A & 2B"
 

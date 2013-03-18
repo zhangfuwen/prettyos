@@ -61,6 +61,7 @@ static const KEY_t scancodeToKey_E0[] =      // cf. http://www.win.tue.nl/~aeb/l
 
 static bool pressedKeys[__KEY_LAST] = {false}; // for monitoring pressed keys
 static void keyboard_handler(registers_t* r);
+static bool capsLock = false;
 
 
 void keyboard_install(void)
@@ -91,7 +92,6 @@ static uint8_t getScancode(void)
 static KEY_t scancodeToKey(uint8_t scancode, bool* make)
 {
     KEY_t key = __KEY_INVALID;
-
     static uint8_t prevScancode = 0; // Stores the previous scancode. For E1 codes it stores always the first byte (0xE1).
     static uint8_t byteCounter = 1; // Only needed for E1 codes
 
@@ -119,6 +119,7 @@ static KEY_t scancodeToKey(uint8_t scancode, bool* make)
             byteCounter++;
             if (byteCounter == 3)
             {
+                prevScancode = 0; // Last scancode is not interesting in this case
                 return (KEY_PAUSE);
             }
         }
@@ -127,6 +128,8 @@ static KEY_t scancodeToKey(uint8_t scancode, bool* make)
             prevScancode = 0; // Last scancode is not interesting in this case
             key = scancodeToKey_default[scancode & 0x7F];
             pressedKeys[key] = !(scancode & 0x80);
+            if(key == KEY_CAPS && pressedKeys[KEY_CAPS])
+                capsLock = !capsLock;
         }
     }
     return (key);
@@ -136,25 +139,29 @@ static char keyToASCII(KEY_t key)
 {
     uint8_t retchar = 0; // The character that returns the scan code to ASCII code
 
+    bool shift = pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT];
+    if(capsLock)
+        shift = !shift;
+
     // Fallback mechanism
     if (pressedKeys[KEY_ALTGR])
     {
-        if (pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT])
+        if (shift)
         {
             retchar = keyToASCII_shiftAltGr[key];
         }
-        if (!(pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT]) || retchar == 0) // if shift is not pressed or if there is no key specified for ShiftAltGr (so retchar is still 0)
+        if (!shift || retchar == 0) // if shift is not pressed or if there is no key specified for ShiftAltGr (so retchar is still 0)
         {
             retchar = keyToASCII_altGr[key];
         }
     }
     if (!pressedKeys[KEY_ALTGR] || retchar == 0) // if AltGr is not pressed or if retchar is still 0
     {
-        if (pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT])
+        if (shift)
         {
             retchar = keyToASCII_shift[key];
         }
-        if (!(pressedKeys[KEY_LSHIFT] || pressedKeys[KEY_RSHIFT]) || retchar == 0) // if shift is not pressed or if retchar is still 0
+        if (!shift || retchar == 0) // if shift is not pressed or if retchar is still 0
         {
             retchar = keyToASCII_default[key];
         }

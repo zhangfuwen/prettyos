@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -6,17 +5,19 @@
 #include <vector>
 #include <string>
 
+
 typedef unsigned char  byte;
 typedef unsigned short word;
 typedef unsigned int   uint;
 
 
-struct Format
+class Format
 {
+	std::ostringstream ss;
+public:
 	Format& operator()()  {ss.str(""); return *this;}
 	template<typename T> Format& operator<<(const T& t)  {ss<<t; return *this;}
-	const std::string str()  {return ss.str();}
-	std::stringstream ss;
+	const std::string str() const {return ss.str();}
 } fmt;
 
 
@@ -87,34 +88,24 @@ struct RootDirEntry
 	}
 
 	RootDirEntry( const std::string& name )
+		: attributes(0x08), reserved1(0), reserved2(0), creation_ms(0)
+		, creation_time(0), creation_date(0), lastaccess_date(0), lastchange_time(0xA2AA)
+		, lastchange_date(0x3B1E), start_cluster_plus2(0), file_size(0)
 	{
-		memset( this, 0, sizeof(*this) );
 		memcpy( filename, name.c_str(), name.size() );
 		memset( filename+name.size(), ' ', sizeof(filename)-name.size() );
 		memset( extension, ' ', 3 );
-		attributes = 0x08;
-
-		lastchange_time = 0xA2AA;
-		lastchange_date = 0x3B1E;
 	}
 
 	RootDirEntry( const std::string& name, const std::string& ext, uint filesize, uint first_cluster )
+		: attributes(0x20), reserved1(0), reserved2(0), creation_ms(1)
+		, creation_time(0xA2BA), creation_date(0x3B1E), lastaccess_date(0x3B5A), lastchange_time(0x863C)
+		, lastchange_date(0x3B5A), start_cluster_plus2(first_cluster+2), file_size(filesize)
 	{
-		memset( this, 0, sizeof(*this) );
 		memcpy( filename, name.c_str(), name.size() );
 		memset( filename+name.size(), ' ', sizeof(filename)-name.size() );
 		memcpy( extension, ext.c_str(), ext.size() );
 		memset( filename+ext.size(), ' ', sizeof(extension)-ext.size() );
-		attributes = 0x20;
-		file_size = filesize;
-		start_cluster_plus2 = first_cluster+2;
-
-		creation_ms = 1;
-		creation_time = 0xA2BA;
-		creation_date = 0x3B1E;
-		lastaccess_date = 0x3B5A;
-		lastchange_time = 0x863C;
-		lastchange_date = 0x3B5A;
 	}
 }
 #ifdef WIN32
@@ -143,7 +134,7 @@ std::vector<byte> compactFAT( const std::vector<word>& fat )
 
 
 
-int main( int argc, char** args )
+int main(unsigned int argc, char* argv[])
 {
 	assert( sizeof(BootSector) == 512 );
 	assert( sizeof(RootDirEntry) == 32 );
@@ -156,11 +147,10 @@ int main( int argc, char** args )
 		// Read and verify the bootsector
 		BootSector bs;
 		{
-			std::ifstream bsf( args[3], std::ios::binary );
+			std::ifstream bsf( argv[3], std::ios::binary );
 			if ( ! bsf )
-				throw (fmt() << "Cannot open the bootsector file '" << args[3] << "'").str();
+				throw (fmt() << "Cannot open the bootsector file '" << argv[3] << "'").str();
 			bsf.read( (char*)&bs, sizeof(bs) );
-			uint asd = bsf.gcount();
 			if ( bsf.gcount() != sizeof(bs) )
 				throw (fmt() << "Bootsector file is too small, expected " << sizeof(bs) << " bytes").str();
 			if ( strncmp( bs.fat_version, "FAT12   ", 8 ) != 0 )
@@ -181,25 +171,24 @@ int main( int argc, char** args )
 		fat[0] = 0xFF0;
 		fat[1] = 0xFFF;
 		uint direntry_idx = 0;
-		uint cluster_idx = 0;
 
 		// Add volume entry
-		RootDirEntry volume_entry = RootDirEntry( args[1] );
+		RootDirEntry volume_entry = RootDirEntry( argv[1] );
 		rootdir[direntry_idx++] = volume_entry;
 
 		// Add the files
 		for ( int i=4; i<argc; ++i )
 		{
 			// Open and read the file
-			std::ifstream file( args[i], std::ios::binary );
+			std::ifstream file( argv[i], std::ios::binary );
 			if ( ! file )
-				throw (fmt() << "Cannot open the file '" << args[i] << "'").str();
+				throw (fmt() << "Cannot open the file '" << argv[i] << "'").str();
 			file.seekg( 0, std::ios::end );
 			size_t file_size = file.tellg();
 			file.seekg( 0, std::ios::beg );
 
 			// Get the file's name and extension ("C:/foo/dog.txt" -> "dog", "txt")
-			std::string name( args[i] );
+			std::string name( argv[i] );
 			size_t slash_pos = name.find_last_of( "\\/" );
 			if ( slash_pos != std::string::npos )
 				name.erase( 0, slash_pos+1 );
@@ -233,12 +222,12 @@ int main( int argc, char** args )
 
 		// Save the image to file
 		{
-			std::ofstream file( args[2], std::ios::binary );
+			std::ofstream file( argv[2], std::ios::binary );
 			if ( ! file )
-				throw (fmt() << "Cannot open the file '" << args[1] << "'").str();
+				throw (fmt() << "Cannot open the file '" << argv[1] << "'").str();
 
 			// Write the bootsector
-			file.write( (char*)&bs, 512 );
+			file.write( (const char*)&bs, 512 );
 
 			// Write the reserved sectors
 			std::vector<char> reserved( bs.bytes_per_sector, 0 );
@@ -248,11 +237,10 @@ int main( int argc, char** args )
 			// Write the FAT
 			std::vector<byte> compacted_fat = compactFAT( fat );
 			for ( uint i=0; i<bs.fat_copies; ++i )
-				file.write( (char*)&compacted_fat[0], compacted_fat.size() );
+				file.write( (const char*)&compacted_fat[0], compacted_fat.size() );
 
 			// Write the root directory
-			uint p = file.tellp();
-			file.write( (char*)&rootdir[0], rootdir.size()*sizeof(RootDirEntry) );
+			file.write( (const char*)&rootdir[0], rootdir.size()*sizeof(RootDirEntry) );
 
 			// Write the data sectors
 			file.write( &data[0], 1474560-file.tellp() );
@@ -260,7 +248,7 @@ int main( int argc, char** args )
 	}
 	catch ( const std::string& s )
 	{
-		std::cerr << s << "\n";
+		std::cerr << s << '\n';
 		return -1;
 	}
 }

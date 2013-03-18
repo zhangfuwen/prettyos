@@ -29,11 +29,11 @@ char RenderBuffer[83];
 void drawEntry(const char* entry)
 {
     sprintf(RenderBuffer, "$> %s", entry);
-    size_t length = min(80, entryLength)+3;
-    if (length < MAX_CHAR_PER_LINE)
-        memset(RenderBuffer+length, ' ', MAX_CHAR_PER_LINE-length);
+    size_t length = min(80, entryLength+3);
+    if (length < 80)
+        memset(RenderBuffer+length, ' ', 80-length);
     RenderBuffer[80] = 0;
-    if (cursorPos < entryLength && entryLength < MAX_CHAR_PER_LINE)
+    if (cursorPos < entryLength)
     {
         prependStr(RenderBuffer+3+cursorPos, "%v");
     }
