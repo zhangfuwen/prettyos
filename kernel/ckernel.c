@@ -40,17 +40,13 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.19 - Rev: 1404";
+const char* const version = "0.0.4.20 - Rev: 1405";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
 extern uintptr_t _bss_end;   // Linker script
 
-extern diskType_t* ScreenDest; // HACK for screenshots
-
 todoList_t* kernel_idleTasks; // List of functions that are executed in kernel idle loop
-
-extern disk_t* disks[DISKARRAYSIZE]; //HACK
 
 static void logText(const char* str)
 {
@@ -319,19 +315,16 @@ void main(multiboot_t* mb_struct)
                         switch (*(char*)buffer)
                         {
                             case 'f': // Taking a screenshot (Floppy)
-                                ScreenDest = &FLOPPYDISK; // HACK
                                 printf("Save screenshot to Floppy.");
-                                saveScreenshot();
+                                saveScreenshot(&FLOPPYDISK);
                                 break;
                             case 'u': // Taking a screenshot (USB)
-                                ScreenDest = &USB_MSD; // HACK
                                 printf("Save screenshot to USB.");
-                                saveScreenshot();
+                                saveScreenshot(&USB_MSD);
                                 break;
                             case 'h': // Taking a screenshot (HDD)
-                                ScreenDest = &HDDPIODISK; // HACK
                                 printf("Save screenshot to HDD.");
-                                saveScreenshot();
+                                saveScreenshot(&HDDPIODISK);
                                 break;
                         }
                     }

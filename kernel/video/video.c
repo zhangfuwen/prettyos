@@ -309,8 +309,7 @@ void takeScreenshot(void)
 }
 
 extern disk_t* disks[DISKARRAYSIZE]; // HACK
-diskType_t*    ScreenDest = &FLOPPYDISK; // HACK
-void saveScreenshot(void)
+void saveScreenshot(diskType_t* ScreenDest)
 {
     char Pfad[20];
 

@@ -7,7 +7,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-int main(size_t argc, char* argv[])
+int main(int argc, char* argv[])
 {
     setScrollField(0, 43); // The train should not be destroyed by the output, so we shrink the scrolling area...
     printLine("================================================================================", 0, 0x0B);
@@ -37,7 +37,7 @@ int main(size_t argc, char* argv[])
 }
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

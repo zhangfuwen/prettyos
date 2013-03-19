@@ -60,7 +60,7 @@ void kprintf(const char* message, uint32_t line, uint8_t attribute, ...);
 void vga_updateCursor(void);
 uint8_t AsciiToCP437(uint8_t ascii);
 void writeInfo(uint8_t line, const char* content, ...);
-void saveScreenshot(void);
+void saveScreenshot(diskType_t* destinationType);
 void takeScreenshot(void);
 void mt_screenshot(void);
 

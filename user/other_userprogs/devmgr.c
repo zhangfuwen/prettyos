@@ -114,7 +114,7 @@ void parseArg(const char* arg) {
     }
 }
 
-int main(size_t argc, char* argv[])
+int main(int argc, char* argv[])
 {
     printLine("================================================================================", 0, 0x0B);
     printLine("                                 Device Manager",                                  2, 0x0B);

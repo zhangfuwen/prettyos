@@ -105,6 +105,7 @@
     <ClCompile Include="..\user\other_userprogs\browser.c" />
     <ClCompile Include="..\user\other_userprogs\calc.c" />
     <ClCompile Include="..\user\other_userprogs\devmgr.c" />
+    <ClCompile Include="..\user\other_userprogs\editor.cpp" />
     <ClCompile Include="..\user\other_userprogs\ftp.c" />
     <ClCompile Include="..\user\other_userprogs\hello.c" />
     <ClCompile Include="..\user\other_userprogs\irc.c" />

@@ -156,7 +156,7 @@ static int32_t CalcTerm(char* term, size_t pos) {
     return (atoi(term+pos));
 }
 
-int main(size_t argc, char* argv[]) {
+int main(int argc, char* argv[]) {
     if(argc > 1)
     {
         printf("Result: %u", CalcTerm(argv[1], 0));
@@ -184,7 +184,7 @@ int main(size_t argc, char* argv[]) {
 }
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

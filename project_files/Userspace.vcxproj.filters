@@ -191,6 +191,9 @@
     <ClCompile Include="..\user\other_userprogs\devmgr.c">
       <Filter>Other Userprogs</Filter>
     </ClCompile>
+    <ClCompile Include="..\user\other_userprogs\editor.cpp">
+      <Filter>Other Userprogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\user\stdlibc\assert.h">

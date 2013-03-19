@@ -39,11 +39,11 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -O -ffreestanding -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti
+CPPFLAGS= -c -std=c++11 -march=i486 -Wshadow -m32 -Werror -Wall -O2 -nostdinc -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti
 ifeq ($(COMPILER),CLANG)
 	CPPFLAGS+= -Xclang -triple=i386-pc-unknown
 	ifeq ($(MESSAGEFORMAT), VS)
-		CCFLAGS+= -fdiagnostics-format=msvc
+		CPPFLAGS+= -fdiagnostics-format=msvc
 	endif
 else
 	CPPFLAGS+= -fno-pic -lgcc

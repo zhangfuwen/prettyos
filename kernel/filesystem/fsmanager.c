@@ -63,7 +63,7 @@ FS_ERROR analyzePartition(partition_t* part)
 
     // Is it a BPB? -> FAT
     BPBbase_t* BPB = (BPBbase_t*)buffer;
-    if (BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0)
+    if (BPB->FATcount > 0 && BPB->bytesPerSector%512 == 0 && BPB->bytesPerSector != 0)
     {
         part->type = &FAT;
     }
@@ -203,7 +203,8 @@ FS_ERROR rename(const char* oldpath, const char* newpath)
 inline char fgetc(file_t* file)
 {
     char retVal;
-    fread(&retVal, 1, 1, file);
+    if(file->volume->type->fread(file, &retVal, 1) == CE_EOF)
+        return -1;
     return (retVal);
 }
 
@@ -347,7 +348,7 @@ void fsmanager_cleanup(task_t* task)
 
 
 /*
-* Copyright (c) 2010-2012 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2010-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

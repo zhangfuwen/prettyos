@@ -31,8 +31,8 @@ endif
 
 # Compiler-/Linker-Flags
 NASMFLAGS= -Ox -f elf
-CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O2 -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
-CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O2 -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti
+CCFLAGS= -c -std=c99 -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O2 -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude
+CPPFLAGS= -c -std=c++0x -march=i486 -Wshadow -m32 -Werror -Wall -ffunction-sections -fdata-sections -O2 -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fomit-frame-pointer -fno-common -Iinclude -fno-exceptions -fno-rtti
 ifeq ($(COMPILER),CLANG)
 	CCFLAGS+= -Xclang -triple=i386-pc-unknown
 	CPPFLAGS+= -Xclang -triple=i386-pc-unknown
