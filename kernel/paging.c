@@ -224,7 +224,7 @@ static uint32_t physMemAlloc(void)
             uint32_t bitnr;
             // Find the number of first free bit.
             // This inline assembler instruction is smaller and faster than a C loop to identify this bit
-            __asm__ volatile("bsfl %1, %0" : "=r"(bitnr) : "r"(~bittable[firstFreeDWORD]));
+            __asm__("bsfl %1, %0" : "=r"(bitnr) : "r"(~bittable[firstFreeDWORD]));
 
             // Set the page to "reserved" and return the frame's address
             SET_BIT(bittable[firstFreeDWORD], bitnr % 32);

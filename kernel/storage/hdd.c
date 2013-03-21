@@ -23,7 +23,7 @@ static void* hddDmaAdress;
 
 static inline void repinsw(uint16_t port, uint16_t* buf, uint32_t count)
 {
-    __asm__ volatile ("rep insw" : : "d" (port), "D" ((uint32_t)buf), "c" (count));
+    __asm__("rep insw" : : "d" (port), "D" ((uint32_t)buf), "c" (count));
 }
 
 static const uint32_t ataTimeout = 30000; // Technically we have to wait 30 sec for drive spinning up

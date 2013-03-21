@@ -168,9 +168,6 @@ static void move_cursor_right(void)
         console_current->cursor.x = 0;
         scroll();
     }
-
-    if(console_current == console_displayed)
-        vga_updateCursor();
 }
 
 static void move_cursor_left(void)
@@ -184,17 +181,11 @@ static void move_cursor_left(void)
         console_current->cursor.x = COLUMNS-1;
         --console_current->cursor.y;
     }
-
-    if(console_current == console_displayed)
-        vga_updateCursor();
 }
 
 static void move_cursor_home(void)
 {
     console_current->cursor.x = 0;
-
-    if(console_current == console_displayed)
-        vga_updateCursor();
 }
 
 void setCursor(position_t pos)
@@ -224,11 +215,8 @@ void console_setPixel(uint8_t x, uint8_t y, uint16_t value)
     }
 }
 
-void putch(char c)
+static void putCP437ch(uint8_t uc)
 {
-    uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
-    mutex_lock(console_current->mutex);
-
     switch (uc)
     {
         case 0x08: // backspace: move the cursor one space backwards and delete
@@ -244,8 +232,6 @@ void putch(char c)
                 ++console_current->cursor.y;
                 console_current->cursor.x=0;
                 scroll();
-                if(console_displayed == console_current)
-                    vga_updateCursor();
             }
             break;
         case '\r': // cr: cursor back to the margin
@@ -266,14 +252,32 @@ void putch(char c)
             }
             break;
     }
+}
 
+static void atomic_putch(char c) // Does neither lock mutex nor move vga cursor
+{
+    uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
+    putCP437ch(uc);
+}
+
+void putch(char c)
+{
+    uint8_t uc = AsciiToCP437((uint8_t)c); // no negative values
+    mutex_lock(console_current->mutex);
+    putCP437ch(uc);
+
+    if(console_current == console_displayed)
+        vga_updateCursor();
     mutex_unlock(console_current->mutex);
 }
 
 void puts(const char* text)
 {
     mutex_lock(console_current->mutex);
-    for (; *text; putch(*text), ++text);
+    for (; *text; atomic_putch(*text), ++text);
+
+    if(console_current == console_displayed)
+        vga_updateCursor();
     mutex_unlock(console_current->mutex);
 }
 
@@ -360,12 +364,12 @@ size_t vprintf(const char* args, va_list ap)
                         break;
                     }
                     case 'c':
-                        putch((int8_t)va_arg(ap, int32_t));
+                        atomic_putch((int8_t)va_arg(ap, int32_t));
                         pos++;
                         break;
                     case 'v':
                         textColor((attribute >> 4) | (attribute << 4));
-                        putch(*(++args));
+                        atomic_putch(*(++args));
                         textColor(attribute);
                         pos++;
                         break;
@@ -409,7 +413,7 @@ size_t vprintf(const char* args, va_list ap)
                         break;
                     }
                     case '%':
-                        putch('%');
+                        atomic_putch('%');
                         pos++;
                         break;
                     default:
@@ -419,12 +423,14 @@ size_t vprintf(const char* args, va_list ap)
                 }
                 break;
             default:
-                putch(*args);
+                atomic_putch(*args);
                 pos++;
                 break;
         }
     }
 
+    if(console_current == console_displayed)
+        vga_updateCursor();
     mutex_unlock(console_current->mutex);
     return (pos);
 }

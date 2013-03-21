@@ -132,7 +132,7 @@ uint16_t* memsetw(uint16_t* dest, uint16_t val, size_t words)
 
 uint32_t* memsetl(uint32_t* dest, uint32_t val, size_t dwords)
 {
-    __asm__ volatile("cld\n" "rep stosl" : : "D"(dest), "a"(val), "c" (dwords));
+    __asm__("cld\n" "rep stosl" : : "D"(dest), "a"(val), "c" (dwords));
     return dest;
 }
 
@@ -993,7 +993,7 @@ uint32_t abs(int32_t arg)
 double fabs(double x)
 {
     double result;
-    __asm__ volatile("fabs" : "=t" (result) : "0" (x));
+    __asm__("fabs" : "=t" (result) : "0" (x));
     return result;
 }
 
@@ -1003,7 +1003,7 @@ double sqrt(double x)
         return NAN;
 
     double result;
-    __asm__ volatile("fsqrt" : "=t" (result) : "0" (x));
+    __asm__("fsqrt" : "=t" (result) : "0" (x));
     return result;
 }
 

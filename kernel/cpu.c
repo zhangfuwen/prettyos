@@ -36,13 +36,13 @@ void cpu_install(void)
     cpuid_available = (result == 0);
 
     if(cpu_supports(CF_PGE)) // We take this to indicate availability of CR4 register
-        __asm__ volatile("mov %cr4, %eax;"
-                         "or $0x00000080, %eax;" // Activate PGE
-                         "mov %eax, %cr4");
+        __asm__("mov %cr4, %eax;"
+                "or $0x00000080, %eax;" // Activate PGE
+                "mov %eax, %cr4");
     if(cpu_supports(CF_FXSR)) // We take this to indicate availability of CR4 register
-        __asm__ volatile("mov %cr4, %eax;"
-                         "or $0x00000200, %eax;" // Activate OSFXSR
-                         "mov %eax, %cr4");
+        __asm__("mov %cr4, %eax;"
+                "or $0x00000200, %eax;" // Activate OSFXSR
+                "mov %eax, %cr4");
 }
 
 static void printSupport(bool b)
@@ -118,25 +118,25 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
         case CR_EAX:
         {
             volatile uint32_t temp; // Has to be volatile to make it work with gcc
-            __asm__ volatile ("cpuid" : "=a"(temp) : "a"(function));
+            __asm__("cpuid" : "=a"(temp) : "a"(function));
             return (temp);
         }
         case CR_EBX:
         {
             volatile uint32_t temp;
-            __asm__ volatile ("cpuid" : "=b"(temp) : "a"(function));
+            __asm__("cpuid" : "=b"(temp) : "a"(function));
             return (temp);
         }
         case CR_ECX:
         {
             volatile uint32_t temp;
-            __asm__ volatile ("cpuid" : "=c"(temp) : "a"(function));
+            __asm__("cpuid" : "=c"(temp) : "a"(function));
             return (temp);
         }
         case CR_EDX:
         {
             volatile uint32_t temp;
-            __asm__ volatile ("cpuid" : "=d"(temp) : "a"(function));
+            __asm__("cpuid" : "=d"(temp) : "a"(function));
             return (temp);
         }
         default:
@@ -148,7 +148,7 @@ uint64_t cpu_MSRread(uint32_t msr)
 {
     uint32_t low, high;
 
-    __asm__ volatile ("rdmsr" : "=a" (low), "=d" (high) : "c" (msr));
+    __asm__("rdmsr" : "=a" (low), "=d" (high) : "c" (msr));
 
     return ((uint64_t)high << 32) | low;
 }
@@ -158,7 +158,7 @@ void cpu_MSRwrite(uint32_t msr, uint64_t value)
     uint32_t low = value & 0xFFFFFFFF;
     uint32_t high = value >> 32;
 
-    __asm__ volatile ("wrmsr" :: "a"(low), "c"(msr), "d"(high));
+    __asm__("wrmsr" :: "a"(low), "c"(msr), "d"(high));
 }
 
 

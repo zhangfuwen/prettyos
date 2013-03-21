@@ -9,7 +9,7 @@ static double pow2x(double x) // 2^x
     double fl = 0;
     int i;
 
-    __asm__ volatile("frndint" : "=t" (rndResult) :"0"(x));
+    __asm__("frndint" : "=t" (rndResult) :"0"(x));
 
     if (rndResult > x)
     {
@@ -26,7 +26,7 @@ static double pow2x(double x) // 2^x
     {
         powResult *= 2.0;
     }
-    __asm__ volatile("f2xm1" : "=t" (result) : "0" (fl));
+    __asm__("f2xm1" : "=t" (result) : "0" (fl));
 
     if (x >=0)
     {
@@ -43,14 +43,14 @@ int abs(int n)
 double fabs(double x)
 {
     double result;
-    __asm__ volatile("fabs" : "=t" (result) : "0" (x));
+    __asm__("fabs" : "=t" (result) : "0" (x));
     return result;
 }
 
 double ceil(double x)
 {
     double result;
-    __asm__ volatile("frndint" :"=t" (result) : "0"(x));
+    __asm__("frndint" :"=t" (result) : "0"(x));
     if (result < x)
     {
         return result + 1;
@@ -60,7 +60,7 @@ double ceil(double x)
 double floor(double x)
 {
     double result;
-    __asm__ volatile("frndint" :"=t" (result) : "0"(x));
+    __asm__("frndint" :"=t" (result) : "0"(x));
     if (result > x)
     {
         return result - 1;
@@ -77,19 +77,19 @@ double fmod(double numerator, double denominator)
 double cos(double x)
 {
     double result;
-    __asm__ volatile("fcos" : "=t" (result) : "0" (x));
+    __asm__("fcos" : "=t" (result) : "0" (x));
     return result;
 }
 double sin(double x)
 {
     double result;
-    __asm__ volatile("fsin" : "=t" (result) : "0" (x));
+    __asm__("fsin" : "=t" (result) : "0" (x));
     return result;
 }
 double tan(double x)
 {
     double result;
-    __asm__ volatile("fptan; fstp %%st(0)": "=t" (result) : "0" (x));
+    __asm__("fptan; fstp %%st(0)": "=t" (result) : "0" (x));
     return result;
 }
 
@@ -123,13 +123,13 @@ double asin(double x)
 double atan(double x)
 {
     double result;
-    __asm__ volatile("fld1; fpatan" : "=t" (result) : "0" (x));
+    __asm__("fld1; fpatan" : "=t" (result) : "0" (x));
     return result;
 }
 double atan2(double x, double y)
 {
     double result;
-    __asm__ volatile("fpatan" : "=t" (result) : "0" (y), "u" (x));
+    __asm__("fpatan" : "=t" (result) : "0" (y), "u" (x));
     return result;
 }
 
@@ -139,14 +139,14 @@ double sqrt(double x)
         return NAN;
 
     double result;
-    __asm__ volatile("fsqrt" : "=t" (result) : "0" (x));
+    __asm__("fsqrt" : "=t" (result) : "0" (x));
     return result;
 }
 
 double exp(double x)
 {
     double result;
-    __asm__ volatile("fldl2e": "=t" (result));
+    __asm__("fldl2e": "=t" (result));
     return pow(pow2x(result),x);
 }
 
@@ -180,7 +180,7 @@ double log(double x)
         return NAN;
 
     double retVal;
-    __asm__ volatile(
+    __asm__(
         "fyl2x;"
         "fldln2;"
         "fmulp" : "=t"(retVal) : "0"(x), "u"(1.0));
@@ -193,7 +193,7 @@ double log10(double x)
         return NAN;
 
     double retVal;
-    __asm__ volatile(
+    __asm__(
         "fyl2x;"
         "fldlg2;"
         "fmulp" : "=t"(retVal) : "0"(x), "u"(1.0));
@@ -220,9 +220,9 @@ double pow(double base, double exponent)
     }
 
     double result;
-    __asm__ volatile("fyl2x" : "=t" (result) : "0" (base), "u" (exponent));
+    __asm__("fyl2x" : "=t" (result) : "0" (base), "u" (exponent));
 
     double retVal;
-    __asm__ volatile("f2xm1" : "=t" (retVal) : "0" (result));
+    __asm__("f2xm1" : "=t" (retVal) : "0" (result));
     return(retVal+1.0);
 }

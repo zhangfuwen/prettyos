@@ -29,8 +29,8 @@
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b))
 void panic_assert(const char* file, uint32_t line, const char* desc);
 
-#define CLEAR_BIT(val, bit) __asm__ volatile("btr %1, %0" : "+r"(val) : "r"(bit))
-#define SET_BIT(val, bit) __asm__ volatile("bts %1, %0" : "+r"(val) : "r"(bit))
+#define CLEAR_BIT(val, bit) __asm__("btr %1, %0" : "+r"(val) : "r"(bit))
+#define SET_BIT(val, bit) __asm__("bts %1, %0" : "+r"(val) : "r"(bit))
 
 
 static inline void nop(void) { __asm__ volatile ("nop"); } // Do nothing
@@ -47,37 +47,37 @@ static inline uint64_t rdtsc(void)
 static inline uint8_t inportb(uint16_t port)
 {
     uint8_t ret_val;
-    __asm__ volatile ("inb %%dx,%%al" : "=a"(ret_val) : "d"(port));
+    __asm__ volatile ("inb %1, %0" : "=a"(ret_val) : "d"(port));
     return ret_val;
 }
 
 static inline uint16_t inportw(uint16_t port)
 {
     uint16_t ret_val;
-    __asm__ volatile ("inw %%dx,%%ax" : "=a" (ret_val) : "d"(port));
+    __asm__ volatile ("inw %1, %0" : "=a" (ret_val) : "d"(port));
     return ret_val;
 }
 
 static inline uint32_t inportl(uint16_t port)
 {
     uint32_t ret_val;
-    __asm__ volatile ("inl %%dx,%%eax" : "=a" (ret_val) : "d"(port));
+    __asm__ volatile ("inl %1, %0" : "=a" (ret_val) : "d"(port));
     return ret_val;
 }
 
 static inline void outportb(uint16_t port, uint8_t val)
 {
-    __asm__ volatile ("outb %%al,%%dx" :: "a"(val), "d"(port));
+    __asm__ volatile ("outb %0, %1" :: "a"(val), "d"(port));
 }
 
 static inline void outportw(uint16_t port, uint16_t val)
 {
-    __asm__ volatile ("outw %%ax,%%dx" :: "a"(val), "d"(port));
+    __asm__ volatile ("outw %0, %1" :: "a"(val), "d"(port));
 }
 
 static inline void outportl(uint16_t port, uint32_t val)
 {
-    __asm__ volatile ("outl %%eax,%%dx" : : "a"(val), "d"(port));
+    __asm__ volatile ("outl %0, %1" : : "a"(val), "d"(port));
 }
 
 static inline uint32_t alignUp(uint32_t val, uint32_t alignment)
