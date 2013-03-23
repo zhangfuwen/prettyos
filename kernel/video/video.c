@@ -232,9 +232,31 @@ void refreshUserScreen(void)
 
     if(console_displayed->properties & CONSOLE_FULLSCREEN)
     {
+        // copying content of visible console to the video-ram
         memcpy(vidmem, (void*)console_displayed->vidmem, COLUMNS*LINES*sizeof(uint16_t));
     }
+    else if (console_displayed->properties & CONSOLE_SHOWINFOBAR)
+    {
+        // copying content of visible console to the video-ram
+        memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_END-USER_BEGIN-4) * 2);
+        kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
+        refreshInfoBar();
+    }
     else
+    {
+        // copying content of visible console to the video-ram
+        memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_END-USER_BEGIN)*2);
+    }
+
+    mutex_unlock(videoLock);
+}
+
+void refreshScreen(void)
+{
+    mutex_lock(videoLock);
+
+    refreshUserScreen(); // Reprint user area
+    if(!(console_displayed->properties & CONSOLE_FULLSCREEN))
     {
         // Printing titlebar
         kprintf("PrettyOS [Version %s]                                                            ", 0, TITLEBAR, version);
@@ -252,20 +274,8 @@ void refreshUserScreen(void)
             cursor.y = 0;
             kputs(Buffer, 0x0C);
         }
-        kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation
-        if (console_displayed->properties & CONSOLE_SHOWINFOBAR)
-        {
-            // copying content of visible console to the video-ram
-            memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_END-USER_BEGIN-4) * 2);
-            kprintf("--------------------------------------------------------------------------------", 44, 7); // Separation
-            refreshInfoBar();
-        }
-        else
-        {
-            // copying content of visible console to the video-ram
-            memcpy(vidmem + USER_BEGIN * COLUMNS, (void*)console_displayed->vidmem, COLUMNS * (USER_END-USER_BEGIN)*2);
-        }
-        kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation
+        kprintf("--------------------------------------------------------------------------------", 1, 7); // Separation on top
+        kprintf("--------------------------------------------------------------------------------", 48, 7); // Separation on bottom
 
         cursor.y = console_displayed->cursor.y;
         cursor.x = console_displayed->cursor.x;

@@ -31,8 +31,8 @@ static const uint32_t ataTimeout = 30000; // Technically we have to wait 30 sec 
 static const uint32_t ataIRQCheckInterval = 200;
 static const uint32_t ataIRQRetries = 30000 / 200;
 
-static const uint32_t ataPollInterval = 5;
-static const uint32_t ataPollRetries = 30000 / 5;
+static const uint32_t ataPollInterval = 10;
+static const uint32_t ataPollRetries = 30000 / 10;
 
 // TODO: Merge the r/w-functions and make lba48 (currently removed) part of it to avoid code duplication
 // Caller has to call irq_resetCounter before calling this function
@@ -121,14 +121,14 @@ static inline bool ataPoll(HDD_ATACHANNEL channel, uint8_t errMask, uint8_t good
     {
         if(!(portval & ATA_STATUS_BSY))
         {
-            if(port & goodMask)
+            if(portval & goodMask)
             {
                if(status)
                     *status = portval;
                return true;
             }
 
-            if(port & errMask)
+            if(portval & errMask)
             {
                if(status)
                    *status = portval;
@@ -142,6 +142,42 @@ static inline bool ataPoll(HDD_ATACHANNEL channel, uint8_t errMask, uint8_t good
 
     if(status)
         *status = 0xFF;
+    return false;
+}
+
+static inline bool ataWaitBSY(HDD_ATACHANNEL channel)
+{
+    uint16_t port;
+
+    switch(channel)
+    {
+    case ATACHANNEL_FIRST_MASTER:
+    case ATACHANNEL_FIRST_SLAVE:
+        port = ATA_PRIMARY_BASEPORT+ATA_REG_STATUSCMD;
+        break;
+    case ATACHANNEL_SECOND_MASTER:
+    case ATACHANNEL_SECOND_SLAVE:
+        port = ATA_SECONDARY_BASEPORT+ATA_REG_STATUSCMD;
+        break;
+    default:
+        return false;
+    }
+
+    wait400NS(port);
+
+    uint8_t portval = inportb(port);
+
+    for(int i = 0; i < ataPollRetries; ++i)
+    {
+        if(!(portval & ATA_STATUS_BSY))
+        {
+            return true;
+        }
+
+        sleepMilliSeconds(ataPollInterval);
+        portval = inportb(port);
+    }
+
     return false;
 }
 
@@ -172,6 +208,10 @@ static FS_ERROR readSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
 
     mutex_lock(hd->rwLock);
 
+    // high nibble: 0xE = master, 0xF = slave
+    // low nibble: highest 4 bit of the 28 bit lba
+    outportb(port+ATA_REG_DRIVE, (slave? 0xF0 : 0xE0) | ((sector >> 24) & 0x0F));
+
     uint8_t stat = 0;
 
     if(!ataPoll(hd->channel, ATA_STATUS_ERR | ATA_STATUS_DF, ATA_STATUS_RDY, &stat))
@@ -181,10 +221,6 @@ static FS_ERROR readSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
         mutex_unlock(hd->rwLock);
         return CE_BAD_SECTOR_READ;
     }
-
-    // high nibble: 0xE = master, 0xF = slave
-    // low nibble: highest 4 bit of the 28 bit lba
-    outportb(port+ATA_REG_DRIVE, (slave? 0xF0 : 0xE0) | ((sector >> 24) & 0x0F));
 
     //outportb(port+ATA_REG_FEATURE, 0x00);
 
@@ -255,6 +291,10 @@ static FS_ERROR writeSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
 
     mutex_lock(hd->rwLock);
 
+    // high nibble: 0xE0 = master, 0xF0 = slave
+    // low nibble: highest 4 bit of the 28 bit lba
+    outportb(port+ATA_REG_DRIVE, (slave? 0xF0 : 0xE0) | ((sector >> 24) & 0x0F));
+
     uint8_t portval;
 
     if(!ataPoll(hd->channel, ATA_STATUS_ERR | ATA_STATUS_DF, ATA_STATUS_RDY, &portval))
@@ -264,10 +304,6 @@ static FS_ERROR writeSectorPIOLBA28(uint32_t sector, void* buf, hdd_t* hd)
         mutex_unlock(hd->rwLock);
         return CE_WRITE_ERROR;
     }
-
-    // high nibble: 0xE0 = master, 0xF0 = slave
-    // low nibble: highest 4 bit of the 28 bit lba
-    outportb(port+ATA_REG_DRIVE, (slave? 0xF0 : 0xE0) | ((sector >> 24) & 0x0F));
 
     //outportb(port+ATA_REG_FEATURE, 0x00);
 
@@ -351,20 +387,31 @@ static bool hdd_ATAIdentify(HDD_ATACHANNEL channel, uint16_t *output)
         return false;
     }
 
+    outportb(port+ATA_REG_DRIVE, slave ? 0xB0 : 0xA0); // Select drive
+
+    wait400NS(port+ATA_REG_STATUSCMD);
+
     if (inportb(port+ATA_REG_STATUSCMD) == 0xFF) // Floating port
     {
         serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] floating port: %d\r\n", (int32_t)channel);
         return false;
     }
 
-    outportb(port+ATA_REG_DRIVE, slave ? 0xB0 : 0xA0);
+    uint8_t tmp;
+
+    // Floating bus will cause this to fail, so we no longer need to check it seperately
+    if(!ataWaitBSY(channel))
+    {
+        serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] Drive not ready or floating bus: %y!\r\n", tmp);
+
+        return false;
+    }
+
     outportb(port+ATA_REG_SECTORCOUNT, 0x00);
     outportb(port+ATA_REG_LBALO, 0x00);
     outportb(port+ATA_REG_LBAMID, 0x00);
     outportb(port+ATA_REG_LBAHI, 0x00);
     outportb(port+ATA_REG_STATUSCMD, 0xEC); // IDENTIFY
-
-    uint8_t tmp;
 
     wait400NS(port+ATA_REG_STATUSCMD);
 
@@ -375,18 +422,38 @@ static bool hdd_ATAIdentify(HDD_ATACHANNEL channel, uint16_t *output)
         return false;
     }
 
-    while(inportb(port+ATA_REG_STATUSCMD) & ATA_STATUS_BSY || !(inportb(port+ATA_REG_STATUSCMD) & ATA_STATUS_DRQ))
+    if(!ataWaitBSY(channel))
     {
-        if (inportb(port+ATA_REG_LBAMID) || inportb(port+ATA_REG_LBAHI)) // Nonstandard device --> not supported
+        serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] Drive was busy for more than 30 sec!\r\n(l 428)");
+    }
+
+    //We can not use ataPoll here, because we have to check some other ATA regs too
+
+    uint8_t portval = inportb(port+ATA_REG_STATUSCMD);
+
+    for(int i = 0; i < ataPollRetries; ++i)
+    {
+        if(portval & ATA_STATUS_DRQ)
         {
-            serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] nonstandard device: %d\r\n", (int32_t)channel);
+            break;
+        }
+
+        if(portval & ATA_STATUS_ERR)
+        {
+            serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] Error during IDENTIFY: %y\r\n", portval);
+
             return false;
         }
-        if (inportb(port+ATA_REG_STATUSCMD) & ATA_STATUS_ERR)
+
+        if(inportb(port+ATA_REG_LBAMID) || inportb(port+ATA_REG_LBAHI))
         {
-            serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] error bit in status reg was set: %d\r\n", (int32_t)channel);
+            serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] Nonstandard device!\r\n");
+
             return false;
         }
+
+        sleepMilliSeconds(ataPollInterval);
+        portval = inportb(port+ATA_REG_STATUSCMD);
     }
 
     repinsw(port+ATA_REG_DATA, output, 256);
@@ -410,7 +477,7 @@ void hdd_install(void)
     {
         if (hdd_ATAIdentify((HDD_ATACHANNEL)i, buf))
         {
-            serial_log(SER_LOG_HRDDSK, "[hdd_install]Disk connected in ATA-Channel %d\r\n", i);
+            serial_log(SER_LOG_HRDDSK, "[hdd_install] Disk connected in ATA-Channel %d\r\n", i);
             hdd_t* hd = malloc(sizeof(hdd_t), 0, "hdd-HDD");
 
             hd->channel = (HDD_ATACHANNEL)i;
@@ -445,7 +512,7 @@ void hdd_install(void)
             hd->drive->insertedDisk->data            = hd;
             hd->drive->insertedDisk->port            = hd->drive;
             // buf[60] and buf[61] give the total size of the lba28 adressable sectors
-            hd->drive->insertedDisk->size            = (*(uint32_t*)&buf[60])*512;
+            hd->drive->insertedDisk->size            = ((uint64_t)(*(uint32_t*)&buf[60]))*512;
             hd->drive->insertedDisk->headCount       = 0;
             hd->drive->insertedDisk->secPerTrack     = 0;
             hd->drive->insertedDisk->sectorSize      = 512;
@@ -454,7 +521,7 @@ void hdd_install(void)
             for(int j = 0; j < PARTITIONARRAYSIZE; ++j)
                 hd->drive->insertedDisk->partition[i] = 0;
 
-            serial_log(SER_LOG_HRDDSK, "[hdd_install] Size of disk at channel %d is %d\r\n", i, hd->drive->insertedDisk->size);
+            serial_log(SER_LOG_HRDDSK, "[hdd_install] Size of disk at channel %d is %S\r\n", i, hd->drive->insertedDisk->size);
 
             attachDisk(hd->drive->insertedDisk); // disk == hard disk
             attachPort(hd->drive);

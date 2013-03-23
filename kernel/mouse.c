@@ -134,7 +134,6 @@ static void mouse_moveEvent(int8_t x, int8_t y)
 
 static void mouse_handler(registers_t* r)
 {
-    static bool erroroccurred = false;
     static uint8_t bytecounter = 0;
     static uint8_t bytes[4];
 
@@ -150,13 +149,14 @@ static void mouse_handler(registers_t* r)
             }
             else
             {
+                static bool erroroccurred = false;
                 bytecounter = 0;
                 if (erroroccurred == false) // Ignore error on the first time due to some emulators, TODO: Why?
                     erroroccurred = true;
                 else
                 {
                     textColor(ERROR);
-                    printf(" => ERROR (mouse.c, 159): Mouse sent unknown package (%yh)!\n", bytes[0]);
+                    printf("ERROR (mouse.c, 159): Mouse sent unknown package (%yh)!\n", bytes[0]);
                     textColor(TEXT);
                 }
                 return;
@@ -197,7 +197,7 @@ static void mouse_handler(registers_t* r)
                     bytecounter--;
 
                     textColor(ERROR);
-                    printf(" ERROR (mouse.c, 201): Mouse sent unknown package (%u)!\n", bytes[0]);
+                    printf("ERROR (mouse.c, 201): Mouse sent unknown package (%yh)!\n", bytes[0]);
                     textColor(TEXT);
                     break;
             }

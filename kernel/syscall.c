@@ -185,17 +185,18 @@ static void syscall_handler(registers_t* r)
 }
 
 __asm__ ("syscall_sysenterHandler:"
-            "imul $4, %eax;"       // Calculate address of function
-            "add $syscalls, %eax;"
-            "push %edi;"           // Push parameters on stack
-            "push %esi;"
-            "push %edx;"
-            "push %ecx;"
-            "push %ebx;"
-            "call *(%eax);"        // Call syscall
-            "add $20, %esp;"       // Restore stack
-            "mov %ebp, %edx;"      // Move return address to edx
-            "sysexit;");           // Leave kernel
+             "sti;"                 // IF flag is disabled by sysenter, however it should be safe to interrupt a syscall
+             "shl $2, %eax;"        // Calculate address of function: Multiply syscall number by 4
+             "add $syscalls, %eax;"
+             "push %edi;"           // Push parameters on stack
+             "push %esi;"
+             "push %edx;"
+             "push %ecx;"
+             "push %ebx;"
+             "call *(%eax);"        // Call syscall
+             "add $20, %esp;"       // Restore stack
+             "mov %ebp, %edx;"      // Move return address to edx
+             "sysexit;");           // Leave kernel
 
 /*
 * Copyright (c) 2009-2013 The PrettyOS Project. All rights reserved.

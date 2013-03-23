@@ -262,7 +262,7 @@ void vbe_leaveVideoMode(videoDevice_t* device)
 {
     vm86_executeSync(vbe_pd, VM86_SWITCH_TO_TEXT); // Needed until VGA-Text driver is written
     videomode = VM_TEXT;
-    refreshUserScreen();
+    refreshScreen();
 }
 
 void vbe_setPixel(videoDevice_t* device, uint16_t x, uint16_t y, BGRA_t color)

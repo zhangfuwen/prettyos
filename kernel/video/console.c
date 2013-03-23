@@ -119,7 +119,7 @@ bool console_display(uint8_t ID)
     console_displayed = reachableConsoles[ID];
 
     if(console_displayed->properties & CONSOLE_AUTOREFRESH)
-        refreshUserScreen();
+        refreshScreen();
 
     vga_updateCursor();
     return (true);
@@ -138,7 +138,7 @@ void console_setProperties(console_properties_t properties)
     if(properties & CONSOLE_SHOWINFOBAR)
         console_current->scrollEnd = min(console_current->scrollEnd, 42);
     if(properties & CONSOLE_AUTOREFRESH)
-        refreshUserScreen();
+        refreshScreen();
 }
 
 void console_clear(uint8_t backcolor)
@@ -375,7 +375,7 @@ size_t vprintf(const char* args, va_list ap)
                         break;
                     case 'S': // Size: prints a size in bytes. Can autoscale them to KiB, MiB and GiB
                     {
-                        size_t size = va_arg(ap, uint64_t);
+                        uint64_t size = va_arg(ap, uint64_t);
                         switch(toLower(*++args)) // Second letter determines several properties:
                         {
                             case 'g': // GiB at maximum
