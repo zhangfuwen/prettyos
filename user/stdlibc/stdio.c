@@ -63,6 +63,7 @@ int fgetpos(FILE* file, fpos_t* position); /// TODO
 int fsetpos(FILE* file, const fpos_t* position); /// TODO
 int vfprintf(FILE* file, const char* format, va_list arg); /// TODO
 int fprintf(FILE* file, const char* format, ...); /// TODO
+int vfscanf(FILE* file, const char* format, va_list arg); /// TODO
 int fscanf(FILE* file, const char* format, ...); /// TODO
 void setbuf(FILE* file, char* buffer); /// TODO
 int setvbuf(FILE* file, char* buffer, int mode, size_t size); /// TODO
@@ -107,6 +108,7 @@ char* gets(char* str)
     return str;
 }
 
+int vscanf(const char* format, va_list arg); /// TODO
 int scanf(const char* format, ...); /// TODO
 int putchar(char c); // -> Syscall
 int puts(const char* str)
@@ -283,4 +285,87 @@ int sprintf(char* dest, const char* format, ...)
     return (retval);
 }
 
+void vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
+{
+    char m_buffer[32]; // Larger is not needed at the moment
+
+    size_t pos;
+    for (pos = 0; *args && pos < length; args++)
+    {
+        switch (*args)
+        {
+            case '%':
+                switch (*(++args))
+                {
+                    case 'u':
+                        utoa(va_arg(ap, uint32_t), m_buffer);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += strlen(m_buffer);
+                        break;
+                    case 'f':
+                        ftoa(va_arg(ap, double), m_buffer);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += strlen(m_buffer);
+                        break;
+                    case 'i': case 'd':
+                        itoa(va_arg(ap, int32_t), m_buffer);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += strlen(m_buffer);
+                        break;
+                    case 'X':
+                        i2hex(va_arg(ap, int32_t), m_buffer, 8);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += 8;
+                        break;
+                    case 'x':
+                        i2hex(va_arg(ap, int32_t), m_buffer, 4);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += 4;
+                        break;
+                    case 'y':
+                        i2hex(va_arg(ap, int32_t), m_buffer, 2);
+                        strncpy(buffer+pos, m_buffer, length - pos);
+                        pos += 2;
+                        break;
+                    case 's':
+                    {
+                        const char* string = va_arg(ap, const char*);
+                        strncpy(buffer+pos, string, length - pos);
+                        pos += strlen(string);
+                        break;
+                    }
+                    case 'c':
+                        buffer[pos] = (char)va_arg(ap, int32_t);
+                        pos++;
+                        buffer[pos] = 0;
+                        break;
+                    case '%':
+                        buffer[pos] = '%';
+                        pos++;
+                        buffer[pos] = 0;
+                        break;
+                    default:
+                        --args;
+                        break;
+                    }
+                break;
+            default:
+                buffer[pos] = (*args);
+                pos++;
+                break;
+        }
+    }
+    if(pos < length)
+        buffer[pos] = 0;
+}
+
+void snprintf(char *buffer, size_t length, const char *args, ...)
+{
+    va_list ap;
+    va_start(ap, args);
+    vsnprintf(buffer, length, args, ap);
+    va_end(ap);
+}
+
+int vsscanf(const char* src, const char* format, va_list arg); /// TODO
 int sscanf(const char* src, const char* format, ...); /// TODO

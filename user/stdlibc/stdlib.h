@@ -19,27 +19,42 @@ typedef struct
     long quot, rem;
 } ldiv_t;
 
+typedef struct
+{
+    long long quot, rem;
+} lldiv_t;
+
 
 #ifdef _cplusplus
 extern "C" {
 #endif
 
 void abort();
-void exit();
+void exit(int status);
+void quick_exit(int status);
+void _Exit(int status);
 int atexit(void (*func)());
+int at_quick_exit(void (*func)());
 
 int abs(int n);
 long labs(long n);
+long long llabs(long long n);
 
 div_t div(int numerator, int denominator);
 ldiv_t ldiv(long numerator, long denominator);
+lldiv_t lldiv(long long numerator, long long denominator);
 
 int atoi(const char* nptr);
 long int atol(const char* nptr);
+long long atoll(const char* nptr);
 double atof(const char *nptr);
+float strtof(const char* nptr, char** endptr);
 double strtod(const char* nptr, char** endptr);
+long double strtold(const char* nptr, char** endptr);
 long int strtol(const char* nptr, char** endptr, int base);
+long long strtoll(const char* nptr, char** endptr, int base);
 unsigned long int strtoul(const char* nptr, char** endptr, int base);
+unsigned long long strtoull(const char* nptr, char** endptr, int base);
 
 int mblen(const char* pmb, size_t max);
 size_t mbstowcs(wchar_t* wcstr, const char* mbstr, size_t max);

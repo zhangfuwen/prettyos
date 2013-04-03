@@ -46,12 +46,12 @@ void timer_handler(registers_t* r)
 
 void sleepSeconds(uint32_t seconds)
 {
-    scheduler_blockCurrentTask(0, 0, max(1, 1000*seconds)); // "abuse" timeout function
+    scheduler_blockCurrentTask(0, 0, 1000*seconds); // "abuse" timeout function
 }
 
 void sleepMilliSeconds(uint32_t ms)
 {
-    scheduler_blockCurrentTask(0, 0, max(1, ms)); // "abuse" timeout function
+    scheduler_blockCurrentTask(0, 0, ms); // "abuse" timeout function
 }
 
 void timer_setFrequency(uint32_t freq)

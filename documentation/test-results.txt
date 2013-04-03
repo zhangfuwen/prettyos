@@ -22,7 +22,7 @@ AMD am5x86-P75      ?                32 MiB  | 0.0.2.0    -             (f)   x 
 Intel Pentium II    NeoMagic         256 MiB | 0.0.1.195  30000000h      f    x        x      x           1             MrX          VBE fails: Screen gets black and freezes. (Notebook)
 AMD Phenom x4 9550  ATI Radeon 4850  4 GiB   | 0.0.3.1    D0000000h      √    x        x      10          1             MrX          Does not boot from USB (Freeze before/in BL1)
 AMD Athlon x2 3800+ NVidia Quadro 4  1 GiB   | 0.0.1.226  -              -    x        x      -           -             MrX          Boots from USB-Stick. Have only testet if it boots or not.
-Via Nano 1300+      S3 Chrome 9 HC   1 GiB   | 0.0.1.226  -              -    x        -      -           -             MrX          Notebook; Booting from USB does not work (just displays BL1 and continues with loading Windows)
+Via Nano 1300+      S3 Chrome 9 HC   2 GiB   | 0.0.4.23   -              -    x        √      -           -             MrX          Netbook
 Celeron 850 MHz     VIA CLE266       512 MiB | 0.0.1.226  -              -    -        -      -           -             MrX          Medion Digitainer 2; Does not boot from USB ("BOOT2.BIN missing")
 Intel 80386 SX      VGA/EGA/CGA/MDA  4 MiB   | 0.0.2.89   -              -    x        -      x           -             MrX          Notebook; Invalid opcode error after Timer install (Most likely due to cpuid)
 Intel Pentium III   AGP V7100 ASUS   128 MiB | 0.0.1.195  F0000000h      √    x        -      x           2             Cuervo

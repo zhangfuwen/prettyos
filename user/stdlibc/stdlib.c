@@ -8,9 +8,11 @@
 
 
 extern void (**_atexit_funcs)(); // -> syscalls.c
+extern void (**_at_quick_exit_funcs)(); // -> syscalls.c
 
 
 void* userheapAlloc(size_t increase); // -> Syscall, Userlib
+void exitProcess(void); // -> Syscall, Userlib
 
 
 void abort()
@@ -18,7 +20,27 @@ void abort()
     raise(SIGABRT);
 }
 
-void exit(); // -> Syscall
+void exit(int status)
+{
+    if(_atexit_funcs)
+        for(size_t i = 0; _atexit_funcs[i]; i++)
+            _atexit_funcs[i]();
+    exitProcess();
+}
+
+void quick_exit(int status)
+{
+    if(_at_quick_exit_funcs)
+        for(size_t i = 0; _at_quick_exit_funcs[i]; i++)
+            _at_quick_exit_funcs[i]();
+    exitProcess();
+}
+
+void _Exit(int status)
+{
+    exitProcess();
+}
+
 int atexit(void (*func)())
 {
     static size_t num = 0;
@@ -33,10 +55,28 @@ int atexit(void (*func)())
     return(0);
 }
 
+int at_quick_exit(void (*func)())
+{
+    static size_t num = 0;
+    static size_t size = 0;
+    if(num+1 >= size) {
+        size += 5;
+        _at_quick_exit_funcs = malloc(size*sizeof(*_at_quick_exit_funcs));
+    }
+    _at_quick_exit_funcs[num] = func;
+    num++;
+    _at_quick_exit_funcs[num] = 0;
+    return(0);
+}
+
 int abs(int n); // -> math.c
 long labs(long n)
 {
-    return (abs(n)); // HACK?
+    return (n<0?-n:n);
+}
+long long llabs(long long n)
+{
+    return (n<0?-n:n);
 }
 
 div_t div(int numerator, int denominator)
@@ -48,6 +88,12 @@ div_t div(int numerator, int denominator)
 ldiv_t ldiv(long numerator, long denominator)
 {
     ldiv_t d = {.quot = numerator/denominator, .rem = numerator%denominator};
+    return (d);
+}
+
+lldiv_t lldiv(long long numerator, long long denominator)
+{
+    lldiv_t d = {.quot = numerator/denominator, .rem = numerator%denominator};
     return (d);
 }
 

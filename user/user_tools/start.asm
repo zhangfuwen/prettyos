@@ -1,6 +1,6 @@
 [BITS 32]
 extern main
-extern exit
+extern exitProcess
 
 global _start
 global _syscall
@@ -17,7 +17,7 @@ _start:
         mov [_syscall], eax
     .done:
     call main               ; Start programm
-    call exit               ; Cleanup. Deletes this task. (Syscall)
+    call exitProcess        ; Cleanup. Deletes this task. (Syscall)
     jmp  $
 
 syscall:

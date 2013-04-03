@@ -86,7 +86,7 @@ static void moveFighter(void)
     }
     if (keyPressed(KEY_ESC))
     {
-        exit();
+        exit(EXIT_SUCCESS);
     }
 }
 

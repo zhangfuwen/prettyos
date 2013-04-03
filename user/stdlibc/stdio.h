@@ -56,6 +56,7 @@ int fgetpos(FILE* file, fpos_t* position);
 int fsetpos(FILE* file, const fpos_t* position);
 int vfprintf(FILE* file, const char* format, va_list arg);
 int fprintf(FILE* file, const char* format, ...);
+int vfscanf(FILE* file, const char* format, va_list arg);
 int fscanf(FILE* file, const char* format, ...);
 void setbuf(FILE* file, char* buffer);
 int setvbuf(FILE* file, char* buffer, int mode, size_t size);
@@ -65,6 +66,7 @@ void perror(const char* string);
 
 char getchar();
 char* gets(char* str);
+int vscanf(const char* format, va_list arg);
 int scanf(const char* format, ...);
 int putchar(char c);
 int puts(const char* str);
@@ -73,6 +75,9 @@ int printf(const char* format, ...);
 
 int vsprintf(char* dest, const char* format, va_list arg);
 int sprintf(char* dest, const char* format, ...);
+void vsnprintf(char* buffer, size_t length, const char* args, va_list ap);
+void snprintf(char* buffer, size_t length, const char* args, ...);
+int vsscanf(const char* src, const char* format, va_list arg);
 int sscanf(const char* src, const char* format, ...);
 
 #ifdef _cplusplus

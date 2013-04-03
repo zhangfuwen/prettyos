@@ -25,6 +25,16 @@ long int atol(const char* nptr)
     return strtol(nptr, 0, 10);
 }
 
+long long atoll(const char* nptr)
+{
+    return strtoll(nptr, 0, 10);
+}
+
+float strtof(const char* nptr, char** endptr)
+{
+    return strtod(nptr, endptr); // HACK?
+}
+
 double strtod(const char* nptr, char** endptr)
 {
     double num = 0.0;
@@ -96,6 +106,8 @@ double strtod(const char* nptr, char** endptr)
 
     return num * sign;
 }
+
+long double strtold(const char* nptr, char** endptr); /// TODO
 
 long int strtol(const char* nptr, char** endptr, int base)
 {
@@ -172,6 +184,8 @@ long int strtol(const char* nptr, char** endptr, int base)
     return num * sign;
 }
 
+long long strtoll(const char* nptr, char** endptr, int base); /// TODO
+
 unsigned long int strtoul(const char* nptr, char** endptr, int base)
 {
     unsigned long num = 0;
@@ -239,8 +253,10 @@ unsigned long int strtoul(const char* nptr, char** endptr, int base)
     return num;
 }
 
+unsigned long long strtoull(const char* nptr, char** endptr, int base); /// TODO
+
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *

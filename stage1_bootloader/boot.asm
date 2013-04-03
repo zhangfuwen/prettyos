@@ -32,7 +32,7 @@ entry_point:
 
     cld                                ; clear direction flag. We rely on this later.
 
-    mov [bootdevice], dl               ; store boot device
+    mov [DriveNum], dl               ; store boot device
 
     mov ax, 0x1112
     int 0x10                           ; set 80x50 text mode and 8x8 font
@@ -137,7 +137,7 @@ Load_Image:
     jb Load_Image
 
 DONE:
-    mov dl, [bootdevice]
+    mov dl, [DriveNum]
     jmp 0x0000:0x0500
 
 FAILURE:
@@ -237,7 +237,6 @@ print_string:
 Sector         db 0
 Head           db 0
 Cylinder       db 0
-bootdevice     db 0
 datasector     dw 0
 cluster        dw 0
 ImageName      db "BOOT2   BIN"

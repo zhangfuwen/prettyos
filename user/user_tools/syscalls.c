@@ -22,11 +22,8 @@ FS_ERROR execute(const char* path, size_t argc, char* argv[])
 
 // TODO: (2) createThread
 
-void exit(void)
+void exitProcess(void)
 {
-    if(_atexit_funcs)
-        for(size_t i = 0; _atexit_funcs[i]; i++)
-            _atexit_funcs[i]();
     __asm__("call *_syscall" : : "a"(2));
 }
 

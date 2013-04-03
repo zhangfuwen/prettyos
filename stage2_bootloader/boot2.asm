@@ -40,6 +40,7 @@ msgFailure        db 0x0D, 0x0A, "Missing KERNEL.BIN (Fatal Error)", 0
 
 [BITS 16]
 entry_point:
+    mov BYTE [DriveNum], dl
     xor ax, ax
     mov ds, ax
     mov es, ax

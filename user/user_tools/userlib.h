@@ -29,7 +29,7 @@ struct file;
 
 // syscalls (only non-standard functions, because we do not want to include stdio.h here.
 FS_ERROR execute(const char* path, size_t argc, char* argv[]);
-void exit(void);
+void exitProcess(void);
 bool wait(BLOCKERTYPE reason, void* data, uint32_t timeout);
 uint32_t getMyPID(void);
 
@@ -92,9 +92,6 @@ bool waitForTask(uint32_t pid, uint32_t timeout);
 
 void iSetCursor(uint16_t x, uint16_t y);
 uint32_t getCurrentSeconds();
-
-void snprintf(char *buffer, size_t length, const char *args, ...);
-void vsnprintf(char *buffer, size_t length, const char *args, va_list ap);
 
 char* stoupper(char* s);
 char* stolower(char* s);

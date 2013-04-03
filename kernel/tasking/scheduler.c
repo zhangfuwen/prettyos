@@ -159,7 +159,7 @@ bool scheduler_blockCurrentTask(BLOCKERTYPE reason, void* data, uint32_t timeout
     }
     else
     {
-        currentTask->blocker.timeout = timer_getTicks()+timer_millisecondsToTicks(timeout);
+        currentTask->blocker.timeout = timer_getTicks()+max(1, timer_millisecondsToTicks(timeout));
     }
 
     cli();

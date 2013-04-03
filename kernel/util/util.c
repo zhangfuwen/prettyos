@@ -199,7 +199,7 @@ size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
     char m_buffer[32]; // Larger is not needed at the moment
 
     size_t pos;
-    for (pos = 0; *args && pos < length; args++)
+    for (pos = 0; *args && pos < length-1; args++)
     {
         switch (*args)
         {
@@ -208,50 +208,48 @@ size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
                 {
                     case 'u':
                         utoa(va_arg(ap, uint32_t), m_buffer);
-                        strncpy(buffer+pos, m_buffer, length - pos);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer);
                         break;
                     case 'f':
                         ftoa(va_arg(ap, double), m_buffer);
-                        strncpy(buffer+pos, m_buffer, length - pos);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer);
                         break;
                     case 'i': case 'd':
                         itoa(va_arg(ap, int32_t), m_buffer);
-                        strncpy(buffer+pos, m_buffer, length - pos);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += strlen(m_buffer);
                         break;
                     case 'X':
                         i2hex(va_arg(ap, int32_t), m_buffer, 8);
-                        strncpy(buffer+pos, m_buffer, length - pos);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += 8;
                         break;
                     case 'x':
                         i2hex(va_arg(ap, int32_t), m_buffer, 4);
-                        strncpy(buffer+pos, m_buffer, length - pos);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += 4;
                         break;
                     case 'y':
                         i2hex(va_arg(ap, int32_t), m_buffer, 2);
-                        strncpy(buffer+pos, m_buffer, length - pos);
+                        strncpy(buffer+pos, m_buffer, length - pos - 1);
                         pos += 2;
                         break;
                     case 's':
                     {
                         const char* string = va_arg(ap, const char*);
-                        strncpy(buffer+pos, string, length - pos);
+                        strncpy(buffer+pos, string, length - pos - 1);
                         pos += strlen(string);
                         break;
                     }
                     case 'c':
                         buffer[pos] = (char)va_arg(ap, int32_t);
                         pos++;
-                        buffer[pos] = 0;
                         break;
                     case '%':
                         buffer[pos] = '%';
                         pos++;
-                        buffer[pos] = 0;
                         break;
                     default:
                         --args;
@@ -264,8 +262,7 @@ size_t vsnprintf(char* buffer, size_t length, const char* args, va_list ap)
                 break;
         }
     }
-    if(pos < length)
-        buffer[pos] = 0;
+    buffer[pos] = 0;
     return (pos);
 }
 
@@ -330,10 +327,7 @@ char* strncpyandfill(char* dest, const char* src, size_t n, char val)
     {
         dest[i] = src[i];
     }
-    for (; i < n; i++)
-    {
-        dest[i] = val;
-    }
+    memset(dest+i, val, n-i);
     return (dest);
 }
 

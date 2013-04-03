@@ -47,7 +47,7 @@ static void* memcpyr(void* dest, const void* src, size_t bytes)
     size_t dwords = bytes/4;
     bytes %= 4;
 
-    __asm__ volatile("std\n" "rep movsb"         : : "S" (src), "D" (temp), "c" (bytes));
+    __asm__ volatile("std\n" "rep movsb" : : "S" (src), "D" (temp), "c" (bytes));
     __asm__ volatile("sub $3, %edi\n" "sub $3, %esi");
     __asm__ volatile("rep movsl\n" "cld" : : "c" (dwords));
     return (dest);
@@ -135,10 +135,7 @@ char* strncpy(char* dest, const char* src, size_t n)
     {
         dest[i] = src[i];
     }
-    for (; i < n; i++)
-    {
-        dest[i] = 0;
-    }
+    memset(dest+i, 0, n-i);
     return (dest);
 }
 

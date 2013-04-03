@@ -109,12 +109,36 @@ int main()
                             char str[200], msg[240];
                             gets(str);
 
-                            if (*key == KEY_P)
-                                snprintf(msg, 240, "PRIVMSG #PrettyOS :%s\r\n", str);
-                            else if (*key == KEY_L)
-                                snprintf(msg, 240, "PRIVMSG #lost :%s\r\n", str);
+                            if(str[0] != '/')
+                            {
+                                if (*key == KEY_P)
+                                    snprintf(msg, 240, "PRIVMSG #PrettyOS :%s\r\n", str);
+                                else if (*key == KEY_L)
+                                    snprintf(msg, 240, "PRIVMSG #lost :%s\r\n", str);
+                            }
+                            else
+                            {
+                                snprintf(msg, 240, "%s\r\n", str+1); // / means the Content is sent without changing anything
+                            }
 
                             tcp_send(connection, msg, strlen(msg));
+                        }
+                        break;
+                    }
+                    case KEY_C:
+                    {
+                        if(ctrl)
+                        {
+                            printf("\nEnter command: ");
+                            getchar(); // Ommit first character, because its a 'c'
+
+                            char cmd[200];
+                            gets(cmd);
+
+                            char cmdbuffer[202];
+                            snprintf(cmdbuffer, 202, "%s\r\n", cmd);
+
+                            tcp_send(connection, cmdbuffer, strlen(cmdbuffer));
                         }
                         break;
                     }
@@ -145,7 +169,7 @@ int main()
 
 
 /*
-* Copyright (c) 2011 The PrettyOS Project. All rights reserved.
+* Copyright (c) 2011-2013 The PrettyOS Project. All rights reserved.
 *
 * http://www.c-plusplus.de/forum/viewforum-var-f-is-62.html
 *
