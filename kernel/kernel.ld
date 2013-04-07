@@ -5,9 +5,9 @@ SECTIONS
 {
     . = 0x00100000;
     _kernel_beg = .;
-    .text   : {                  *(.text*)                 }
+    .text   : { _ro_start = .;   *(.text*)                 }
+    .rodata : {                  *(.rodata*) _ro_end = .;  }
     .data   : {                  *(.data*)                 }
-    .rodata : {                  *(.rodata*)               }
     .bss    : { _bss_start = .;  *(.bss*);   _bss_end = .; }
     .cdi    : { _cdi_start = .;  *(.cdi*);   _cdi_end = .; }
     _kernel_end = .;

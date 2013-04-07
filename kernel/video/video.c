@@ -7,6 +7,7 @@
 #include "console.h"
 #include "util/util.h"
 #include "paging.h"
+#include "kheap.h"
 #include "filesystem/fsmanager.h"
 #include "tasking/synchronisation.h"
 
@@ -294,7 +295,7 @@ void vga_updateCursor(void)
     outportb(CRTC_DATA_REGISTER, BYTE1(position));
 }
 
-static uint8_t screenCache[SCREENSHOT_BYTES];
+static uint8_t* screenCache = 0;
 void takeScreenshot(void)
 {
     puts("\nTake screenshot. ");
@@ -302,6 +303,8 @@ void takeScreenshot(void)
 
     mutex_lock(videoLock);
 
+    if(screenCache == 0) // If necessary, allocate screen cache
+        screenCache = malloc(SCREENSHOT_BYTES, 0, "screenCache");
     for (uint16_t i=0; i<4000; i++)
     {
         uint16_t j=i+2*NewLine;
@@ -321,7 +324,10 @@ void takeScreenshot(void)
 extern disk_t* disks[DISKARRAYSIZE]; // HACK
 void saveScreenshot(diskType_t* ScreenDest)
 {
-    char Pfad[20];
+    if(screenCache == 0)
+        return; // No screenshot in memory
+
+    char Pfad[20] = {0};
 
     for (int i = 0; i < DISKARRAYSIZE; i++) // HACK
     {
@@ -331,6 +337,9 @@ void saveScreenshot(diskType_t* ScreenDest)
             break;
         }
     }
+
+    if(Pfad[0] == 0)
+        return; // No destination
 
     file_t* file = fopen(Pfad, "a+");
 

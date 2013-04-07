@@ -32,7 +32,7 @@ entry_point:
 
     cld                                ; clear direction flag. We rely on this later.
 
-    mov [DriveNum], dl               ; store boot device
+    mov [DriveNum], dl                 ; store boot device
 
     mov ax, 0x1112
     int 0x10                           ; set 80x50 text mode and 8x8 font
@@ -188,7 +188,6 @@ ReadSectors:
 .NEXTSECTOR:
         mov di, 5                      ; five retries for error
         push ax
-        push bx
         push cx
         call Convert_LBA_to_CHS        ; convert starting sector from LBA to CHS
     .LOOP:
@@ -200,7 +199,8 @@ ReadSectors:
             mov  dl, BYTE [DriveNum]   ; drive
             int  0x13
             jnc  .SUCCESS              ; check read error
-            xor  ah, ah                ; INT 0x13, AH=0 --> reset disk
+            xor  ah, ah                ; INT 0x13, AH=0, DL=0 --> reset disk
+            xor  dl, dl
             int  0x13
             dec  di                    ; decrement error counter
             jnz  .LOOP                 ; read again
@@ -209,7 +209,6 @@ ReadSectors:
         mov  si, msgProgress
         call print_string
         pop  cx
-        pop  bx
         pop  ax
         add  bx, WORD [BytesPerSec]    ; queue next buffer
         inc  ax                        ; queue next sector
@@ -221,15 +220,15 @@ ReadSectors:
 ;    DS:SI  null-terminated string
 ;******************************************************************************
 print_string:
-    mov ah, 0x0E      ; BIOS function 0x0E: teletype
-.loop:
-    lodsb             ; grab a byte from SI
-    test al, al       ; NUL?
-    jz .done          ; if the result is zero: get out
-    int 0x10          ; else: print out the character
-    jmp .loop
-.done:
-    ret
+    mov ah, 0x0E                    ; BIOS function 0x0E: teletype
+    .loop:
+        lodsb                       ; grab a byte from SI
+        test al, al                 ; NULL?
+        jz .done                    ; if zero: end loop
+        int 0x10                    ; else: print character to screen
+        jmp .loop
+    .done:
+        ret
 
 ;******************************************************************************
 ;    Parameters

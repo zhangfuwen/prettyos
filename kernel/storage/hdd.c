@@ -397,12 +397,10 @@ static bool hdd_ATAIdentify(HDD_ATACHANNEL channel, uint16_t *output)
         return false;
     }
 
-    uint8_t tmp;
-
     // Floating bus will cause this to fail, so we no longer need to check it seperately
     if(!ataWaitBSY(channel))
     {
-        serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] Drive not ready or floating bus: %y!\r\n", tmp);
+        serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] Drive not ready!\r\n");
 
         return false;
     }
@@ -415,6 +413,7 @@ static bool hdd_ATAIdentify(HDD_ATACHANNEL channel, uint16_t *output)
 
     wait400NS(port+ATA_REG_STATUSCMD);
 
+    uint8_t tmp;
     if ((tmp=inportb(port+ATA_REG_STATUSCMD)) == 0) // Drive does not exist
     {
         serial_log(SER_LOG_HRDDSK, "[hdd_ATAIdentify] drive does not exist (returned %y from port %x): %d\r\n",

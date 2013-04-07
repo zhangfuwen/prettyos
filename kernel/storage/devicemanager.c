@@ -46,11 +46,12 @@ typedef struct
     uint32_t sector;
 } cache_t;
 
-static cache_t caches[NUMCACHE];
+static cache_t* caches = 0;
 
 
 void deviceManager_install(partition_t* systemPart)
 {
+    caches = malloc(sizeof(cache_t)*NUMCACHE, 0, "devmgr caches");
     for (uint16_t i = 0; i < NUMCACHE; i++) // Invalidate all read caches
     {
         caches[i].valid = false;

@@ -5,10 +5,8 @@
 
 InstallGDT:             ; load GDT into GDTR
     cli
-    pusha
     lgdt [gdt_limit_and_base]
     sti
-    popa
     ret
 
 EnterUnrealMode:

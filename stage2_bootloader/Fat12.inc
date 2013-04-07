@@ -10,15 +10,19 @@ Sector      db 0x00
 Head        db 0x00
 Cylinder    db 0x00
 
-BytesPerSec  dw 512
-SecPerClus   db 1
-ReservedSec  dw 1
-NumFATs      db 2
-RootEntries  dw 224
-FATSize      dw 9
-SecPerTrack  dw 18
-NumHeads     dw 2
-DriveNum     db 0
+; Stage 1 bootloader resides at 0x7C00, including FAT Boot Parameter Block
+; To avoid having duplicate values stored somewhere and to ensure that the
+; actual structure of the filesystem is taken into account, we use Stage 1's
+; values. Thus, following values are addresses.
+%define BytesPerSec 0x7C00 + 11
+%define SecPerClus  0x7C00 + 13
+%define ReservedSec 0x7C00 + 14
+%define NumFATs     0x7C00 + 16
+%define RootEntries 0x7C00 + 17
+%define FATSize     0x7C00 + 22
+%define SecPerTrack 0x7C00 + 24
+%define NumHeads    0x7C00 + 26
+%define DriveNum    0x7C00 + 36
 
 ;******************************************************************************
 ; Convert CHS to LBA
@@ -81,7 +85,8 @@ ReadSectors:
             mov     dl, BYTE [DriveNum]         ; drive
             int     0x13                        ; invoke BIOS
             jnc     .SUCCESS                    ; test for read error. If not, leave loop
-            xor     ax, ax                      ; ERROR case: BIOS reset disk
+            xor     ah, ah                      ; ERROR: Reset disk (AH=0, DL=0)
+            xor     dl, dl
             int     0x13                        ; invoke BIOS
             dec     bp                          ; decrement error counter
             jnz     .SECTORLOOP                 ; attempt to read again

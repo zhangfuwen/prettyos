@@ -8,7 +8,7 @@ typedef int            ptrdiff_t;
 typedef __WCHAR_TYPE__ wchar_t;
 #endif
 
-#define NULL (void*)0
+#define NULL 0
 
 #define offsetof(s,m)  (size_t)&(((s *)0)->m)
 

@@ -118,25 +118,25 @@ uint32_t cpu_idGetRegister(uint32_t function, CPU_REGISTER reg)
         case CR_EAX:
         {
             volatile uint32_t temp; // Has to be volatile to make it work with gcc
-            __asm__("cpuid" : "=a"(temp) : "a"(function));
+            __asm__("cpuid" : "=a"(temp) : "a"(function) : "ebx", "ecx", "edx");
             return (temp);
         }
         case CR_EBX:
         {
             volatile uint32_t temp;
-            __asm__("cpuid" : "=b"(temp) : "a"(function));
+            __asm__("cpuid" : "=b"(temp) : "a"(function) : "ecx", "edx");
             return (temp);
         }
         case CR_ECX:
         {
             volatile uint32_t temp;
-            __asm__("cpuid" : "=c"(temp) : "a"(function));
+            __asm__("cpuid" : "=c"(temp) : "a"(function) : "ebx", "edx");
             return (temp);
         }
         case CR_EDX:
         {
             volatile uint32_t temp;
-            __asm__("cpuid" : "=d"(temp) : "a"(function));
+            __asm__("cpuid" : "=d"(temp) : "a"(function) : "ebx", "ecx");
             return (temp);
         }
         default:

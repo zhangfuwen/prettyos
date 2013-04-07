@@ -21,6 +21,7 @@ pageDirectory_t* kernelPageDirectory;
 pageDirectory_t* currentPageDirectory = 0;
 
 extern char _kernel_beg, _kernel_end; // defined in linker script
+extern char _ro_start, _ro_end;       // defined in linker script
 
 static const uint32_t MAX_DWORDS = FOUR_GB / PAGESIZE / 32;
 static uint32_t*      bittable;
@@ -37,17 +38,17 @@ uint32_t paging_install(memoryMapEntry_t* memoryMapBegin, memoryMapEntry_t* memo
     // Setup the kernel page directory
     kernelPageDirectory = malloc(sizeof(pageDirectory_t), PAGESIZE, "pag-kernelPD");
     memset(kernelPageDirectory, 0, sizeof(pageDirectory_t) - 4);
-    kernelPageDirectory->physAddr = (uint32_t)kernelPageDirectory;
+    kernelPageDirectory->physAddr = (uintptr_t)kernelPageDirectory;
 
     kdebug(3, "\nkernelPageDirectory (virt., phys.): %Xh, %Xh\n", kernelPageDirectory, kernelPageDirectory->physAddr);
 
     // Setup the page tables for 0 MiB - 12 MiB, identity mapping
-    uint32_t addr = 0;
+    uintptr_t addr = 0;
     for (uint8_t i=0; i<IDMAP; i++)
     {
         // Page directory entry, virt=phys due to placement allocation in id-mapped area
         kernelPageDirectory->tables[i] = malloc(sizeof(pageTable_t), PAGESIZE, "pag-kernelPT");
-        kernelPageDirectory->codes[i]  = (uint32_t)kernelPageDirectory->tables[i] | MEM_PRESENT;
+        kernelPageDirectory->codes[i]  = (uint32_t)kernelPageDirectory->tables[i] | MEM_PRESENT | MEM_WRITE;
 
         // Page table entries, identity mapping
         for (uint32_t j = 0; j < PAGE_COUNT; ++j)
@@ -67,11 +68,35 @@ uint32_t paging_install(memoryMapEntry_t* memoryMapBegin, memoryMapEntry_t* memo
         kernelPageDirectory->codes [PCI_MEM_START/PAGESIZE/PAGE_COUNT + i] = (uint32_t)(heap_pts + i) | MEM_PRESENT | MEM_WRITE;
     }
 
+    // Make some parts of the kernel (Sections text and rodata) read-only
+    uint32_t startpt = ((uintptr_t)&_ro_start)/PAGESIZE/PAGE_COUNT; // Page table, where read-only section starts
+    uint32_t startp = ((uintptr_t)&_ro_start)/PAGESIZE%PAGE_COUNT; // Page, where read-only section starts
+    if((uintptr_t)&_ro_start%PAGESIZE != 0) {
+        startp++;
+        if(startp > PAGE_COUNT) {
+            startpt++;
+            startp = 0;
+        }
+    }
+    uint32_t endpt = ((uintptr_t)&_ro_end)/PAGESIZE/PAGE_COUNT; // Page table, where read-only section ends
+    uint32_t endp = ((uintptr_t)&_ro_end)/PAGESIZE%PAGE_COUNT; // Page, where read-only section ends
+    if(endp > 0)
+        endp--;
+    else {
+        endp = PAGE_COUNT-1;
+        endpt--;
+    }
+    for(uint32_t i = startpt; i <= endpt; i++) {
+        for(uint32_t j = startp; j <= endp; j++) {
+            kernelPageDirectory->tables[i]->pages[j] = kernelPageDirectory->tables[i]->pages[j] & (~MEM_WRITE); // Forbid writing
+        }
+    }
+
     // Tell CPU to enable paging
     paging_switch(kernelPageDirectory);
     uint32_t cr0;
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0)); // read CR0
-    cr0 |= BIT(31);                               // set the paging bit in CR0
+    cr0 |= BIT(31) | BIT(16);                     // set the paging bit (31) and write protect bit (16) in CR0
     __asm__ volatile("mov %0, %%cr0":: "r"(cr0)); // write CR0
 
     return (ram_available);

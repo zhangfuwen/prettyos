@@ -40,7 +40,7 @@
 #include "netprotocol/tcp.h"    // tcp_showConnections, network_displayArpTables
 
 
-const char* const version = "0.0.4.23 - Rev: 1409";
+const char* const version = "0.0.4.24 - Rev: 1410";
 
 // .bss
 extern uintptr_t _bss_start; // Linker script
@@ -55,7 +55,7 @@ static void logText(const char* str)
 
     uint16_t len = strlen(str);
 
-    for (uint16_t i = len; i < 20;i++)
+    for (uint16_t i = len; i < 20; i++)
     {
         putch(' ');
     }
