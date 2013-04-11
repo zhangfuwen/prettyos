@@ -1,0 +1,9 @@
+*.ELF
+*.map
+*.a
+*.BIN
+*.bin
+*.COM
+*.dat
+object_files/
+
