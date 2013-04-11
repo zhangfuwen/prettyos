@@ -7,11 +7,11 @@
 #include "stdlib.h"
 
 #if (__GNUC__ >= 4 && __GNUC_MINOR__ >= 7)
-void* operator new(long unsigned int size)
+void* operator new(size_t size)
 {
     return malloc(size);
 }
-void* operator new[](long unsigned int size)
+void* operator new[](size_t size)
 {
     return malloc(size);
 }
